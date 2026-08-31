@@ -43,21 +43,35 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
       }
     };
 
-    // 3. Window blur (Clicked outside, Alt+Tabbed, or overlay/sandbox clicked)
+    // 3. Window blur / Control Loss (Clicked outside, Alt+Tabbed, or clicked ChatGPT/overlay)
     const handleBlur = () => {
       setTimeout(() => {
         if (!document.hasFocus() && !isLocked && !isCompleted) {
-          onViolation("FOCUS_LOSS", "Window lost focus (interacted with an external window, ChatGPT overlay, or background sandbox).");
+          onViolation("CONTROL_LOST", "Input control departed from exam window (interacted with external window/overlay).");
         }
       }, 100);
     };
 
-    // 3b. Active Proactive Focus Poller (catches silent overlay focus steals every 250ms unconditionally)
+    // 3b. Active Proactive Focus Poller (catches silent overlay focus steals every 200ms)
     const focusPoller = setInterval(() => {
       if (!document.hasFocus() && !isLocked && !isCompleted) {
-        onViolation("OVERLAY_DETECTED", "Exam window lost active focus to an external window or overlay.");
+        onViolation("CONTROL_LOST", "Active window focus was lost to an external overlay or background application.");
       }
-    }, 250);
+    }, 200);
+
+    // 3c. Mouse Cursor Boundary Tracker (detects cursor moving outside the exam canvas)
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (
+        e.clientY <= 0 ||
+        e.clientX <= 0 ||
+        e.clientX >= window.innerWidth ||
+        e.clientY >= window.innerHeight
+      ) {
+        if (!isLocked && !isCompleted) {
+          onViolation("CURSOR_EXIT", "Mouse cursor exited the exam viewport to an external display area or overlay.");
+        }
+      }
+    };
 
     // 4. Keyboard Shortcuts Interception & Copy/Paste/Screenshot Blocking
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -158,6 +172,7 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
+    document.addEventListener("mouseleave", handleMouseLeave);
     window.addEventListener("keydown", handleKeyDown, true);
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("copy", handleClipboardEvent, true);
@@ -170,6 +185,7 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
+      document.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("copy", handleClipboardEvent, true);
@@ -200,16 +216,16 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-white tracking-tight">Proctored Assessment Lockdown</h2>
               <p className="text-sm text-slate-400 leading-relaxed">
-                This assessment enforces strict full-screen and anti-cheat policies. Copying, pasting, and switching tabs are prohibited.
+                This assessment enforces strict control tracking. Moving the cursor outside or switching to external applications will trigger an instant exam lock.
               </p>
             </div>
 
             <div className="bg-slate-800/60 rounded-xl p-4 text-xs text-slate-300 text-left space-y-2 border border-slate-700/50">
               <p className="font-semibold text-slate-200">Security Guidelines:</p>
               <ul className="list-disc list-inside space-y-1 text-slate-400">
-                <li>Copy, paste, and text selection are strictly disabled.</li>
+                <li>Keep cursor and keyboard control inside the exam at all times.</li>
                 <li>Do not press <kbd className="bg-slate-700 px-1.5 py-0.5 rounded text-slate-200">Alt+Tab</kbd> or switch applications.</li>
-                <li>Stay on the exam tab at all times until final submission.</li>
+                <li>Stay on the exam tab until final submission.</li>
               </ul>
             </div>
 
