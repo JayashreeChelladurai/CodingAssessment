@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
 import os from "os";
 import { v4 as uuidv4 } from "uuid";
@@ -22,6 +23,67 @@ export interface TestCaseEvaluationResult extends ExecutionResult {
   passed: boolean;
   scoreAwarded: number;
   weight: number;
+}
+
+let cachedGccPath: string | null = null;
+let cachedGppPath: string | null = null;
+
+export function getGccPath(): string {
+  if (cachedGccPath) return cachedGccPath;
+
+  const potentialPaths = [
+    path.resolve(__dirname, "../../compilers/w64devkit/bin/gcc.exe"),
+    path.resolve(process.cwd(), "compilers/w64devkit/bin/gcc.exe"),
+    path.resolve(__dirname, "../../../compilers/w64devkit/bin/gcc.exe"),
+    "C:\\Program Files\\LLVM\\bin\\clang.exe",
+    "C:\\msys64\\ucrt64\\bin\\gcc.exe",
+    "C:\\MinGW\\bin\\gcc.exe",
+    "gcc",
+    "clang",
+  ];
+
+  for (const p of potentialPaths) {
+    try {
+      if (path.isAbsolute(p) && fsSync.existsSync(p)) {
+        cachedGccPath = p;
+        return p;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  cachedGccPath = "gcc";
+  return "gcc";
+}
+
+export function getGppPath(): string {
+  if (cachedGppPath) return cachedGppPath;
+
+  const potentialPaths = [
+    path.resolve(__dirname, "../../compilers/w64devkit/bin/g++.exe"),
+    path.resolve(process.cwd(), "compilers/w64devkit/bin/g++.exe"),
+    path.resolve(__dirname, "../../../compilers/w64devkit/bin/g++.exe"),
+    "C:\\Program Files\\LLVM\\bin\\clang++.exe",
+    "C:\\msys64\\ucrt64\\bin\\g++.exe",
+    "C:\\MinGW\\bin\\g++.exe",
+    "g++",
+    "clang++",
+  ];
+
+  for (const p of potentialPaths) {
+    try {
+      if (path.isAbsolute(p) && fsSync.existsSync(p)) {
+        cachedGppPath = p;
+        return p;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  cachedGppPath = "g++";
+  return "g++";
 }
 
 function extractJavaClassName(code: string): string {
@@ -86,7 +148,7 @@ export async function executeCode(
       await fs.writeFile(sourceFilePath, code, "utf-8");
 
       const exeName = process.platform === "win32" ? "Solution.exe" : "Solution";
-      compileCmd = "gcc";
+      compileCmd = getGccPath();
       compileArgs = ["-O2", "-Wall", "-std=c11", "Solution.c", "-o", exeName];
 
       runCmd = path.join(tempDir, exeName);
@@ -96,7 +158,7 @@ export async function executeCode(
       await fs.writeFile(sourceFilePath, code, "utf-8");
 
       const exeName = process.platform === "win32" ? "Solution.exe" : "Solution";
-      compileCmd = "g++";
+      compileCmd = getGppPath();
       compileArgs = ["-O2", "-Wall", "-std=c++17", "Solution.cpp", "-o", exeName];
 
       runCmd = path.join(tempDir, exeName);
@@ -188,10 +250,18 @@ function runProcess(
     let timedOut = false;
     let isSettled = false;
 
+    const gccDir = path.dirname(getGccPath());
+    const pathSeparator = process.platform === "win32" ? ";" : ":";
+    const customPath = `${gccDir}${pathSeparator}${process.env.PATH || ""}`;
+
     const child = spawn(command, args, {
       cwd,
       shell: false,
       stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        PATH: customPath,
+      },
     });
 
     const killProcess = () => {

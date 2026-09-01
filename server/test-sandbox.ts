@@ -23,27 +23,69 @@ async function runTests() {
   const resJava = await executeCode("JAVA", javaCode, "20 30", 3, 256);
   console.log("Java Result:", resJava.status, "Output:", resJava.stdout.trim(), `(${resJava.executionTimeMs}ms)`);
   if (resJava.status !== "ACCEPTED" || resJava.stdout.trim() !== "50") {
-    throw new Error("Java Test Failed!");
+    throw new Error(`Java Test Failed: ${resJava.stderr || resJava.compilationError}`);
   }
 
-  // 2. Test MCQ Grading (Correct Answer)
-  console.log("\n[Test 2] Testing MCQ Grading (Correct)...");
+  // 2. Test C Execution
+  console.log("\n[Test 2] Running C Code...");
+  const cCode = `
+    #include <stdio.h>
+    int main() {
+      int a, b;
+      if (scanf("%d %d", &a, &b) == 2) {
+        printf("%d\\n", a * b);
+      }
+      return 0;
+    }
+  `;
+  const resC = await executeCode("C", cCode, "6 7", 3, 256);
+  console.log("C Result:", resC.status, "Output:", resC.stdout.trim(), `(${resC.executionTimeMs}ms)`);
+  if (resC.status !== "ACCEPTED" || resC.stdout.trim() !== "42") {
+    throw new Error(`C Test Failed: ${resC.stderr || resC.compilationError}`);
+  }
+
+  // 3. Test C++ Execution
+  console.log("\n[Test 3] Running C++ Code...");
+  const cppCode = `
+    #include <iostream>
+    #include <vector>
+    #include <numeric>
+    using namespace std;
+    int main() {
+      int n;
+      if (!(cin >> n)) return 0;
+      vector<int> v(n);
+      for(int i = 0; i < n; i++) cin >> v[i];
+      int sum = 0;
+      for(int x : v) sum += x;
+      cout << sum << endl;
+      return 0;
+    }
+  `;
+  const resCpp = await executeCode("CPP", cppCode, "4 10 20 30 40", 3, 256);
+  console.log("C++ Result:", resCpp.status, "Output:", resCpp.stdout.trim(), `(${resCpp.executionTimeMs}ms)`);
+  if (resCpp.status !== "ACCEPTED" || resCpp.stdout.trim() !== "100") {
+    throw new Error(`C++ Test Failed: ${resCpp.stderr || resCpp.compilationError}`);
+  }
+
+  // 4. Test MCQ Grading (Correct Answer)
+  console.log("\n[Test 4] Testing MCQ Grading (Correct)...");
   const mcqCorrect = gradeMcqQuestion(["opt-2"], ["opt-2"], 2.0, 0.5);
   console.log("MCQ Correct Score:", mcqCorrect.score, "Status:", mcqCorrect.status);
   if (mcqCorrect.score !== 2.0 || mcqCorrect.status !== "CORRECT") {
     throw new Error("MCQ Correct Test Failed!");
   }
 
-  // 3. Test MCQ Grading (Incorrect with Negative Marking)
-  console.log("\n[Test 3] Testing MCQ Grading (Incorrect Negative Marking)...");
+  // 5. Test MCQ Grading (Incorrect with Negative Marking)
+  console.log("\n[Test 5] Testing MCQ Grading (Incorrect Negative Marking)...");
   const mcqWrong = gradeMcqQuestion(["opt-1"], ["opt-2"], 2.0, 0.5);
   console.log("MCQ Wrong Penalty:", mcqWrong.score, "Status:", mcqWrong.status);
   if (mcqWrong.score !== -0.5 || mcqWrong.status !== "INCORRECT") {
     throw new Error("MCQ Negative Marking Test Failed!");
   }
 
-  // 4. Test SEB XML Configuration Generation
-  console.log("\n[Test 4] Testing SEB XML Config Generation...");
+  // 6. Test SEB XML Configuration Generation
+  console.log("\n[Test 6] Testing SEB XML Config Generation...");
   const sebXml = generateSebConfig({
     assessmentCode: "JAVA-DEMO-101",
     startUrl: "http://localhost:3000/?code=JAVA-DEMO-101",
@@ -57,8 +99,8 @@ async function runTests() {
     throw new Error("SEB XML Generation Failed!");
   }
 
-  // 5. Test Multi-Testcase Partial Grading
-  console.log("\n[Test 5] Testing Multi-Testcase Partial Grading...");
+  // 7. Test Multi-Testcase Partial Grading (C++ Solution)
+  console.log("\n[Test 7] Testing Multi-Testcase Partial Grading (C++)...");
   const question = {
     id: "q-alg-1",
     marks: 48,
@@ -72,28 +114,30 @@ async function runTests() {
     ],
   };
 
-  const studentSolution = `
-    import java.util.*;
-    public class Solution {
-      public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        if (!sc.hasNextInt()) return;
-        int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i=0; i<n; i++) a[i] = sc.nextInt();
-        int target = sc.nextInt();
-        HashSet<Integer> set = new HashSet<>();
-        boolean ok = false;
-        for(int x : a) {
-          if (set.contains(target - x)) { ok = true; break; }
-          set.add(x);
-        }
-        System.out.println(ok ? "YES" : "NO");
+  const studentCppSolution = `
+    #include <iostream>
+    #include <vector>
+    #include <unordered_set>
+    using namespace std;
+    int main() {
+      int n;
+      if (!(cin >> n)) return 0;
+      vector<int> a(n);
+      for(int i = 0; i < n; i++) cin >> a[i];
+      int target;
+      cin >> target;
+      unordered_set<int> seen;
+      bool found = false;
+      for(int x : a) {
+        if (seen.count(target - x)) { found = true; break; }
+        seen.insert(x);
       }
+      cout << (found ? "YES" : "NO") << endl;
+      return 0;
     }
   `;
 
-  const grading = await gradeStudentCode("JAVA", studentSolution, question, false);
+  const grading = await gradeStudentCode("CPP", studentCppSolution, question, false);
   console.log(`Coding Passed: ${grading.passedTestCases}/${grading.totalTestCases} | Score: ${grading.totalScore}/${grading.maxScore}`);
 
   if (grading.status !== "ACCEPTED" || grading.totalScore !== 48) {
@@ -101,7 +145,7 @@ async function runTests() {
   }
 
   console.log("\n==================================================");
-  console.log("   🎉 ALL TESTS (JAVA, MCQs, SEB, SCORING) PASSED!");
+  console.log("   🎉 ALL TESTS (JAVA, C, C++, MCQs, SEB, SCORING) PASSED!");
   console.log("==================================================");
 }
 

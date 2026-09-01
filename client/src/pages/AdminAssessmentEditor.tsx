@@ -725,10 +725,68 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                         </div>
                       )}
 
-                      {/* Coding Test Cases Config */}
+                      {/* Coding Test Cases & Starter Boilerplates */}
                       {q.type === "CODING" && (
                         <div className="space-y-3 pt-2 border-t border-slate-800">
-                          <div className="flex items-center justify-between">
+                          {/* Language Starter Code Boilerplates */}
+                          <div className="space-y-2">
+                            <span className="text-[11px] font-bold uppercase text-slate-300 block">
+                              Language Starter Boilerplates (Java, C, C++)
+                            </span>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <div>
+                                <span className="text-[10px] font-bold text-amber-400 block mb-1">Java Starter Code</span>
+                                <textarea
+                                  rows={4}
+                                  value={q.starterCodes?.JAVA || ""}
+                                  onChange={(e) => {
+                                    const copy = [...sections];
+                                    copy[secIdx].questions[qIdx].starterCodes = {
+                                      ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                      JAVA: e.target.value,
+                                    };
+                                    copy[secIdx].questions[qIdx].starterCode = e.target.value;
+                                    setSections(copy);
+                                  }}
+                                  className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200"
+                                />
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold text-blue-400 block mb-1">C Starter Code</span>
+                                <textarea
+                                  rows={4}
+                                  value={q.starterCodes?.C || ""}
+                                  onChange={(e) => {
+                                    const copy = [...sections];
+                                    copy[secIdx].questions[qIdx].starterCodes = {
+                                      ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                      C: e.target.value,
+                                    };
+                                    setSections(copy);
+                                  }}
+                                  className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200"
+                                />
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold text-cyan-400 block mb-1">C++ Starter Code</span>
+                                <textarea
+                                  rows={4}
+                                  value={q.starterCodes?.CPP || ""}
+                                  onChange={(e) => {
+                                    const copy = [...sections];
+                                    copy[secIdx].questions[qIdx].starterCodes = {
+                                      ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                      CPP: e.target.value,
+                                    };
+                                    setSections(copy);
+                                  }}
+                                  className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
                             <span className="text-[11px] font-bold uppercase text-emerald-400">
                               Test Cases (Open & Closed Evaluation)
                             </span>

@@ -14,15 +14,20 @@ export function isSebRequest(req: any): boolean {
   const userAgent = req.headers["user-agent"] || "";
   const sebHeader = req.headers["x-safeexambrowser-requesthash"] || req.headers["x-safeexambrowser-configkeyhash"];
 
-  if (userAgent.includes("SafeExamBrowser") || userAgent.includes("SEB/") || sebHeader) {
+  if (
+    userAgent.includes("SafeExamBrowser") ||
+    userAgent.includes("SEB/") ||
+    userAgent.includes("SEB ") ||
+    sebHeader
+  ) {
     return true;
   }
   return false;
 }
 
 /**
- * Generate official SEB (.seb) XML Plist Configuration File
- * Enforces CreateNewDesktop isolation, Screen Capture Protection, and Process Blocker
+ * Generate Universal Cross-Platform SEB (.seb) XML Plist Configuration File
+ * Compatible with macOS (Sonoma, Ventura, Monterey, Big Sur) and Windows (10, 11)
  */
 export function generateSebConfig(options: SebConfigOptions): string {
   const { startUrl, quitPassword = "exit123", title = "ProctorExam Assessment" } = options;
@@ -38,21 +43,23 @@ export function generateSebConfig(options: SebConfigOptions): string {
 <plist version="1.0">
 <dict>
     <key>originatorVersion</key>
-    <string>SEB_Win_3.x</string>
+    <string>SEB_Universal_3.x</string>
     <key>startURL</key>
     <string>${startUrl}</string>
     <key>title</key>
     <string>${title}</string>
+    
+    <!-- Quit & Password Policies -->
     <key>allowQuit</key>
     <true/>
     <key>hashedQuitPassword</key>
     <string>${hashedQuitPassword}</string>
     <key>quitURL</key>
     <string>seb://quit</string>
+    
+    <!-- Universal Fullscreen & Kiosk Policies -->
     <key>browserViewMode</key>
     <integer>0</integer>
-    <key>kioskMode</key>
-    <string>CreateNewDesktop</string>
     <key>openInWindow</key>
     <false/>
     <key>showTaskBar</key>
@@ -67,6 +74,14 @@ export function generateSebConfig(options: SebConfigOptions): string {
     <false/>
     <key>showNavigationButtons</key>
     <false/>
+    <key>hideBrowserWindowToolbar</key>
+    <true/>
+    <key>showMenuBar</key>
+    <false/>
+    <key>showSideMenu</key>
+    <false/>
+    
+    <!-- Security & Hardware Lockdown -->
     <key>allowPreferencesWindow</key>
     <false/>
     <key>allowDeveloperConsole</key>
@@ -95,6 +110,28 @@ export function generateSebConfig(options: SebConfigOptions): string {
     <false/>
     <key>allowScreenSharing</key>
     <false/>
+    <key>clearClipboardOnStart</key>
+    <true/>
+    <key>clearClipboardOnExit</key>
+    <true/>
+    <key>enableRightMouse</key>
+    <false/>
+    
+    <!-- Windows-Specific Keys -->
+    <key>enableAltEsc</key>
+    <false/>
+    <key>enableAltF4</key>
+    <false/>
+    <key>enableAltTab</key>
+    <false/>
+    <key>enableCtrlEsc</key>
+    <false/>
+    <key>enableEsc</key>
+    <false/>
+    <key>enableStartMenu</key>
+    <false/>
+    <key>enableSystemKey</key>
+    <false/>
     <key>hookKeys</key>
     <true/>
     <key>enableAltSpace</key>
@@ -115,127 +152,124 @@ export function generateSebConfig(options: SebConfigOptions): string {
     <false/>
     <key>browserWindowShowTitle</key>
     <false/>
-    <key>hideBrowserWindowToolbar</key>
+
+    <!-- macOS-Specific Keys -->
+    <key>enableCmdTab</key>
+    <false/>
+    <key>enableCmdEsc</key>
+    <false/>
+    <key>enableSpotlight</key>
+    <false/>
+    <key>enableForceQuit</key>
+    <false/>
+    <key>enableAppSwitcherCheck</key>
     <true/>
-    <key>showMenuBar</key>
+    <key>allowUserSwitching</key>
     <false/>
-    <key>showSideMenu</key>
+    <key>allowSiri</key>
     <false/>
-    <key>clearClipboardOnStart</key>
-    <true/>
-    <key>clearClipboardOnExit</key>
-    <true/>
-    <key>enableAltEsc</key>
+    <key>allowDictation</key>
     <false/>
-    <key>enableAltF4</key>
+    <key>enableTouchBar</key>
     <false/>
-    <key>enableAltTab</key>
-    <false/>
-    <key>enableCtrlEsc</key>
-    <false/>
-    <key>enableEsc</key>
-    <false/>
-    <key>enableStartMenu</key>
-    <false/>
-    <key>enableSystemKey</key>
-    <false/>
-    <key>enableRightMouse</key>
-    <false/>
+    
+    <!-- Window Dimensions -->
     <key>mainBrowserWindowWidth</key>
     <string>100%</string>
     <key>mainBrowserWindowHeight</key>
     <string>100%</string>
     <key>mainBrowserWindowPositioning</key>
     <integer>0</integer>
+    
+    <!-- Prohibited Process Blacklist (Windows & macOS) -->
     <key>killProcessList</key>
     <array>
+        <!-- Windows Processes -->
         <dict>
             <key>executable</key>
             <string>chrome.exe</string>
+            <key>os</key>
+            <integer>1</integer>
         </dict>
         <dict>
             <key>executable</key>
             <string>msedge.exe</string>
+            <key>os</key>
+            <integer>1</integer>
         </dict>
         <dict>
             <key>executable</key>
             <string>firefox.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>brave.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>opera.exe</string>
+            <key>os</key>
+            <integer>1</integer>
         </dict>
         <dict>
             <key>executable</key>
             <string>chatgpt.exe</string>
+            <key>os</key>
+            <integer>1</integer>
         </dict>
         <dict>
             <key>executable</key>
             <string>ChatGPT.exe</string>
+            <key>os</key>
+            <integer>1</integer>
         </dict>
         <dict>
             <key>executable</key>
             <string>WindowsSandbox.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>WindowsSandboxClient.exe</string>
+            <key>os</key>
+            <integer>1</integer>
         </dict>
         <dict>
             <key>executable</key>
             <string>SnippingTool.exe</string>
+            <key>os</key>
+            <integer>1</integer>
+        </dict>
+        
+        <!-- macOS Processes -->
+        <dict>
+            <key>executable</key>
+            <string>Google Chrome</string>
+            <key>os</key>
+            <integer>2</integer>
         </dict>
         <dict>
             <key>executable</key>
-            <string>ScreenClippingHost.exe</string>
+            <string>Safari</string>
+            <key>os</key>
+            <integer>2</integer>
         </dict>
         <dict>
             <key>executable</key>
-            <string>obs64.exe</string>
+            <string>ChatGPT</string>
+            <key>os</key>
+            <integer>2</integer>
         </dict>
         <dict>
             <key>executable</key>
-            <string>VirtualBoxVM.exe</string>
+            <string>Discord</string>
+            <key>os</key>
+            <integer>2</integer>
         </dict>
         <dict>
             <key>executable</key>
-            <string>VBoxSVC.exe</string>
+            <string>Telegram</string>
+            <key>os</key>
+            <integer>2</integer>
         </dict>
         <dict>
             <key>executable</key>
-            <string>vmware.exe</string>
+            <string>WhatsApp</string>
+            <key>os</key>
+            <integer>2</integer>
         </dict>
         <dict>
             <key>executable</key>
-            <string>vmware-vmx.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>DeskPins.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>TurboTop.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>PowerToys.AlwaysOnTop.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>discord.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>telegram.exe</string>
-        </dict>
-        <dict>
-            <key>executable</key>
-            <string>whatsapp.exe</string>
+            <string>Slack</string>
+            <key>os</key>
+            <integer>2</integer>
         </dict>
     </array>
 </dict>

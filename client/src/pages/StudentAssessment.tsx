@@ -130,20 +130,79 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
     ? selectedLanguages[activeQuestion.id] || allowedLanguagesList[0] || "JAVA"
     : "JAVA";
 
-  // Get starter or draft code for active question
+const DEFAULT_BOILERPLATES: Record<string, string> = {
+  JAVA: `import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        // Write your solution here
+    }
+}`,
+  C: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    // Write your solution here
+    return 0;
+}`,
+  CPP: `#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+int main() {
+    // Write your solution here
+    return 0;
+}`,
+};
+
+  // Retrieve draft code for a given question and language
+  const getDraftFor = (questionId: string, lang: string): string | undefined => {
+    // 1. Direct compound key: `${questionId}_${lang}`
+    if (drafts[`${questionId}_${lang}`] !== undefined) {
+      return drafts[`${questionId}_${lang}`];
+    }
+    // 2. Nested map: drafts[questionId][lang]
+    const val = drafts[questionId];
+    if (typeof val === "object" && val !== null && val[lang] !== undefined) {
+      return val[lang];
+    }
+    // 3. Fallback: raw string if initial language matches
+    if (typeof val === "string" && val.trim().length > 0) {
+      return val;
+    }
+    return undefined;
+  };
+
+  // Get starter or draft code for active question and selected language
   const getCurrentCode = () => {
     if (!activeQuestion) return "";
-    if (drafts[activeQuestion.id]) {
-      return drafts[activeQuestion.id];
+    
+    // 1. Check if user has an existing saved draft for this specific language
+    const savedDraft = getDraftFor(activeQuestion.id, currentLanguage);
+    if (savedDraft !== undefined && savedDraft.trim().length > 0) {
+      return savedDraft;
     }
-    // Check starter codes JSON
+
+    // 2. Check question starterCodes JSON for this specific language
     try {
       const templates = JSON.parse(activeQuestion.starterCodes || "{}");
-      if (templates[currentLanguage]) return templates[currentLanguage];
+      if (templates[currentLanguage] && templates[currentLanguage].trim().length > 0) {
+        return templates[currentLanguage];
+      }
     } catch {
       // ignore
     }
-    return activeQuestion.starterCode || "";
+
+    // 3. If question has a general starterCode and current language is JAVA
+    if (currentLanguage === "JAVA" && activeQuestion.starterCode && activeQuestion.starterCode.trim().length > 0) {
+      return activeQuestion.starterCode;
+    }
+
+    // 4. Default boilerplate for this language
+    return DEFAULT_BOILERPLATES[currentLanguage] || activeQuestion.starterCode || "";
   };
 
   const currentCode = getCurrentCode();
@@ -308,10 +367,18 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   // Handle Coding changes
   const handleCodeChange = (newCode: string) => {
     if (!activeQuestion) return;
-    setDrafts((prev) => ({
-      ...prev,
-      [activeQuestion.id]: newCode,
-    }));
+    setDrafts((prev: Record<string, any>) => {
+      const prevQ = prev[activeQuestion.id];
+      const prevObj = typeof prevQ === "object" && prevQ !== null ? (prevQ as Record<string, string>) : {};
+      return {
+        ...prev,
+        [`${activeQuestion.id}_${currentLanguage}`]: newCode,
+        [activeQuestion.id]: {
+          ...prevObj,
+          [currentLanguage]: newCode,
+        },
+      };
+    });
     setSaveStatus("Saving...");
     setTimeout(() => setSaveStatus("All changes saved"), 800);
   };
@@ -323,21 +390,10 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
       ...prev,
       [activeQuestion.id]: lang,
     }));
-
-    // If no draft exists yet, load the boilerplate for this language
-    if (!drafts[activeQuestion.id]) {
-      try {
-        const templates = JSON.parse(activeQuestion.starterCodes || "{}");
-        if (templates[lang]) {
-          setDrafts((prev) => ({
-            ...prev,
-            [activeQuestion.id]: templates[lang],
-          }));
-        }
-      } catch {
-        // ignore
-      }
-    }
+    setCodingResult(null);
+    setCustomResult(null);
+    setSaveStatus(`Switched to ${lang}`);
+    setTimeout(() => setSaveStatus("All changes saved"), 1000);
   };
 
   // Run Code against Sample Test Cases
