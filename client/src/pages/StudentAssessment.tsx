@@ -469,6 +469,15 @@ int main() {
     return `${h > 0 ? `${h}:` : ""}${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  const handleExitSeb = () => {
+    try {
+      window.close();
+    } catch {}
+    try {
+      window.location.href = `${window.location.origin}/quit`;
+    } catch {}
+  };
+
   // Submission Complete Screen
   if (isSubmitted) {
     return (
@@ -495,13 +504,7 @@ int main() {
           </div>
           <div className="flex flex-col gap-2.5">
             <button
-              onClick={() => {
-                try {
-                  window.location.href = "seb://quit";
-                } catch {
-                  window.close();
-                }
-              }}
+              onClick={handleExitSeb}
               className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-rose-950/50 text-xs"
             >
               <LogOut className="w-4 h-4" />
@@ -773,13 +776,7 @@ int main() {
                 Resume Exam
               </button>
               <button
-                onClick={() => {
-                  try {
-                    window.location.href = "seb://quit";
-                  } catch {
-                    window.close();
-                  }
-                }}
+                onClick={handleExitSeb}
                 className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/50 flex items-center gap-1.5"
               >
                 <LogOut className="w-3.5 h-3.5" />

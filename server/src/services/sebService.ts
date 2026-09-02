@@ -36,7 +36,13 @@ export function generateSebConfig(options: SebConfigOptions): string {
   const hashedQuitPassword = crypto
     .createHash("sha256")
     .update(quitPassword, "utf-8")
-    .digest("hex");
+  let quitUrl = "http://127.0.0.1:3000/quit";
+  try {
+    const parsed = new URL(startUrl);
+    quitUrl = `${parsed.protocol}//${parsed.host}/quit`;
+  } catch {
+    quitUrl = "http://127.0.0.1:3000/quit";
+  }
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -55,7 +61,9 @@ export function generateSebConfig(options: SebConfigOptions): string {
     <key>hashedQuitPassword</key>
     <string>${hashedQuitPassword}</string>
     <key>quitURL</key>
-    <string>seb://quit</string>
+    <string>${quitUrl}</string>
+    <key>quitURLConfirm</key>
+    <false/>
     
     <!-- Universal Fullscreen & Kiosk Policies -->
     <key>browserViewMode</key>

@@ -46,6 +46,52 @@ app.use("/api/student", studentRouter);
 app.use("/api/execution", executionRouter);
 app.use("/api/results", resultsRouter);
 
+// Safe Exam Browser Exit Handler Route (prevents ERR_NAME_NOT_RESOLVED)
+app.get(["/quit", "/api/student/quit", "/seb-quit"], (_req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Exiting Safe Exam Browser</title>
+        <style>
+          body {
+            background-color: #020617;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+          }
+          .card {
+            max-width: 480px;
+            text-align: center;
+            padding: 2.5rem;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          }
+          h2 { color: #34d399; margin-top: 0; font-size: 1.5rem; }
+          p { color: #94a3b8; font-size: 0.875rem; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>Assessment Complete!</h2>
+          <p>Your responses have been safely submitted. Safe Exam Browser will now exit.</p>
+        </div>
+        <script>
+          try { window.close(); } catch(e) {}
+        </script>
+      </body>
+    </html>
+  `);
+});
+
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
