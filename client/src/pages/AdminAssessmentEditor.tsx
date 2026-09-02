@@ -59,6 +59,25 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
   const [startTime, setStartTime] = useState<string>(() => formatIsoDate(initialAssessment?.startTime));
   const [endTime, setEndTime] = useState<string>(() => formatIsoDate(initialAssessment?.endTime));
 
+  const handleSyncEndTimeFromStart = () => {
+    if (!startTime) return;
+    try {
+      let baseDate: Date;
+      if (startTime.includes("T")) {
+        const [dPart, tPart] = startTime.split("T");
+        const [hStr, mStr] = tPart.split(":");
+        const [y, m, d] = dPart.split("-").map((n) => parseInt(n, 10));
+        baseDate = new Date(y, m - 1, d, parseInt(hStr, 10), parseInt(mStr, 10), 0);
+      } else {
+        baseDate = new Date(startTime);
+      }
+      const endD = new Date(baseDate.getTime() + (Number(durationMinutes) || 60) * 60000);
+      setEndTime(formatIsoDate(endD));
+    } catch {
+      // ignore
+    }
+  };
+
   const [shuffleQuestions, setShuffleQuestions] = useState<boolean>(
     initialAssessment?.shuffleQuestions ?? true
   );
@@ -484,6 +503,8 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
               value={endTime}
               onChange={setEndTime}
               helperText="After this deadline, the assessment closes and auto-submits."
+              onSyncWithStart={startTime ? handleSyncEndTimeFromStart : undefined}
+              syncButtonLabel={`+ ${durationMinutes || 60} Mins (Start + Duration)`}
             />
           </div>
         </div>
