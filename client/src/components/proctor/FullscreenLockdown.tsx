@@ -59,20 +59,6 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
       }
     }, 200);
 
-    // 3c. Mouse Cursor Boundary Tracker (detects cursor moving outside the exam canvas)
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (
-        e.clientY <= 0 ||
-        e.clientX <= 0 ||
-        e.clientX >= window.innerWidth ||
-        e.clientY >= window.innerHeight
-      ) {
-        if (!isLocked && !isCompleted) {
-          onViolation("CURSOR_EXIT", "Mouse cursor exited the exam viewport to an external display area or overlay.");
-        }
-      }
-    };
-
     // 4. Keyboard Shortcuts Interception & Copy/Paste/Screenshot Blocking
     const handleKeyDown = (e: KeyboardEvent) => {
       // Block PrintScreen key
@@ -172,7 +158,6 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
-    document.addEventListener("mouseleave", handleMouseLeave);
     window.addEventListener("keydown", handleKeyDown, true);
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("copy", handleClipboardEvent, true);
@@ -185,7 +170,6 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
-      document.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("copy", handleClipboardEvent, true);
