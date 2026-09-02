@@ -9,6 +9,8 @@ import {
   Trash2,
   Copy,
   Code,
+  Code2,
+  RotateCcw,
   CheckCircle,
   Eye,
   EyeOff,
@@ -22,6 +24,41 @@ import {
   Shuffle,
   Calendar
 } from "lucide-react";
+
+const DEFAULT_BOILERPLATES: Record<string, string> = {
+  JAVA: `import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        // Write your solution here
+        
+    }
+}
+`,
+  C: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    // Write your solution here
+    
+    return 0;
+}
+`,
+  CPP: `#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    // Write your solution here
+    
+    return 0;
+}
+`,
+};
 
 interface AdminAssessmentEditorProps {
   initialAssessment?: Assessment | null;
@@ -38,6 +75,7 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
   const [description, setDescription] = useState<string>(initialAssessment?.description || "");
   const [code, setCode] = useState<string>(initialAssessment?.code || "");
   const [durationMinutes, setDurationMinutes] = useState<number>(initialAssessment?.durationMinutes || 60);
+  const [starterCodeTabs, setStarterCodeTabs] = useState<Record<string, string>>({});
 
   // Parse ISO date string safely
   const formatIsoDate = (dateVal?: string | Date | null) => {
@@ -922,63 +960,250 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
 
                       {/* Coding Test Cases & Starter Boilerplates */}
                       {q.type === "CODING" && (
-                        <div className="space-y-3 pt-2 border-t border-slate-800">
+                        <div className="space-y-4 pt-3 border-t border-slate-800">
                           {/* Language Starter Code Boilerplates */}
-                          <div className="space-y-2">
-                            <span className="text-[11px] font-bold uppercase text-slate-300 block">
-                              Language Starter Boilerplates (Java, C, C++)
-                            </span>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                              <div>
-                                <span className="text-[10px] font-bold text-amber-400 block mb-1">Java Starter Code</span>
-                                <textarea
-                                  rows={4}
-                                  value={q.starterCodes?.JAVA || ""}
-                                  onChange={(e) => {
-                                    const copy = [...sections];
-                                    copy[secIdx].questions[qIdx].starterCodes = {
-                                      ...(copy[secIdx].questions[qIdx].starterCodes || {}),
-                                      JAVA: e.target.value,
-                                    };
-                                    copy[secIdx].questions[qIdx].starterCode = e.target.value;
-                                    setSections(copy);
-                                  }}
-                                  className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200"
-                                />
+                          <div className="space-y-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-800">
+                              <div className="flex items-center gap-2">
+                                <Code2 className="w-4 h-4 text-emerald-400" />
+                                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                                  Default Starter Code Boilerplates
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">
+                                  (Students see this template pre-filled when they switch languages)
+                                </span>
                               </div>
-                              <div>
-                                <span className="text-[10px] font-bold text-blue-400 block mb-1">C Starter Code</span>
-                                <textarea
-                                  rows={4}
-                                  value={q.starterCodes?.C || ""}
-                                  onChange={(e) => {
-                                    const copy = [...sections];
-                                    copy[secIdx].questions[qIdx].starterCodes = {
-                                      ...(copy[secIdx].questions[qIdx].starterCodes || {}),
-                                      C: e.target.value,
-                                    };
-                                    setSections(copy);
-                                  }}
-                                  className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200"
-                                />
-                              </div>
-                              <div>
-                                <span className="text-[10px] font-bold text-cyan-400 block mb-1">C++ Starter Code</span>
-                                <textarea
-                                  rows={4}
-                                  value={q.starterCodes?.CPP || ""}
-                                  onChange={(e) => {
-                                    const copy = [...sections];
-                                    copy[secIdx].questions[qIdx].starterCodes = {
-                                      ...(copy[secIdx].questions[qIdx].starterCodes || {}),
-                                      CPP: e.target.value,
-                                    };
-                                    setSections(copy);
-                                  }}
-                                  className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200"
-                                />
+
+                              {/* Language Selector Tabs */}
+                              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+                                {[
+                                  { id: "JAVA", label: "Java (JDK 21)", color: "text-amber-400 border-amber-500/40" },
+                                  { id: "C", label: "C (C11)", color: "text-blue-400 border-blue-500/40" },
+                                  { id: "CPP", label: "C++ (C++17)", color: "text-cyan-400 border-cyan-500/40" },
+                                  { id: "SPLIT", label: "Split View (All 3)", color: "text-emerald-400 border-emerald-500/40" },
+                                ].map((tab) => {
+                                  const currentTab = starterCodeTabs[q.id || `${secIdx}-${qIdx}`] || "JAVA";
+                                  const isActive = currentTab === tab.id;
+                                  return (
+                                    <button
+                                      key={tab.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setStarterCodeTabs((prev) => ({
+                                          ...prev,
+                                          [q.id || `${secIdx}-${qIdx}`]: tab.id,
+                                        }));
+                                      }}
+                                      className={`px-3 py-1 rounded-lg font-semibold text-[11px] transition ${
+                                        isActive
+                                          ? `bg-slate-800 text-white border ${tab.color} shadow-sm`
+                                          : "text-slate-400 hover:text-slate-200"
+                                      }`}
+                                    >
+                                      {tab.label}
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </div>
+
+                            {/* Active Tab View */}
+                            {(() => {
+                              const qKey = q.id || `${secIdx}-${qIdx}`;
+                              const activeTab = starterCodeTabs[qKey] || "JAVA";
+
+                              if (activeTab === "SPLIT") {
+                                return (
+                                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                                    {/* Java */}
+                                    <div className="space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1">
+                                          <span>☕ Java Starter Code</span>
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const copy = [...sections];
+                                            copy[secIdx].questions[qIdx].starterCodes = {
+                                              ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                              JAVA: DEFAULT_BOILERPLATES.JAVA,
+                                            };
+                                            copy[secIdx].questions[qIdx].starterCode = DEFAULT_BOILERPLATES.JAVA;
+                                            setSections(copy);
+                                          }}
+                                          className="text-[10px] text-slate-500 hover:text-amber-300 flex items-center gap-1"
+                                          title="Reset to clean Java template"
+                                        >
+                                          <RotateCcw className="w-2.5 h-2.5" />
+                                          <span>Reset</span>
+                                        </button>
+                                      </div>
+                                      <textarea
+                                        rows={12}
+                                        value={q.starterCodes?.JAVA || ""}
+                                        onChange={(e) => {
+                                          const copy = [...sections];
+                                          copy[secIdx].questions[qIdx].starterCodes = {
+                                            ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                            JAVA: e.target.value,
+                                          };
+                                          copy[secIdx].questions[qIdx].starterCode = e.target.value;
+                                          setSections(copy);
+                                        }}
+                                        placeholder="Enter default Java starter code for students..."
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-slate-100 leading-relaxed focus:outline-none focus:border-amber-500 resize-y min-h-[240px]"
+                                        spellCheck={false}
+                                      />
+                                    </div>
+
+                                    {/* C */}
+                                    <div className="space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-blue-400 flex items-center gap-1">
+                                          <span>⚙️ C Starter Code</span>
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const copy = [...sections];
+                                            copy[secIdx].questions[qIdx].starterCodes = {
+                                              ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                              C: DEFAULT_BOILERPLATES.C,
+                                            };
+                                            setSections(copy);
+                                          }}
+                                          className="text-[10px] text-slate-500 hover:text-blue-300 flex items-center gap-1"
+                                          title="Reset to clean C template"
+                                        >
+                                          <RotateCcw className="w-2.5 h-2.5" />
+                                          <span>Reset</span>
+                                        </button>
+                                      </div>
+                                      <textarea
+                                        rows={12}
+                                        value={q.starterCodes?.C || ""}
+                                        onChange={(e) => {
+                                          const copy = [...sections];
+                                          copy[secIdx].questions[qIdx].starterCodes = {
+                                            ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                            C: e.target.value,
+                                          };
+                                          setSections(copy);
+                                        }}
+                                        placeholder="Enter default C starter code for students..."
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-slate-100 leading-relaxed focus:outline-none focus:border-blue-500 resize-y min-h-[240px]"
+                                        spellCheck={false}
+                                      />
+                                    </div>
+
+                                    {/* C++ */}
+                                    <div className="space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-cyan-400 flex items-center gap-1">
+                                          <span>⚡ C++ Starter Code</span>
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const copy = [...sections];
+                                            copy[secIdx].questions[qIdx].starterCodes = {
+                                              ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                              CPP: DEFAULT_BOILERPLATES.CPP,
+                                            };
+                                            setSections(copy);
+                                          }}
+                                          className="text-[10px] text-slate-500 hover:text-cyan-300 flex items-center gap-1"
+                                          title="Reset to clean C++ template"
+                                        >
+                                          <RotateCcw className="w-2.5 h-2.5" />
+                                          <span>Reset</span>
+                                        </button>
+                                      </div>
+                                      <textarea
+                                        rows={12}
+                                        value={q.starterCodes?.CPP || ""}
+                                        onChange={(e) => {
+                                          const copy = [...sections];
+                                          copy[secIdx].questions[qIdx].starterCodes = {
+                                            ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                            CPP: e.target.value,
+                                          };
+                                          setSections(copy);
+                                        }}
+                                        placeholder="Enter default C++ starter code for students..."
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-slate-100 leading-relaxed focus:outline-none focus:border-cyan-500 resize-y min-h-[240px]"
+                                        spellCheck={false}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              // Single Tab Full-Width View (Java / C / C++)
+                              const langKey = activeTab as "JAVA" | "C" | "CPP";
+                              const langLabels = {
+                                JAVA: { title: "☕ Java (OpenJDK 21 LTS)", color: "text-amber-400", border: "focus:border-amber-500" },
+                                C: { title: "⚙️ C Language (C11 GCC)", color: "text-blue-400", border: "focus:border-blue-500" },
+                                CPP: { title: "⚡ C++ (C++17 G++)", color: "text-cyan-400", border: "focus:border-cyan-500" },
+                              }[langKey];
+
+                              const currentVal = q.starterCodes?.[langKey] || "";
+                              const lineCount = (currentVal.match(/\n/g) || []).length + 1;
+
+                              return (
+                                <div className="space-y-2 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`font-bold ${langLabels.color}`}>
+                                        {langLabels.title}
+                                      </span>
+                                      <span className="text-[10px] text-slate-500 font-mono">
+                                        ({lineCount} lines, {currentVal.length} chars)
+                                      </span>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const copy = [...sections];
+                                        copy[secIdx].questions[qIdx].starterCodes = {
+                                          ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                          [langKey]: DEFAULT_BOILERPLATES[langKey],
+                                        };
+                                        if (langKey === "JAVA") {
+                                          copy[secIdx].questions[qIdx].starterCode = DEFAULT_BOILERPLATES.JAVA;
+                                        }
+                                        setSections(copy);
+                                      }}
+                                      className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition"
+                                    >
+                                      <RotateCcw className="w-3 h-3 text-slate-400" />
+                                      <span>Reset to Clean Template</span>
+                                    </button>
+                                  </div>
+
+                                  <textarea
+                                    rows={14}
+                                    value={currentVal}
+                                    onChange={(e) => {
+                                      const copy = [...sections];
+                                      copy[secIdx].questions[qIdx].starterCodes = {
+                                        ...(copy[secIdx].questions[qIdx].starterCodes || {}),
+                                        [langKey]: e.target.value,
+                                      };
+                                      if (langKey === "JAVA") {
+                                        copy[secIdx].questions[qIdx].starterCode = e.target.value;
+                                      }
+                                      setSections(copy);
+                                    }}
+                                    placeholder={`Enter default starter code template for ${langKey}...`}
+                                    className={`w-full p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-xs text-slate-100 leading-relaxed focus:outline-none ${langLabels.border} resize-y min-h-[280px] shadow-inner`}
+                                    spellCheck={false}
+                                  />
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
