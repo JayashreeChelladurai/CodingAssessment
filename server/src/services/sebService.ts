@@ -36,6 +36,8 @@ export function generateSebConfig(options: SebConfigOptions): string {
   const hashedQuitPassword = crypto
     .createHash("sha256")
     .update(quitPassword, "utf-8")
+    .digest("hex");
+
   let quitUrl = "http://127.0.0.1:3000/quit";
   try {
     const parsed = new URL(startUrl);
