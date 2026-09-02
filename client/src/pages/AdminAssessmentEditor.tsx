@@ -7,6 +7,7 @@ import {
   Save,
   Plus,
   Trash2,
+  Copy,
   Code,
   CheckCircle,
   Eye,
@@ -280,6 +281,34 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
     });
   };
 
+  const handleCloneSection = (secIdx: number) => {
+    setSections((prev) => {
+      const copy = [...prev];
+      const targetSec = copy[secIdx];
+      const clonedSec = {
+        ...JSON.parse(JSON.stringify(targetSec)),
+        id: `sec-${Date.now()}`,
+        title: `${targetSec.title} (Copy)`,
+        order: copy.length,
+      };
+      return [...copy, clonedSec];
+    });
+  };
+
+  const handleCloneQuestion = (secIdx: number, qIdx: number) => {
+    setSections((prev) => {
+      const copy = [...prev];
+      const targetQ = copy[secIdx].questions[qIdx];
+      const clonedQ = {
+        ...JSON.parse(JSON.stringify(targetQ)),
+        id: `q-${Date.now()}`,
+        title: `${targetQ.title} (Copy)`,
+      };
+      copy[secIdx].questions.splice(qIdx + 1, 0, clonedQ);
+      return copy;
+    });
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !code) {
@@ -546,6 +575,15 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                     <span>+ Coding Problem</span>
                   </button>
 
+                  <button
+                    type="button"
+                    onClick={() => handleCloneSection(secIdx)}
+                    className="p-2 text-slate-500 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition"
+                    title="Duplicate / Clone Section"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+
                   {sections.length > 1 && (
                     <button
                       type="button"
@@ -578,14 +616,24 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                           <span className="font-bold text-xs text-white">Q{qIdx + 1}: {q.title}</span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveQuestion(secIdx, qIdx)}
-                          className="text-slate-500 hover:text-rose-400 transition"
-                          title="Remove Question"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleCloneQuestion(secIdx, qIdx)}
+                            className="p-1.5 text-slate-500 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition"
+                            title="Duplicate / Clone Question"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveQuestion(secIdx, qIdx)}
+                            className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition"
+                            title="Remove Question"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -604,7 +652,7 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Marks</label>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Marks Awarded</label>
                           <input
                             type="number"
                             value={q.marks}
@@ -623,6 +671,7 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                             <input
                               type="number"
                               step="0.25"
+                              min="0"
                               value={q.negativeMarks || 0}
                               onChange={(e) => {
                                 const copy = [...sections];
@@ -650,6 +699,64 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                         )}
                       </div>
 
+                      {/* Secondary Config Grid for MCQ / Coding */}
+                      {q.type === "MCQ" ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">Answer Selection Mode</label>
+                            <select
+                              value={q.mcqType || "SINGLE"}
+                              onChange={(e) => {
+                                const copy = [...sections];
+                                copy[secIdx].questions[qIdx].mcqType = e.target.value;
+                                if (e.target.value === "SINGLE" && (copy[secIdx].questions[qIdx].correctAnswers || []).length > 1) {
+                                  copy[secIdx].questions[qIdx].correctAnswers = [copy[secIdx].questions[qIdx].correctAnswers[0]];
+                                }
+                                setSections(copy);
+                              }}
+                              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-amber-400 font-bold"
+                            >
+                              <option value="SINGLE">Single Choice (Radio Button)</option>
+                              <option value="MULTIPLE">Multiple Choice (Checkboxes)</option>
+                            </select>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">Time Limit (Seconds)</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={15}
+                              value={q.timeLimitSeconds || 3}
+                              onChange={(e) => {
+                                const copy = [...sections];
+                                copy[secIdx].questions[qIdx].timeLimitSeconds = Number(e.target.value);
+                                setSections(copy);
+                              }}
+                              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">Memory Limit (MB)</label>
+                            <input
+                              type="number"
+                              min={64}
+                              max={1024}
+                              step={64}
+                              value={q.memoryLimitMb || 256}
+                              onChange={(e) => {
+                                const copy = [...sections];
+                                copy[secIdx].questions[qIdx].memoryLimitMb = Number(e.target.value);
+                                setSections(copy);
+                              }}
+                              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white font-mono"
+                            />
+                          </div>
+                        </div>
+                      )}
+
                       <div>
                         <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                           Question Description & Code Snippets (Markdown supported)
@@ -669,25 +776,62 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                       {/* MCQ Options Config */}
                       {q.type === "MCQ" && (
                         <div className="space-y-3 pt-2 border-t border-slate-800">
-                          <span className="text-[11px] font-bold uppercase text-amber-400 block">
-                            MCQ Options (Check radio button for the correct option):
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold uppercase text-amber-400 block">
+                              MCQ Options ({q.mcqType === "MULTIPLE" ? "Check all correct answers" : "Select the single correct answer"}):
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const copy = [...sections];
+                                const curOpts = copy[secIdx].questions[qIdx].options || [];
+                                const nextId = `opt-${Date.now()}-${curOpts.length + 1}`;
+                                copy[secIdx].questions[qIdx].options = [
+                                  ...curOpts,
+                                  { id: nextId, text: `Option ${String.fromCharCode(65 + curOpts.length)}` }
+                                ];
+                                setSections(copy);
+                              }}
+                              className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
+                            >
+                              + Add Option
+                            </button>
+                          </div>
+
                           <div className="space-y-2">
                             {(q.options || []).map((opt: any, optIdx: number) => {
                               const isCorrect = (q.correctAnswers || []).includes(opt.id);
                               return (
-                                <div key={optIdx} className="flex items-center gap-2">
-                                  <input
-                                    type="radio"
-                                    name={`correct-${secIdx}-${qIdx}`}
-                                    checked={isCorrect}
-                                    onChange={() => {
-                                      const copy = [...sections];
-                                      copy[secIdx].questions[qIdx].correctAnswers = [opt.id];
-                                      setSections(copy);
-                                    }}
-                                    className="w-4 h-4 text-emerald-600 cursor-pointer"
-                                  />
+                                <div key={opt.id || optIdx} className="flex items-center gap-2">
+                                  {q.mcqType === "MULTIPLE" ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={isCorrect}
+                                      onChange={(e) => {
+                                        const copy = [...sections];
+                                        const cur = copy[secIdx].questions[qIdx].correctAnswers || [];
+                                        if (e.target.checked) {
+                                          copy[secIdx].questions[qIdx].correctAnswers = [...cur, opt.id];
+                                        } else {
+                                          copy[secIdx].questions[qIdx].correctAnswers = cur.filter((id: string) => id !== opt.id);
+                                        }
+                                        setSections(copy);
+                                      }}
+                                      className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                                    />
+                                  ) : (
+                                    <input
+                                      type="radio"
+                                      name={`correct-${secIdx}-${qIdx}`}
+                                      checked={isCorrect}
+                                      onChange={() => {
+                                        const copy = [...sections];
+                                        copy[secIdx].questions[qIdx].correctAnswers = [opt.id];
+                                        setSections(copy);
+                                      }}
+                                      className="w-4 h-4 text-emerald-600 cursor-pointer"
+                                    />
+                                  )}
                                   <span className="font-bold font-mono text-xs w-5 text-slate-400">
                                     {String.fromCharCode(65 + optIdx)}
                                   </span>
@@ -701,6 +845,21 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                                     }}
                                     className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white"
                                   />
+                                  {(q.options || []).length > 2 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const copy = [...sections];
+                                        copy[secIdx].questions[qIdx].options = copy[secIdx].questions[qIdx].options.filter((_: any, i: number) => i !== optIdx);
+                                        copy[secIdx].questions[qIdx].correctAnswers = (copy[secIdx].questions[qIdx].correctAnswers || []).filter((id: string) => id !== opt.id);
+                                        setSections(copy);
+                                      }}
+                                      className="p-1 text-slate-500 hover:text-rose-400"
+                                      title="Remove Option"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               );
                             })}
@@ -834,6 +993,22 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
                                       setSections(copy);
                                     }}
                                     className="w-full p-1 bg-slate-950 border border-slate-800 rounded font-mono text-xs text-white"
+                                  />
+                                </div>
+
+                                <div className="w-16">
+                                  <span className="block text-[10px] text-slate-500 uppercase text-center">Weight</span>
+                                  <input
+                                    type="number"
+                                    step="0.5"
+                                    min="0.5"
+                                    value={tc.weight || 1}
+                                    onChange={(e) => {
+                                      const copy = [...sections];
+                                      copy[secIdx].questions[qIdx].testCases[tcIdx].weight = Number(e.target.value);
+                                      setSections(copy);
+                                    }}
+                                    className="w-full p-1 bg-slate-950 border border-slate-800 rounded font-mono text-xs text-center text-emerald-400 font-bold"
                                   />
                                 </div>
 

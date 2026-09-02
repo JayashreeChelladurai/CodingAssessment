@@ -299,6 +299,80 @@ assessmentRouter.delete("/:id", async (req, res) => {
   }
 });
 
+// 8. Clone Assessment
+assessmentRouter.post("/:id/clone", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const original = await prisma.assessment.findUnique({
+      where: { id },
+      include: {
+        sections: {
+          include: { questions: { include: { testCases: true } } },
+        },
+        questions: { include: { testCases: true } },
+      },
+    });
+
+    if (!original) {
+      return res.status(404).json({ error: "Original assessment not found" });
+    }
+
+    const newCode = `${original.code}-COPY-${Date.now().toString().slice(-4)}`;
+    const cloned = await prisma.assessment.create({
+      data: {
+        title: `${original.title} (Copy)`,
+        description: original.description,
+        code: newCode,
+        durationMinutes: original.durationMinutes,
+        startTime: original.startTime,
+        endTime: original.endTime,
+        shuffleQuestions: original.shuffleQuestions,
+        requireSeb: original.requireSeb,
+        sebQuitPassword: original.sebQuitPassword,
+        isReviewUnlocked: false,
+      },
+    });
+
+    if (original.sections && original.sections.length > 0) {
+      for (let sIdx = 0; sIdx < original.sections.length; sIdx++) {
+        const sec = original.sections[sIdx];
+        const newSec = await prisma.section.create({
+          data: {
+            assessmentId: cloned.id,
+            title: sec.title,
+            description: sec.description,
+            order: sIdx,
+          },
+        });
+
+        for (let qIdx = 0; qIdx < sec.questions.length; qIdx++) {
+          const q = sec.questions[qIdx];
+          await createQuestionRecord(cloned.id, newSec.id, q, qIdx);
+        }
+      }
+    } else if (original.questions && original.questions.length > 0) {
+      for (let qIdx = 0; qIdx < original.questions.length; qIdx++) {
+        const q = original.questions[qIdx];
+        await createQuestionRecord(cloned.id, null, q, qIdx);
+      }
+    }
+
+    const fullCloned = await prisma.assessment.findUnique({
+      where: { id: cloned.id },
+      include: {
+        sections: {
+          include: { questions: { include: { testCases: true } } },
+        },
+        questions: { include: { testCases: true } },
+      },
+    });
+
+    res.status(201).json(fullCloned);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 async function createQuestionRecord(assessmentId: string, sectionId: string | null, q: any, qIdx: number) {
   const isMcq = q.type === "MCQ";
   const optionsStr = typeof q.options === "string" ? q.options : JSON.stringify(q.options || []);

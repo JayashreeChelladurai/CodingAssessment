@@ -76,6 +76,17 @@ export const api = {
     return res.json();
   },
 
+  cloneAssessment: async (id: string) => {
+    const res = await fetch(`${API_BASE}/assessments/${id}/clone`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to clone assessment" }));
+      throw new Error(err.error || "Failed to clone assessment");
+    }
+    return res.json();
+  },
+
   // Student routes
   getAssessmentInfo: async (code: string) => {
     const res = await fetch(`${API_BASE}/student/info/${encodeURIComponent(code)}`);

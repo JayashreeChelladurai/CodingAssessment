@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   Edit,
   Trash2,
+  Copy,
   Users,
   Clock,
   Code2,
@@ -47,6 +48,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } catch (err) {
       console.error("Failed to load assessments:", err);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClone = async (id: string) => {
+    try {
+      setLoading(true);
+      const cloned = await api.cloneAssessment(id);
+      await loadAssessments();
+      alert(`Assessment cloned successfully as '${cloned.code}'!`);
+    } catch (err: any) {
+      alert(err.message || "Failed to clone assessment");
       setLoading(false);
     }
   };
@@ -196,6 +209,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             title="Edit Assessment"
                           >
                             <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleClone(ass.id)}
+                            className="p-1.5 text-slate-400 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition"
+                            title="Duplicate / Clone Assessment"
+                          >
+                            <Copy className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(ass.id, ass.code)}

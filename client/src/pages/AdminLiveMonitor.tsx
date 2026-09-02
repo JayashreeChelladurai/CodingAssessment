@@ -12,7 +12,8 @@ import {
   User,
   Hash,
   Sparkles,
-  Plus
+  Plus,
+  RefreshCw
 } from "lucide-react";
 
 interface AdminLiveMonitorProps {
@@ -119,6 +120,17 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              const socket = getSocket();
+              socket.emit("admin:join", assessment.id);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700"
+            title="Refresh Candidate List"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Refresh</span>
+          </button>
           <button
             onClick={onNavigateToGradebook}
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-md shadow-emerald-950/50"
