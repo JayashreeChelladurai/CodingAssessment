@@ -8,7 +8,7 @@ interface QuestionPaletteProps {
   currentQuestionIdx: number;
   onSelectQuestion: (index: number) => void;
   mcqResponses: Record<string, string[]>;
-  drafts: Record<string, string>;
+  drafts: Record<string, any>;
   flaggedQuestions: string[];
   onToggleFlagQuestion: (questionId: string) => void;
   onClearResponse: (questionId: string) => void;
@@ -32,7 +32,7 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
   const currentQuestion = questions[currentQuestionIdx];
   const isFlagged = currentQuestion ? flaggedQuestions.includes(currentQuestion.id) : false;
 
-  // Compute status for each question
+  // Compute status for each question safely
   const getQuestionStatus = (q: Question) => {
     const isFl = flaggedQuestions.includes(q.id);
     let isAnswered = false;
@@ -40,7 +40,16 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
     if (q.type === "MCQ") {
       isAnswered = (mcqResponses[q.id]?.length || 0) > 0;
     } else {
-      isAnswered = !!drafts[q.id] && drafts[q.id].trim().length > 0;
+      const d = drafts ? drafts[q.id] : undefined;
+      if (typeof d === "string") {
+        isAnswered = d.trim().length > 0;
+      } else if (typeof d === "object" && d !== null) {
+        isAnswered = Object.values(d).some((v) => typeof v === "string" && v.trim().length > 0);
+      } else if (drafts && typeof drafts === "object") {
+        isAnswered = Object.keys(drafts).some(
+          (k) => k.startsWith(`${q.id}_`) && typeof drafts[k] === "string" && drafts[k].trim().length > 0
+        );
+      }
     }
 
     if (isFl && isAnswered) return "ANSWERED_AND_MARKED";

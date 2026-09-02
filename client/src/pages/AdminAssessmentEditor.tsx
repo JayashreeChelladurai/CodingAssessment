@@ -346,10 +346,25 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
     }
   };
 
+  const totalQuestions = sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0);
+  const totalMcqs = sections.reduce(
+    (acc, s) => acc + (s.questions?.filter((q: any) => q.type === "MCQ")?.length || 0),
+    0
+  );
+  const totalCoding = sections.reduce(
+    (acc, s) => acc + (s.questions?.filter((q: any) => q.type === "CODING")?.length || 0),
+    0
+  );
+  const totalMarks = sections.reduce(
+    (acc, s) =>
+      acc + (s.questions?.reduce((qAcc: number, q: any) => qAcc + (Number(q.marks) || 0), 0) || 0),
+    0
+  );
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Header */}
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+      {/* Top Header - Sticky */}
+      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-6 py-3.5 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
@@ -1048,6 +1063,48 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Sticky Floating Save Bar */}
+        <div className="sticky bottom-6 z-40 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <span className="text-slate-400 font-semibold uppercase text-[11px] tracking-wider">Exam Overview:</span>
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+              <span className="font-bold text-white font-mono">{sections.length}</span>
+              <span className="text-slate-500">Sections</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+              <span className="font-bold text-amber-400 font-mono">{totalMcqs}</span>
+              <span className="text-slate-500">MCQs</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+              <span className="font-bold text-emerald-400 font-mono">{totalCoding}</span>
+              <span className="text-slate-500">Coding</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+              <span className="font-bold text-blue-400 font-mono">{totalMarks}</span>
+              <span className="text-slate-500">Total Marks</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold px-6 py-2 rounded-xl text-xs transition shadow-lg shadow-emerald-950/50"
+            >
+              <Save className="w-4 h-4" />
+              <span>{saving ? "Saving Assessment..." : "Save Assessment"}</span>
+            </button>
+          </div>
         </div>
       </main>
     </div>
