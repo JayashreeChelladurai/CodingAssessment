@@ -3,7 +3,6 @@ import http from "http";
 import cors from "cors";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
 import { Server as SocketIOServer } from "socket.io";
 import { setupSocketService } from "./services/socketService.js";
 import { assessmentRouter } from "./routes/assessment.js";
@@ -12,8 +11,6 @@ import { executionRouter } from "./routes/execution.js";
 import { resultsRouter } from "./routes/results.js";
 import { authRouter } from "./routes/auth.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const clientDist = path.resolve(__dirname, "../../client/dist");
 
 const app = express();

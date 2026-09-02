@@ -96,10 +96,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }
             </button>
           </form>
 
-          <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 flex items-center justify-between">
-            <span className="text-slate-500">Default Lab Passcode:</span>
-            <span className="font-mono text-emerald-400 font-bold">admin123</span>
-          </div>
         </div>
       </main>
 

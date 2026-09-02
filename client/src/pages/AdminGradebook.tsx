@@ -60,7 +60,21 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
   };
 
   const handleExportCSV = () => {
-    window.open(api.getExportUrl(assessment.id), "_blank");
+    api
+      .exportResultsCsv(assessment.id)
+      .then(async (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `gradebook-${assessment.code || assessment.id}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      })
+      .catch((err) => {
+        alert(err.message || "Failed to download CSV");
+      });
   };
 
   return (

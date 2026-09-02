@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { isSebRequest } from "../services/sebService.js";
+import {
+  issueAttemptSessionToken,
+  requireAttemptSession,
+  AuthenticatedRequest,
+} from "../services/auth.js";
 
 export const studentRouter = Router();
 
@@ -196,9 +201,11 @@ studentRouter.post("/start", async (req, res) => {
       testCases: q.testCases,
     }));
 
-    res.json({
-      attempt,
-      assessment: {
+      const attemptToken = issueAttemptSessionToken(attempt.id, assessment.id, cleanRollNo);
+      res.json({
+        attempt,
+        attemptToken,
+        assessment: {
         id: assessment.id,
         title: assessment.title,
         description: assessment.description,
@@ -214,9 +221,12 @@ studentRouter.post("/start", async (req, res) => {
 });
 
 // 3. Save Drafts (Coding drafts, MCQ responses, flagged review questions)
-studentRouter.post("/save-draft", async (req, res) => {
+studentRouter.post("/save-draft", requireAttemptSession, async (req: AuthenticatedRequest, res) => {
   try {
     const { attemptId, drafts, mcqResponses, flaggedQuestions, remainingSeconds } = req.body;
+    if (req.attemptSession?.attemptId !== attemptId) {
+      return res.status(401).json({ error: "Invalid attempt session." });
+    }
 
     if (!attemptId) {
       return res.status(400).json({ error: "attemptId is required" });
@@ -239,6 +249,14 @@ studentRouter.post("/save-draft", async (req, res) => {
       updateData.remainingSeconds = Math.max(0, Number(remainingSeconds));
     }
 
+    const attempt = await prisma.studentAttempt.findUnique({ where: { id: attemptId } });
+    if (!attempt) {
+      return res.status(404).json({ error: "Attempt not found." });
+    }
+    if (attempt.status === "SUBMITTED" || attempt.status === "TIME_EXPIRED") {
+      return res.status(409).json({ error: "Attempt is already closed." });
+    }
+
     const updated = await prisma.studentAttempt.update({
       where: { id: attemptId },
       data: updateData,
@@ -251,9 +269,12 @@ studentRouter.post("/save-draft", async (req, res) => {
 });
 
 // 4. Submit MCQ Answer
-studentRouter.post("/submit-mcq", async (req, res) => {
+studentRouter.post("/submit-mcq", requireAttemptSession, async (req: AuthenticatedRequest, res) => {
   try {
     const { attemptId, questionId, selectedOptions } = req.body;
+    if (req.attemptSession?.attemptId !== attemptId) {
+      return res.status(401).json({ error: "Invalid attempt session." });
+    }
 
     if (!attemptId || !questionId) {
       return res.status(400).json({ error: "attemptId and questionId are required" });
@@ -262,6 +283,17 @@ studentRouter.post("/submit-mcq", async (req, res) => {
     const question = await prisma.question.findUnique({ where: { id: questionId } });
     if (!question || question.type !== "MCQ") {
       return res.status(404).json({ error: "MCQ Question not found" });
+    }
+
+    const attempt = await prisma.studentAttempt.findUnique({
+      where: { id: attemptId },
+      include: { assessment: { select: { id: true } } },
+    });
+    if (!attempt || question.assessmentId !== attempt.assessmentId) {
+      return res.status(404).json({ error: "Attempt not found." });
+    }
+    if (attempt.status === "SUBMITTED" || attempt.status === "TIME_EXPIRED") {
+      return res.status(409).json({ error: "Attempt is already closed." });
     }
 
     let correctAnswers: string[] = [];
@@ -313,11 +345,11 @@ studentRouter.post("/submit-mcq", async (req, res) => {
     }
 
     // Save to mcqResponses in attempt
-    const attempt = await prisma.studentAttempt.findUnique({ where: { id: attemptId } });
-    if (attempt) {
+    const attemptState = await prisma.studentAttempt.findUnique({ where: { id: attemptId } });
+    if (attemptState) {
       let currentMcq: Record<string, string[]> = {};
       try {
-        currentMcq = JSON.parse(attempt.mcqResponses || "{}");
+        currentMcq = JSON.parse(attemptState.mcqResponses || "{}");
       } catch {
         currentMcq = {};
       }
@@ -336,11 +368,22 @@ studentRouter.post("/submit-mcq", async (req, res) => {
 });
 
 // 5. Finish / Final Submit Assessment
-studentRouter.post("/finish", async (req, res) => {
+studentRouter.post("/finish", requireAttemptSession, async (req: AuthenticatedRequest, res) => {
   try {
     const { attemptId } = req.body;
+    if (req.attemptSession?.attemptId !== attemptId) {
+      return res.status(401).json({ error: "Invalid attempt session." });
+    }
 
-    const attempt = await prisma.studentAttempt.update({
+    const attempt = await prisma.studentAttempt.findUnique({ where: { id: attemptId } });
+    if (!attempt) {
+      return res.status(404).json({ error: "Attempt not found." });
+    }
+    if (attempt.status === "SUBMITTED") {
+      return res.status(409).json({ error: "Attempt already submitted." });
+    }
+
+    const updatedAttempt = await prisma.studentAttempt.update({
       where: { id: attemptId },
       data: {
         status: "SUBMITTED",
@@ -350,7 +393,7 @@ studentRouter.post("/finish", async (req, res) => {
       include: { submissions: true },
     });
 
-    res.json({ success: true, attempt });
+    res.json({ success: true, attempt: updatedAttempt });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -410,8 +453,11 @@ studentRouter.get("/review/:code/:rollNo", async (req, res) => {
       return res.status(404).json({ error: `No test record found for Roll Number '${cleanRollNo}' in this assessment.` });
     }
 
+    const reviewAttemptToken = issueAttemptSessionToken(attempt.id, assessment.id, attempt.rollNo);
+
     res.json({
       isUnlocked: true,
+      attemptToken: reviewAttemptToken,
       assessment: {
         id: assessment.id,
         title: assessment.title,

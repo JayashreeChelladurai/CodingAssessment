@@ -1,5 +1,41 @@
 const API_BASE = "/api";
 
+const ADMIN_TOKEN_KEY = "prof_admin_token";
+const ATTEMPT_TOKEN_KEY = "student_attempt_token";
+
+function safeStorageGet(key: string): string | null {
+  try {
+    return window?.localStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function adminHeaders(extra: Record<string, string> = {}): HeadersInit {
+  const headers: Record<string, string> = {
+    ...extra,
+    "Content-Type": "application/json",
+  };
+  const token = safeStorageGet(ADMIN_TOKEN_KEY);
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+    headers["x-admin-token"] = token;
+  }
+  return headers;
+}
+
+function studentHeaders(attemptToken?: string, extra: Record<string, string> = {}): HeadersInit {
+  const headers: Record<string, string> = {
+    ...extra,
+    "Content-Type": "application/json",
+  };
+  const token = attemptToken || safeStorageGet(ATTEMPT_TOKEN_KEY);
+  if (token) {
+    headers["x-attempt-token"] = token;
+  }
+  return headers;
+}
+
 export const api = {
   // Admin Auth
   adminLogin: async (passcode: string, username?: string) => {
@@ -17,13 +53,17 @@ export const api = {
 
   // Assessment routes
   getAssessments: async () => {
-    const res = await fetch(`${API_BASE}/assessments`);
+    const res = await fetch(`${API_BASE}/assessments`, {
+      headers: adminHeaders(),
+    });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
 
   getAssessmentById: async (id: string) => {
-    const res = await fetch(`${API_BASE}/assessments/${id}`);
+    const res = await fetch(`${API_BASE}/assessments/${id}`, {
+      headers: adminHeaders(),
+    });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
@@ -31,7 +71,7 @@ export const api = {
   createAssessment: async (data: any) => {
     const res = await fetch(`${API_BASE}/assessments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: adminHeaders(),
       body: JSON.stringify(data),
     });
     if (!res.ok) {
@@ -44,7 +84,7 @@ export const api = {
   updateAssessment: async (id: string, data: any) => {
     const res = await fetch(`${API_BASE}/assessments/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: adminHeaders(),
       body: JSON.stringify(data),
     });
     if (!res.ok) {
@@ -61,7 +101,7 @@ export const api = {
   toggleReviewMode: async (id: string, isReviewUnlocked: boolean, reviewUnlockTime?: string | null) => {
     const res = await fetch(`${API_BASE}/assessments/${id}/review-mode`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: adminHeaders(),
       body: JSON.stringify({ isReviewUnlocked, reviewUnlockTime }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -71,6 +111,7 @@ export const api = {
   deleteAssessment: async (id: string) => {
     const res = await fetch(`${API_BASE}/assessments/${id}`, {
       method: "DELETE",
+      headers: adminHeaders(),
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
@@ -79,6 +120,7 @@ export const api = {
   cloneAssessment: async (id: string) => {
     const res = await fetch(`${API_BASE}/assessments/${id}/clone`, {
       method: "POST",
+      headers: adminHeaders(),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "Failed to clone assessment" }));
@@ -110,19 +152,34 @@ export const api = {
     return res.json();
   },
 
-  saveDraft: async (attemptId: string, drafts?: any, mcqResponses?: any, flaggedQuestions?: any, remainingSeconds?: number) => {
+  setAttemptToken: (attemptToken: string | null) => {
+    if (attemptToken) {
+      localStorage.setItem(ATTEMPT_TOKEN_KEY, attemptToken);
+    } else {
+      localStorage.removeItem(ATTEMPT_TOKEN_KEY);
+    }
+  },
+
+  saveDraft: async (
+    attemptId: string,
+    attemptToken: string | undefined,
+    drafts?: any,
+    mcqResponses?: any,
+    flaggedQuestions?: any,
+    remainingSeconds?: number
+  ) => {
     const res = await fetch(`${API_BASE}/student/save-draft`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: studentHeaders(attemptToken),
       body: JSON.stringify({ attemptId, drafts, mcqResponses, flaggedQuestions, remainingSeconds }),
     });
     return res.json();
   },
 
-  submitMcq: async (attemptId: string, questionId: string, selectedOptions: string[]) => {
+  submitMcq: async (attemptId: string, questionId: string, selectedOptions: string[], attemptToken?: string) => {
     const res = await fetch(`${API_BASE}/student/submit-mcq`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: studentHeaders(attemptToken),
       body: JSON.stringify({ attemptId, questionId, selectedOptions }),
     });
     if (!res.ok) {
@@ -132,10 +189,10 @@ export const api = {
     return res.json();
   },
 
-  finishAssessment: async (attemptId: string) => {
+  finishAssessment: async (attemptId: string, attemptToken?: string) => {
     const res = await fetch(`${API_BASE}/student/finish`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: studentHeaders(attemptToken),
       body: JSON.stringify({ attemptId }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -152,11 +209,24 @@ export const api = {
   },
 
   // Multi-Language Execution
-  runCode: async (language: string, code: string, questionId: string, customInput?: string) => {
+  runCode: async (
+    language: string,
+    code: string,
+    questionId: string,
+    attemptId: string,
+    customInput?: string,
+    attemptToken?: string
+  ) => {
     const res = await fetch(`${API_BASE}/execution/run`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ language, code, questionId, customInput }),
+      headers: studentHeaders(attemptToken),
+      body: JSON.stringify({
+        language,
+        code,
+        questionId,
+        customInput,
+        attemptId,
+      }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "Execution failed" }));
@@ -165,10 +235,16 @@ export const api = {
     return res.json();
   },
 
-  submitCode: async (language: string, code: string, questionId: string, attemptId: string) => {
+  submitCode: async (
+    language: string,
+    code: string,
+    questionId: string,
+    attemptId: string,
+    attemptToken?: string
+  ) => {
     const res = await fetch(`${API_BASE}/execution/submit`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: studentHeaders(attemptToken),
       body: JSON.stringify({ language, code, questionId, attemptId }),
     });
     if (!res.ok) {
@@ -180,12 +256,22 @@ export const api = {
 
   // Results & Gradebook
   getResults: async (assessmentId: string) => {
-    const res = await fetch(`${API_BASE}/results/${assessmentId}`);
+    const res = await fetch(`${API_BASE}/results/${assessmentId}`, {
+      headers: adminHeaders(),
+    });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
 
   getExportUrl: (assessmentId: string) => {
     return `${API_BASE}/results/${assessmentId}/export`;
+  },
+
+  exportResultsCsv: async (assessmentId: string) => {
+    const res = await fetch(`${API_BASE}/results/${assessmentId}/export`, {
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.blob();
   },
 };

@@ -8,6 +8,7 @@ import { AdminDashboard } from "./pages/AdminDashboard";
 import { AdminLiveMonitor } from "./pages/AdminLiveMonitor";
 import { AdminGradebook } from "./pages/AdminGradebook";
 import { AdminAssessmentEditor } from "./pages/AdminAssessmentEditor";
+import { api } from "./services/api";
 
 type ViewMode =
   | "student-login"
@@ -55,7 +56,12 @@ export function App() {
         <StudentAssessment
           initialAssessment={activeAssessment}
           initialAttempt={activeAttempt}
-          onFinished={() => setView("student-login")}
+          onFinished={() => {
+            api.setAttemptToken(null);
+            setActiveAttempt(null);
+            setActiveAssessment(null);
+            setView("student-login");
+          }}
         />
       )}
 
@@ -89,6 +95,7 @@ export function App() {
           }}
           onNavigateToStudent={() => {
             setAdminToken(null);
+            api.setAttemptToken(null);
             setView("student-login");
           }}
         />

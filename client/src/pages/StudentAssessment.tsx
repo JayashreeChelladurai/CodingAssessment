@@ -37,6 +37,13 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
 }) => {
   const [assessment] = useState<Assessment>(initialAssessment);
   const [attempt, setAttempt] = useState<StudentAttempt>(initialAttempt);
+  const [attemptToken] = useState<string | null>(() => {
+    try {
+      return window?.localStorage?.getItem("student_attempt_token") ?? null;
+    } catch {
+      return null;
+    }
+  });
 
   // Parse questions in randomized student order if available
   const [orderedQuestions, setOrderedQuestions] = useState<Question[]>(() => {
@@ -210,7 +217,7 @@ int main() {
 
   // 1. Setup Socket.io listeners
   useEffect(() => {
-    const socket = getSocket();
+    const socket = getSocket({ attemptToken });
     socketRef.current = socket;
 
     socket.emit("student:join", {
@@ -279,7 +286,7 @@ int main() {
           drafts,
         });
       }
-      api.saveDraft(attempt.id, drafts, mcqResponses, flaggedQuestions, remainingSeconds).catch(() => {});
+      api.saveDraft(attempt.id, undefined, drafts, mcqResponses, flaggedQuestions, remainingSeconds).catch(() => {});
     }, 15000);
 
     return () => clearInterval(interval);
@@ -337,7 +344,7 @@ int main() {
     }));
 
     // Auto submit MCQ answer to backend
-    api.submitMcq(attempt.id, activeQuestion.id, nextSelected).catch(() => {});
+    api.submitMcq(attempt.id, activeQuestion.id, nextSelected, attemptToken || undefined).catch(() => {});
     setSaveStatus("MCQ saved");
     setTimeout(() => setSaveStatus("All changes saved"), 800);
   };
@@ -348,7 +355,7 @@ int main() {
       ...prev,
       [questionId]: [],
     }));
-    api.submitMcq(attempt.id, questionId, []).catch(() => {});
+    api.submitMcq(attempt.id, questionId, [], attemptToken || undefined).catch(() => {});
     setSaveStatus("Choice cleared");
     setTimeout(() => setSaveStatus("All changes saved"), 800);
   };
@@ -359,7 +366,7 @@ int main() {
       const next = prev.includes(questionId)
         ? prev.filter((id) => id !== questionId)
         : [...prev, questionId];
-      api.saveDraft(attempt.id, drafts, mcqResponses, next, remainingSeconds).catch(() => {});
+      api.saveDraft(attempt.id, undefined, drafts, mcqResponses, next, remainingSeconds).catch(() => {});
       return next;
     });
   };
@@ -405,10 +412,24 @@ int main() {
       setCustomResult(null);
 
       if (activeConsoleTab === "custom") {
-        const res = await api.runCode(currentLanguage, currentCode, activeQuestion.id, customInput);
+        const res = await api.runCode(
+          currentLanguage,
+          currentCode,
+          activeQuestion.id,
+          attempt.id,
+          customInput,
+          attemptToken || undefined
+        );
         setCustomResult(res.result);
       } else {
-        const res = await api.runCode(currentLanguage, currentCode, activeQuestion.id);
+        const res = await api.runCode(
+          currentLanguage,
+          currentCode,
+          activeQuestion.id,
+          attempt.id,
+          undefined,
+          attemptToken || undefined
+        );
         setCodingResult(res.grading);
       }
     } catch (err: any) {
@@ -423,7 +444,13 @@ int main() {
     if (!activeQuestion || isSubmitting) return;
     try {
       setIsSubmitting(true);
-      const res = await api.submitCode(currentLanguage, currentCode, activeQuestion.id, attempt.id);
+      const res = await api.submitCode(
+        currentLanguage,
+        currentCode,
+        activeQuestion.id,
+        attempt.id,
+        attemptToken || undefined
+      );
       setCodingResult(res.grading);
       setActiveConsoleTab("testcases");
 
@@ -443,8 +470,8 @@ int main() {
 
   const handleAutoSubmit = async () => {
     try {
-      await api.saveDraft(attempt.id, drafts, mcqResponses, flaggedQuestions, 0);
-      await api.finishAssessment(attempt.id);
+      await api.saveDraft(attempt.id, undefined, drafts, mcqResponses, flaggedQuestions, 0);
+      await api.finishAssessment(attempt.id, attemptToken || undefined);
       setIsSubmitted(true);
     } catch (err) {
       console.error("Auto submit failed:", err);
@@ -453,8 +480,8 @@ int main() {
 
   const handleFinalSubmit = async () => {
     try {
-      await api.saveDraft(attempt.id, drafts, mcqResponses, flaggedQuestions, remainingSeconds);
-      await api.finishAssessment(attempt.id);
+      await api.saveDraft(attempt.id, undefined, drafts, mcqResponses, flaggedQuestions, remainingSeconds);
+      await api.finishAssessment(attempt.id, attemptToken || undefined);
       setIsSubmitted(true);
       setShowSubmitModal(false);
     } catch (err: any) {

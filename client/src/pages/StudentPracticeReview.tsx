@@ -45,6 +45,7 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
       setLoading(true);
       setError("");
       const data = await api.getReviewData(code, rollNo);
+      api.setAttemptToken(data.attemptToken || null);
       setReviewData(data);
 
       if (data.assessment?.questions?.length > 0) {
@@ -74,7 +75,18 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
     if (!activeQuestion || isPracticing) return;
     try {
       setIsPracticing(true);
-      const res = await api.runCode(practiceLanguage, practiceCode, activeQuestion.id);
+      const attemptId = reviewData?.attempt?.id;
+      if (!attemptId) {
+        throw new Error("Review session is not initialized correctly.");
+      }
+      const res = await api.runCode(
+        practiceLanguage,
+        practiceCode,
+        activeQuestion.id,
+        attemptId,
+        undefined,
+        undefined
+      );
       setPracticeResults(res.grading);
     } catch (err: any) {
       alert(err.message || "Execution error in practice mode");

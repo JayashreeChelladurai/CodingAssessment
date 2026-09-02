@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { generateSebConfig } from "../services/sebService.js";
+import { requireAdminSession } from "../services/auth.js";
 
 export const assessmentRouter = Router();
+
+assessmentRouter.use(requireAdminSession);
 
 // 1. Get all assessments (Admin)
 assessmentRouter.get("/", async (_req, res) => {
@@ -209,62 +212,83 @@ assessmentRouter.put("/:id", async (req, res) => {
       questions,
     } = req.body;
 
-    // Remove old questions & sections for clean full sync
-    await prisma.question.deleteMany({ where: { assessmentId: id } });
-    await prisma.section.deleteMany({ where: { assessmentId: id } });
-
-    await prisma.assessment.update({
-      where: { id },
-      data: {
-        title,
-        description: description || "",
-        code: code.trim().toUpperCase(),
-        durationMinutes: Number(durationMinutes) || 60,
-        startTime: startTime ? new Date(startTime) : null,
-        endTime: endTime ? new Date(endTime) : null,
-        shuffleQuestions: shuffleQuestions ?? true,
-        requireSeb: requireSeb ?? true,
-        sebQuitPassword: sebQuitPassword || "exit123",
-        isReviewUnlocked: !!isReviewUnlocked,
-        reviewUnlockTime: reviewUnlockTime ? new Date(reviewUnlockTime) : null,
-      },
-    });
-
-    if (sections && Array.isArray(sections) && sections.length > 0) {
-      for (let sIdx = 0; sIdx < sections.length; sIdx++) {
-        const sec = sections[sIdx];
-        const createdSec = await prisma.section.create({
-          data: {
-            assessmentId: id,
-            title: sec.title || `Section ${sIdx + 1}`,
-            description: sec.description || "",
-            order: sIdx,
-          },
-        });
-
-        if (sec.questions && Array.isArray(sec.questions)) {
-          for (let qIdx = 0; qIdx < sec.questions.length; qIdx++) {
-            const q = sec.questions[qIdx];
-            await createQuestionRecord(id, createdSec.id, q, qIdx);
-          }
-        }
-      }
-    } else if (questions && Array.isArray(questions)) {
-      for (let qIdx = 0; qIdx < questions.length; qIdx++) {
-        const q = questions[qIdx];
-        await createQuestionRecord(id, null, q, qIdx);
-      }
+    if (!id || !title || !code) {
+      return res.status(400).json({ error: "Title and unique test code are required" });
     }
 
-    const updated = await prisma.assessment.findUnique({
-      where: { id },
-      include: {
-        sections: {
-          include: { questions: { include: { testCases: true } } },
-        },
-        questions: { include: { testCases: true } },
+    const cleanCode = code.trim().toUpperCase();
+
+    const existing = await prisma.assessment.findFirst({
+      where: {
+        code: cleanCode,
+        NOT: { id },
       },
     });
+    if (existing) {
+      return res.status(409).json({ error: `Assessment code '${cleanCode}' is already in use.` });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.question.deleteMany({ where: { assessmentId: id } });
+      await tx.section.deleteMany({ where: { assessmentId: id } });
+
+      await tx.assessment.update({
+        where: { id },
+        data: {
+          title,
+          description: description || "",
+          code: cleanCode,
+          durationMinutes: Number(durationMinutes) || 60,
+          startTime: startTime ? new Date(startTime) : null,
+          endTime: endTime ? new Date(endTime) : null,
+          shuffleQuestions: shuffleQuestions ?? true,
+          requireSeb: requireSeb ?? true,
+          sebQuitPassword: sebQuitPassword || "exit123",
+          isReviewUnlocked: !!isReviewUnlocked,
+          reviewUnlockTime: reviewUnlockTime ? new Date(reviewUnlockTime) : null,
+        },
+      });
+
+      if (sections && Array.isArray(sections) && sections.length > 0) {
+        for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+          const sec = sections[sIdx];
+          const createdSec = await tx.section.create({
+            data: {
+              assessmentId: id,
+              title: sec.title || `Section ${sIdx + 1}`,
+              description: sec.description || "",
+              order: sIdx,
+            },
+          });
+
+          if (sec.questions && Array.isArray(sec.questions)) {
+            for (let qIdx = 0; qIdx < sec.questions.length; qIdx++) {
+              const q = sec.questions[qIdx];
+              await createQuestionRecord(id, createdSec.id, q, qIdx, tx);
+            }
+          }
+        }
+      } else if (questions && Array.isArray(questions)) {
+        for (let qIdx = 0; qIdx < questions.length; qIdx++) {
+          const q = questions[qIdx];
+          await createQuestionRecord(id, null, q, qIdx, tx);
+        }
+      }
+
+      return tx.assessment.findUnique({
+        where: { id },
+        include: {
+          sections: {
+            include: { questions: { include: { testCases: true } } },
+          },
+          questions: { include: { testCases: true } },
+        },
+      });
+    });
+
+    if (!updated) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
 
     res.json(updated);
   } catch (err: any) {
@@ -373,13 +397,19 @@ assessmentRouter.post("/:id/clone", async (req, res) => {
   }
 });
 
-async function createQuestionRecord(assessmentId: string, sectionId: string | null, q: any, qIdx: number) {
+async function createQuestionRecord(
+  assessmentId: string,
+  sectionId: string | null,
+  q: any,
+  qIdx: number,
+  tx: { question: typeof prisma.question } = prisma
+) {
   const isMcq = q.type === "MCQ";
   const optionsStr = typeof q.options === "string" ? q.options : JSON.stringify(q.options || []);
   const correctAnswersStr = typeof q.correctAnswers === "string" ? q.correctAnswers : JSON.stringify(q.correctAnswers || []);
   const starterCodesStr = typeof q.starterCodes === "string" ? q.starterCodes : JSON.stringify(q.starterCodes || {});
 
-  await prisma.question.create({
+  await tx.question.create({
     data: {
       assessmentId,
       sectionId,

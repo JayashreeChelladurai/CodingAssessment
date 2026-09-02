@@ -1,7 +1,17 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
+import { requireAdminSession } from "../services/auth.js";
 
 export const resultsRouter = Router();
+
+resultsRouter.use(requireAdminSession);
+
+function sanitizeCsvCell(raw: unknown): string {
+  const value = raw === null || raw === undefined ? "" : String(raw);
+  const normalized = value.replace(/\r/g, " ").replace(/\n/g, " ").replace(/"/g, "\"\"");
+  const safeValue = /^[=+\-@]/.test(normalized.trimStart()) ? `'${normalized}` : normalized;
+  return `"${safeValue}"`;
+}
 
 // 1. Get Gradebook Analytics & Combined Scores (Admin)
 resultsRouter.get("/:assessmentId", async (req, res) => {
@@ -161,18 +171,18 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
       const percentage = totalPossibleMarks > 0 ? ((totalEarnedScore / totalPossibleMarks) * 100).toFixed(1) : "0";
 
       rows.push([
-        `"${att.rollNo}"`,
-        `"${att.studentName}"`,
-        `"${att.status}"`,
-        att.violationCount.toString(),
-        mcqScore.toFixed(2),
-        codingScore.toFixed(2),
-        totalEarnedScore.toFixed(2),
-        totalPossibleMarks.toString(),
-        `${percentage}%`,
-        ...qScores,
-        `"${att.startedAt.toISOString()}"`,
-        att.submittedAt ? `"${att.submittedAt.toISOString()}"` : `""`,
+        sanitizeCsvCell(att.rollNo),
+        sanitizeCsvCell(att.studentName),
+        sanitizeCsvCell(att.status),
+        sanitizeCsvCell(att.violationCount.toString()),
+        sanitizeCsvCell(mcqScore.toFixed(2)),
+        sanitizeCsvCell(codingScore.toFixed(2)),
+        sanitizeCsvCell(totalEarnedScore.toFixed(2)),
+        sanitizeCsvCell(totalPossibleMarks.toString()),
+        sanitizeCsvCell(`${percentage}%`),
+        ...qScores.map((score) => sanitizeCsvCell(score)),
+        sanitizeCsvCell(att.startedAt.toISOString()),
+        sanitizeCsvCell(att.submittedAt ? att.submittedAt.toISOString() : ""),
       ]);
     });
 

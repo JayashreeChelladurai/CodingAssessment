@@ -31,9 +31,10 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
   const [violationAlerts, setViolationAlerts] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<StudentAttempt | null>(null);
   const [extraMinutes, setExtraMinutes] = useState<number>(0);
+  const adminToken = localStorage.getItem("prof_admin_token");
 
   useEffect(() => {
-    const socket = getSocket();
+    const socket = getSocket({ adminToken });
 
     socket.emit("admin:join", assessment.id);
 
@@ -78,7 +79,7 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
   }, [assessment.id, selectedStudent?.id]);
 
   const handleResumeStudent = (attemptId: string) => {
-    const socket = getSocket();
+    const socket = getSocket({ adminToken });
     socket.emit("admin:resume_student", {
       attemptId,
       assessmentId: assessment.id,
@@ -122,7 +123,7 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
-              const socket = getSocket();
+              const socket = getSocket({ adminToken });
               socket.emit("admin:join", assessment.id);
             }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700"
