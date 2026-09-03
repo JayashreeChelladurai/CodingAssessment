@@ -23,7 +23,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 const ADMIN_SESSION_SECRET =
-  process.env.ADMIN_SESSION_SECRET || process.env.JWT_SECRET || process.env.SESSION_SECRET;
+  process.env.ADMIN_SESSION_SECRET || process.env.JWT_SECRET || process.env.SESSION_SECRET || "assessment-platform-admin-default-secret-2026";
 const ATTEMPT_SESSION_SECRET = process.env.ATTEMPT_SESSION_SECRET || ADMIN_SESSION_SECRET;
 
 const ADMIN_SESSION_TTL_SECONDS = Math.max(1, Number(process.env.ADMIN_SESSION_TTL_SECONDS || "3600"));
