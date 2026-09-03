@@ -17,7 +17,7 @@ interface ProblemDef {
   }>;
 }
 
-// 25 Problems for Category A (Array, String, Binary)
+// 25 Problems for Category A (Array, String, Binary) with clean SKELETON starter codes
 const CATEGORY_A: ProblemDef[] = [
   // 1. Two Sum
   {
@@ -26,62 +26,57 @@ const CATEGORY_A: ProblemDef[] = [
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
         int[] nums = new int[n];
-        for (int i = 0; i < n; i++) nums[i] = sc.nextInt();
-        int target = sc.nextInt();
-        Map<Integer, Integer> map = new HashMap<>();
         for (int i = 0; i < n; i++) {
-            int comp = target - nums[i];
-            if (map.containsKey(comp)) {
-                System.out.println(map.get(comp) + " " + i);
-                return;
-            }
-            map.put(nums[i], i);
+            nums[i] = sc.nextInt();
         }
+        int target = sc.nextInt();
+
+        // TODO: Find two numbers that add up to target and print their 0-based indices
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
     int n;
     if (scanf("%d", &n) != 1) return 0;
     int a[1000];
-    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
     int target;
     scanf("%d", &target);
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (a[i] + a[j] == target) {
-                printf("%d %d\\n", i, j);
-                return 0;
-            }
-        }
-    }
+
+    // TODO: Find two numbers that add up to target and print their 0-based indices
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <unordered_map>
+
 using namespace std;
+
 int main() {
     int n;
     if (!(cin >> n)) return 0;
     vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
     int target;
     cin >> target;
-    unordered_map<int, int> mp;
-    for (int i = 0; i < n; i++) {
-        int comp = target - a[i];
-        if (mp.count(comp)) {
-            cout << mp[comp] << " " << i << "\\n";
-            return 0;
-        }
-        mp[a[i]] = i;
-    }
+
+    // TODO: Find two numbers that add up to target and print their 0-based indices
+
     return 0;
 }`
     },
@@ -99,48 +94,52 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] p = new int[n];
-        for(int i = 0; i < n; i++) p[i] = sc.nextInt();
-        int minP = Integer.MAX_VALUE, maxProfit = 0;
-        for(int x : p) {
-            minP = Math.min(minP, x);
-            maxProfit = Math.max(maxProfit, x - minP);
+        int[] prices = new int[n];
+        for (int i = 0; i < n; i++) {
+            prices[i] = sc.nextInt();
         }
-        System.out.println(maxProfit);
+
+        // TODO: Calculate and print maximum achievable profit
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
     int n;
     if (scanf("%d", &n) != 1) return 0;
-    int minP = 1e9, maxProfit = 0;
+    int prices[1000];
     for (int i = 0; i < n; i++) {
-        int x;
-        scanf("%d", &x);
-        if (x < minP) minP = x;
-        if (x - minP > maxProfit) maxProfit = x - minP;
+        scanf("%d", &prices[i]);
     }
-    printf("%d\\n", maxProfit);
+
+    // TODO: Calculate and print maximum achievable profit
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
     int n;
     if (!(cin >> n)) return 0;
-    int minP = 1e9, maxProfit = 0;
+    vector<int> prices(n);
     for (int i = 0; i < n; i++) {
-        int x; cin >> x;
-        minP = min(minP, x);
-        maxProfit = max(maxProfit, x - minP);
+        cin >> prices[i];
     }
-    cout << maxProfit << "\\n";
+
+    // TODO: Calculate and print maximum achievable profit
+
     return 0;
 }`
     },
@@ -158,52 +157,52 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        Set<Integer> set = new HashSet<>();
-        boolean dup = false;
-        for(int i = 0; i < n; i++) {
-            int x = sc.nextInt();
-            if(!set.add(x)) dup = true;
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(dup ? "true" : "false");
+
+        // TODO: Print "true" if any value appears at least twice, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-int cmp(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
     int n;
     if (scanf("%d", &n) != 1) return 0;
-    int* a = malloc(n * sizeof(int));
-    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    qsort(a, n, sizeof(int), cmp);
-    for (int i = 1; i < n; i++) {
-        if (a[i] == a[i-1]) {
-            printf("true\\n");
-            return 0;
-        }
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-    printf("false\\n");
+
+    // TODO: Print "true" if any value appears at least twice, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <unordered_set>
+
 using namespace std;
+
 int main() {
     int n;
     if (!(cin >> n)) return 0;
-    unordered_set<int> s;
-    bool dup = false;
+    vector<int> a(n);
     for (int i = 0; i < n; i++) {
-        int x; cin >> x;
-        if (s.count(x)) dup = true;
-        s.insert(x);
+        cin >> a[i];
     }
-    cout << (dup ? "true" : "false") << "\\n";
+
+    // TODO: Print "true" if any value appears at least twice, otherwise "false"
+
     return 0;
 }`
     },
@@ -220,56 +219,51 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        int[] res = new int[n];
-        res[0] = 1;
-        for(int i = 1; i < n; i++) res[i] = res[i-1] * a[i-1];
-        int r = 1;
-        for(int i = n-1; i >= 0; i--) {
-            res[i] *= r;
-            r *= a[i];
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        for(int i = 0; i < n; i++) System.out.print(res[i] + (i == n-1 ? "" : " "));
-        System.out.println();
+
+        // TODO: Compute product of array except self without division and print space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
     int n;
     if (scanf("%d", &n) != 1) return 0;
-    int a[1000], res[1000];
-    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    res[0] = 1;
-    for (int i = 1; i < n; i++) res[i] = res[i-1] * a[i-1];
-    int r = 1;
-    for (int i = n-1; i >= 0; i--) {
-        res[i] *= r;
-        r *= a[i];
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-    for (int i = 0; i < n; i++) printf("%d%s", res[i], i == n-1 ? "" : " ");
-    printf("\\n");
+
+    // TODO: Compute product of array except self without division and print space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n), res(n, 1);
-    for (int i = 0; i < n; i++) cin >> a[i];
-    for (int i = 1; i < n; i++) res[i] = res[i-1] * a[i-1];
-    int r = 1;
-    for (int i = n-1; i >= 0; i--) {
-        res[i] *= r;
-        r *= a[i];
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
     }
-    for (int i = 0; i < n; i++) cout << res[i] << (i == n-1 ? "" : " ");
-    cout << "\\n";
+
+    // TODO: Compute product of array except self without division and print space-separated
+
     return 0;
 }`
     },
@@ -286,47 +280,52 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        long maxSoFar = Long.MIN_VALUE, curr = 0;
-        for(int i = 0; i < n; i++) {
-            long x = sc.nextLong();
-            curr += x;
-            if(curr > maxSoFar) maxSoFar = curr;
-            if(curr < 0) curr = 0;
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(maxSoFar);
+
+        // TODO: Implement Kadane's Algorithm to find and print the maximum subarray sum
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
     int n;
     if (scanf("%d", &n) != 1) return 0;
-    long long maxSoFar = -1e18, curr = 0;
+    int a[1000];
     for (int i = 0; i < n; i++) {
-        long long x; scanf("%lld", &x);
-        curr += x;
-        if (curr > maxSoFar) maxSoFar = curr;
-        if (curr < 0) curr = 0;
+        scanf("%d", &a[i]);
     }
-    printf("%lld\\n", maxSoFar);
+
+    // TODO: Implement Kadane's Algorithm to find and print the maximum subarray sum
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    long long maxSoFar = -1e18, curr = 0;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
     for (int i = 0; i < n; i++) {
-        long long x; cin >> x;
-        curr += x;
-        maxSoFar = max(maxSoFar, curr);
-        if (curr < 0) curr = 0;
+        cin >> a[i];
     }
-    cout << maxSoFar << "\\n";
+
+    // TODO: Implement Kadane's Algorithm to find and print the maximum subarray sum
+
     return 0;
 }`
     },
@@ -344,55 +343,52 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        int maxP = a[0], minP = a[0], res = a[0];
-        for(int i = 1; i < n; i++) {
-            if(a[i] < 0) { int t = maxP; maxP = minP; minP = t; }
-            maxP = Math.max(a[i], maxP * a[i]);
-            minP = Math.min(a[i], minP * a[i]);
-            res = Math.max(res, maxP);
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(res);
+
+        // TODO: Find and print the maximum product of a contiguous subarray
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
-#define MIN(a,b) ((a)<(b)?(a):(b))
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
     int a[1000];
-    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int maxP = a[0], minP = a[0], res = a[0];
-    for (int i = 1; i < n; i++) {
-        if (a[i] < 0) { int t = maxP; maxP = minP; minP = t; }
-        maxP = MAX(a[i], maxP * a[i]);
-        minP = MIN(a[i], minP * a[i]);
-        res = MAX(res, maxP);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-    printf("%d\\n", res);
+
+    // TODO: Find and print the maximum product of a contiguous subarray
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
+    int n;
+    if (!(cin >> n)) return 0;
     vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-    int maxP = a[0], minP = a[0], res = a[0];
-    for (int i = 1; i < n; i++) {
-        if (a[i] < 0) swap(maxP, minP);
-        maxP = max(a[i], maxP * a[i]);
-        minP = min(a[i], minP * a[i]);
-        res = max(res, maxP);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
     }
-    cout << res << "\\n";
+
+    // TODO: Find and print the maximum product of a contiguous subarray
+
     return 0;
 }`
     },
@@ -409,47 +405,51 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        int l = 0, r = n - 1;
-        while(l < r) {
-            int mid = l + (r - l) / 2;
-            if(a[mid] > a[r]) l = mid + 1;
-            else r = mid;
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(a[l]);
+
+        // TODO: Find and print the minimum element in O(log n) time
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int l = 0, r = n - 1;
-    while (l < r) {
-        int mid = l + (r - l) / 2;
-        if (a[mid] > a[r]) l = mid + 1;
-        else r = mid;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-    printf("%d\\n", a[l]);
+
+    // TODO: Find and print the minimum element in O(log n) time
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    int l = 0, r = n - 1;
-    while (l < r) {
-        int mid = l + (r - l) / 2;
-        if (a[mid] > a[r]) l = mid + 1;
-        else r = mid;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
     }
-    cout << a[l] << "\\n";
+
+    // TODO: Find and print the minimum element in O(log n) time
+
     return 0;
 }`
     },
@@ -466,68 +466,56 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        int target = sc.nextInt();
-        int l = 0, r = n - 1, ans = -1;
-        while(l <= r) {
-            int mid = l + (r - l) / 2;
-            if(a[mid] == target) { ans = mid; break; }
-            if(a[l] <= a[mid]) {
-                if(target >= a[l] && target < a[mid]) r = mid - 1;
-                else l = mid + 1;
-            } else {
-                if(target > a[mid] && target <= a[r]) l = mid + 1;
-                else r = mid - 1;
-            }
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(ans);
+        int target = sc.nextInt();
+
+        // TODO: Search for target in rotated sorted array in O(log n) and print its index (-1 if absent)
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int target; scanf("%d", &target);
-    int l = 0, r = n - 1, ans = -1;
-    while (l <= r) {
-        int mid = l + (r - l) / 2;
-        if (a[mid] == target) { ans = mid; break; }
-        if (a[l] <= a[mid]) {
-            if (target >= a[l] && target < a[mid]) r = mid - 1;
-            else l = mid + 1;
-        } else {
-            if (target > a[mid] && target <= a[r]) l = mid + 1;
-            else r = mid - 1;
-        }
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-    printf("%d\\n", ans);
+    int target;
+    scanf("%d", &target);
+
+    // TODO: Search for target in rotated sorted array in O(log n) and print its index (-1 if absent)
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    int target; cin >> target;
-    int l = 0, r = n - 1, ans = -1;
-    while (l <= r) {
-        int mid = l + (r - l) / 2;
-        if (a[mid] == target) { ans = mid; break; }
-        if (a[l] <= a[mid]) {
-            if (target >= a[l] && target < a[mid]) r = mid - 1;
-            else l = mid + 1;
-        } else {
-            if (target > a[mid] && target <= a[r]) l = mid + 1;
-            else r = mid - 1;
-        }
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
     }
-    cout << ans << "\\n";
+    int target;
+    cin >> target;
+
+    // TODO: Search for target in rotated sorted array in O(log n) and print its index (-1 if absent)
+
     return 0;
 }`
     },
@@ -544,80 +532,52 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        Arrays.sort(a);
-        int count = 0;
-        for(int i = 0; i < n - 2; i++) {
-            if(i > 0 && a[i] == a[i-1]) continue;
-            int l = i + 1, r = n - 1;
-            while(l < r) {
-                int sum = a[i] + a[l] + a[r];
-                if(sum == 0) {
-                    count++;
-                    while(l < r && a[l] == a[l+1]) l++;
-                    while(l < r && a[r] == a[r-1]) r--;
-                    l++; r--;
-                } else if(sum < 0) l++;
-                else r--;
-            }
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(count);
+
+        // TODO: Count and print the number of unique triplets that sum to 0
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-int cmp(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    qsort(a, n, sizeof(int), cmp);
-    int count = 0;
-    for (int i = 0; i < n - 2; i++) {
-        if (i > 0 && a[i] == a[i-1]) continue;
-        int l = i + 1, r = n - 1;
-        while (l < r) {
-            int sum = a[i] + a[l] + a[r];
-            if (sum == 0) {
-                count++;
-                while (l < r && a[l] == a[l+1]) l++;
-                while (l < r && a[r] == a[r-1]) r--;
-                l++; r--;
-            } else if (sum < 0) l++;
-            else r--;
-        }
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-    printf("%d\\n", count);
+
+    // TODO: Count and print the number of unique triplets that sum to 0
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    sort(a.begin(), a.end());
-    int count = 0;
-    for (int i = 0; i < n - 2; i++) {
-        if (i > 0 && a[i] == a[i-1]) continue;
-        int l = i + 1, r = n - 1;
-        while (l < r) {
-            int sum = a[i] + a[l] + a[r];
-            if (sum == 0) {
-                count++;
-                while (l < r && a[l] == a[l+1]) l++;
-                while (l < r && a[r] == a[r-1]) r--;
-                l++; r--;
-            } else if (sum < 0) l++;
-            else r--;
-        }
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
     }
-    cout << count << "\\n";
+
+    // TODO: Count and print the number of unique triplets that sum to 0
+
     return 0;
 }`
     },
@@ -634,53 +594,52 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] h = new int[n];
-        for(int i = 0; i < n; i++) h[i] = sc.nextInt();
-        int l = 0, r = n - 1, maxArea = 0;
-        while(l < r) {
-            int area = Math.min(h[l], h[r]) * (r - l);
-            maxArea = Math.max(maxArea, area);
-            if(h[l] < h[r]) l++;
-            else r--;
+        int[] height = new int[n];
+        for (int i = 0; i < n; i++) {
+            height[i] = sc.nextInt();
         }
-        System.out.println(maxArea);
+
+        // TODO: Find and print the maximum area of water the container can store
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MIN(a,b) ((a)<(b)?(a):(b))
-#define MAX(a,b) ((a)>(b)?(a):(b))
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int h[1000]; for (int i = 0; i < n; i++) scanf("%d", &h[i]);
-    int l = 0, r = n - 1, maxArea = 0;
-    while (l < r) {
-        int area = MIN(h[l], h[r]) * (r - l);
-        maxArea = MAX(maxArea, area);
-        if (h[l] < h[r]) l++;
-        else r--;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int h[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &h[i]);
     }
-    printf("%d\\n", maxArea);
+
+    // TODO: Find and print the maximum area of water the container can store
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> h(n); for (int i = 0; i < n; i++) cin >> h[i];
-    int l = 0, r = n - 1, maxArea = 0;
-    while (l < r) {
-        int area = min(h[l], h[r]) * (r - l);
-        maxArea = max(maxArea, area);
-        if (h[l] < h[r]) l++;
-        else r--;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> h(n);
+    for (int i = 0; i < n; i++) {
+        cin >> h[i];
     }
-    cout << maxArea << "\\n";
+
+    // TODO: Find and print the maximum area of water the container can store
+
     return 0;
 }`
     },
@@ -697,57 +656,41 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         String s = sc.hasNextLine() ? sc.nextLine() : "";
-        Map<Character, Integer> map = new HashMap<>();
-        int maxLen = 0, l = 0;
-        for(int r = 0; r < s.length(); r++) {
-            char c = s.charAt(r);
-            if(map.containsKey(c)) l = Math.max(l, map.get(c) + 1);
-            map.put(c, r);
-            maxLen = Math.max(maxLen, r - l + 1);
-        }
-        System.out.println(maxLen);
+
+        // TODO: Find and print the length of the longest substring without repeating characters
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
+
 int main() {
     char s[2000];
-    if (!fgets(s, sizeof(s), stdin)) { printf("0\\n"); return 0; }
+    if (!fgets(s, sizeof(s), stdin)) return 0;
     int len = strlen(s);
     while (len > 0 && (s[len-1] == '\\n' || s[len-1] == '\\r')) s[--len] = '\\0';
-    int last[256]; memset(last, -1, sizeof(last));
-    int maxLen = 0, l = 0;
-    for (int r = 0; r < len; r++) {
-        unsigned char c = (unsigned char)s[r];
-        if (last[c] >= l) l = last[c] + 1;
-        last[c] = r;
-        maxLen = MAX(maxLen, r - l + 1);
-    }
-    printf("%d\\n", maxLen);
+
+    // TODO: Find and print the length of the longest substring without repeating characters
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
-#include <vector>
-#include <algorithm>
+#include <unordered_map>
+
 using namespace std;
+
 int main() {
     string s;
-    if (!getline(cin, s)) { cout << 0 << "\\n"; return 0; }
-    vector<int> last(256, -1);
-    int maxLen = 0, l = 0;
-    for (int r = 0; r < s.size(); r++) {
-        unsigned char c = s[r];
-        if (last[c] >= l) l = last[c] + 1;
-        last[c] = r;
-        maxLen = max(maxLen, r - l + 1);
-    }
-    cout << maxLen << "\\n";
+    if (!getline(cin, s)) return 0;
+
+    // TODO: Find and print the length of the longest substring without repeating characters
+
     return 0;
 }`
     },
@@ -764,61 +707,43 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) return;
         String s = sc.next();
         int k = sc.nextInt();
-        int[] count = new int[26];
-        int maxCount = 0, maxLen = 0, l = 0;
-        for(int r = 0; r < s.length(); r++) {
-            maxCount = Math.max(maxCount, ++count[s.charAt(r) - 'A']);
-            while(r - l + 1 - maxCount > k) {
-                count[s.charAt(l) - 'A']--;
-                l++;
-            }
-            maxLen = Math.max(maxLen, r - l + 1);
-        }
-        System.out.println(maxLen);
+
+        // TODO: Compute and print the max length of substring with same letters after at most k replacements
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
+
 int main() {
-    char s[2000]; int k;
+    char s[2000];
+    int k;
     if (scanf("%s %d", s, &k) != 2) return 0;
-    int count[26] = {0}, maxCount = 0, maxLen = 0, l = 0, n = strlen(s);
-    for (int r = 0; r < n; r++) {
-        maxCount = MAX(maxCount, ++count[s[r] - 'A']);
-        while (r - l + 1 - maxCount > k) {
-            count[s[l] - 'A']--;
-            l++;
-        }
-        maxLen = MAX(maxLen, r - l + 1);
-    }
-    printf("%d\\n", maxLen);
+
+    // TODO: Compute and print the max length of substring with same letters after at most k replacements
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <vector>
-#include <algorithm>
+
 using namespace std;
+
 int main() {
-    string s; int k;
+    string s;
+    int k;
     if (!(cin >> s >> k)) return 0;
-    vector<int> count(26, 0);
-    int maxCount = 0, maxLen = 0, l = 0;
-    for (int r = 0; r < s.size(); r++) {
-        maxCount = max(maxCount, ++count[s[r] - 'A']);
-        while (r - l + 1 - maxCount > k) {
-            count[s[l] - 'A']--;
-            l++;
-        }
-        maxLen = max(maxLen, r - l + 1);
-    }
-    cout << maxLen << "\\n";
+
+    // TODO: Compute and print the max length of substring with same letters after at most k replacements
+
     return 0;
 }`
     },
@@ -835,90 +760,41 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        String s = sc.next(), t = sc.next();
-        Map<Character, Integer> need = new HashMap<>();
-        for(char c : t.toCharArray()) need.put(c, need.getOrDefault(c, 0) + 1);
-        int matched = 0, l = 0, minLen = Integer.MAX_VALUE, start = 0;
-        Map<Character, Integer> window = new HashMap<>();
-        for(int r = 0; r < s.length(); r++) {
-            char c = s.charAt(r);
-            if(need.containsKey(c)) {
-                window.put(c, window.getOrDefault(c, 0) + 1);
-                if(window.get(c).intValue() == need.get(c).intValue()) matched++;
-            }
-            while(matched == need.size()) {
-                if(r - l + 1 < minLen) { minLen = r - l + 1; start = l; }
-                char d = s.charAt(l);
-                if(need.containsKey(d)) {
-                    if(window.get(d).intValue() == need.get(d).intValue()) matched--;
-                    window.put(d, window.get(d) - 1);
-                }
-                l++;
-            }
-        }
-        System.out.println(minLen == Integer.MAX_VALUE ? "" : s.substring(start, start + minLen));
+        if (!sc.hasNext()) return;
+        String s = sc.next();
+        String t = sc.next();
+
+        // TODO: Find and print the minimum window substring of s containing all characters of t
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
+
 int main() {
     char s[2000], t[2000];
     if (scanf("%s %s", s, t) != 2) return 0;
-    int need[256] = {0}, window[256] = {0}, uniqueNeed = 0;
-    for (int i = 0; t[i]; i++) { if (!need[(unsigned char)t[i]]++) uniqueNeed++; }
-    int matched = 0, l = 0, minLen = 1e9, start = 0, n = strlen(s);
-    for (int r = 0; r < n; r++) {
-        unsigned char c = (unsigned char)s[r];
-        if (need[c]) {
-            window[c]++;
-            if (window[c] == need[c]) matched++;
-        }
-        while (matched == uniqueNeed) {
-            if (r - l + 1 < minLen) { minLen = r - l + 1; start = l; }
-            unsigned char d = (unsigned char)s[l];
-            if (need[d]) {
-                if (window[d] == need[d]) matched--;
-                window[d]--;
-            }
-            l++;
-        }
-    }
-    if (minLen > n) printf("\\n");
-    else {
-        s[start + minLen] = '\\0';
-        printf("%s\\n", s + start);
-    }
+
+    // TODO: Find and print the minimum window substring of s containing all characters of t
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <unordered_map>
+
 using namespace std;
+
 int main() {
-    string s, t; if (!(cin >> s >> t)) return 0;
-    unordered_map<char, int> need, window;
-    for (char c : t) need[c]++;
-    int matched = 0, l = 0, minLen = 1e9, start = 0;
-    for (int r = 0; r < s.size(); r++) {
-        char c = s[r];
-        if (need.count(c)) {
-            window[c]++;
-            if (window[c] == need[c]) matched++;
-        }
-        while (matched == need.size()) {
-            if (r - l + 1 < minLen) { minLen = r - l + 1; start = l; }
-            char d = s[l];
-            if (need.count(d)) {
-                if (window[d] == need[d]) matched--;
-                window[d]--;
-            }
-            l++;
-        }
-    }
-    cout << (minLen > s.size() ? "" : s.substr(start, minLen)) << "\\n";
+    string s, t;
+    if (!(cin >> s >> t)) return 0;
+
+    // TODO: Find and print the minimum window substring of s containing all characters of t
+
     return 0;
 }`
     },
@@ -935,51 +811,41 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        String s = sc.next(), t = sc.next();
-        if(s.length() != t.length()) { System.out.println("false"); return; }
-        int[] count = new int[26];
-        for(int i = 0; i < s.length(); i++) {
-            count[s.charAt(i) - 'a']++;
-            count[t.charAt(i) - 'a']--;
-        }
-        for(int c : count) if(c != 0) { System.out.println("false"); return; }
-        System.out.println("true");
+        if (!sc.hasNext()) return;
+        String s = sc.next();
+        String t = sc.next();
+
+        // TODO: Print "true" if t is an anagram of s, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
+
 int main() {
     char s[1000], t[1000];
     if (scanf("%s %s", s, t) != 2) return 0;
-    if (strlen(s) != strlen(t)) { printf("false\\n"); return 0; }
-    int count[26] = {0};
-    for (int i = 0; s[i]; i++) {
-        count[s[i] - 'a']++;
-        count[t[i] - 'a']--;
-    }
-    for (int i = 0; i < 26; i++) {
-        if (count[i] != 0) { printf("false\\n"); return 0; }
-    }
-    printf("true\\n");
+
+    // TODO: Print "true" if t is an anagram of s, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    string s, t; if (!(cin >> s >> t)) return 0;
-    if (s.size() != t.size()) { cout << "false\\n"; return 0; }
-    vector<int> count(26, 0);
-    for (int i = 0; i < s.size(); i++) {
-        count[s[i] - 'a']++;
-        count[t[i] - 'a']--;
-    }
-    for (int x : count) if (x != 0) { cout << "false\\n"; return 0; }
-    cout << "true\\n";
+    string s, t;
+    if (!(cin >> s >> t)) return 0;
+
+    // TODO: Print "true" if t is an anagram of s, otherwise "false"
+
     return 0;
 }`
     },
@@ -996,56 +862,54 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        Set<String> groups = new HashSet<>();
-        for(int i = 0; i < n; i++) {
-            char[] arr = sc.next().toCharArray();
-            Arrays.sort(arr);
-            groups.add(new String(arr));
+        String[] strs = new String[n];
+        for (int i = 0; i < n; i++) {
+            strs[i] = sc.next();
         }
-        System.out.println(groups.size());
+
+        // TODO: Count and print the number of distinct anagram groups
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-int cmp(const void* a, const void* b) { return (*(char*)a - *(char*)b); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
     char words[100][100];
     for (int i = 0; i < n; i++) {
         scanf("%s", words[i]);
-        qsort(words[i], strlen(words[i]), sizeof(char), cmp);
     }
-    int distinct = 0;
-    for (int i = 0; i < n; i++) {
-        int seen = 0;
-        for (int j = 0; j < i; j++) {
-            if (strcmp(words[i], words[j]) == 0) { seen = 1; break; }
-        }
-        if (!seen) distinct++;
-    }
-    printf("%d\\n", distinct);
+
+    // TODO: Count and print the number of distinct anagram groups
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include <unordered_set>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    unordered_set<string> s;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<string> words(n);
     for (int i = 0; i < n; i++) {
-        string w; cin >> w;
-        sort(w.begin(), w.end());
-        s.insert(w);
+        cin >> words[i];
     }
-    cout << s.size() << "\\n";
+
+    // TODO: Count and print the number of distinct anagram groups
+
     return 0;
 }`
     },
@@ -1062,52 +926,39 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         String s = sc.hasNext() ? sc.next() : "";
-        Stack<Character> stack = new Stack<>();
-        boolean ok = true;
-        for(char c : s.toCharArray()) {
-            if(c == '(') stack.push(')');
-            else if(c == '{') stack.push('}');
-            else if(c == '[') stack.push(']');
-            else if(stack.isEmpty() || stack.pop() != c) { ok = false; break; }
-        }
-        System.out.println(ok && stack.isEmpty() ? "true" : "false");
+
+        // TODO: Print "true" if brackets are balanced and correctly closed, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
+
 int main() {
-    char s[2000], stack[2000];
-    if (scanf("%s", s) != 1) { printf("true\\n"); return 0; }
-    int top = 0, ok = 1;
-    for (int i = 0; s[i]; i++) {
-        if (s[i] == '(') stack[top++] = ')';
-        else if (s[i] == '{') stack[top++] = '}';
-        else if (s[i] == '[') stack[top++] = ']';
-        else if (top == 0 || stack[--top] != s[i]) { ok = 0; break; }
-    }
-    printf("%s\\n", ok && top == 0 ? "true" : "false");
+    char s[2000];
+    if (scanf("%s", s) != 1) return 0;
+
+    // TODO: Print "true" if brackets are balanced and correctly closed, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <stack>
+
 using namespace std;
+
 int main() {
-    string s; if (!(cin >> s)) { cout << "true\\n"; return 0; }
-    stack<char> st;
-    bool ok = true;
-    for (char c : s) {
-        if (c == '(') st.push(')');
-        else if (c == '{') st.push('}');
-        else if (c == '[') st.push(']');
-        else if (st.empty() || st.top() != c) { ok = false; break; }
-        else st.pop();
-    }
-    cout << (ok && st.empty() ? "true" : "false") << "\\n";
+    string s;
+    if (!(cin >> s)) return 0;
+
+    // TODO: Print "true" if brackets are balanced and correctly closed, otherwise "false"
+
     return 0;
 }`
     },
@@ -1125,46 +976,40 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         String s = sc.hasNextLine() ? sc.nextLine() : "";
-        StringBuilder sb = new StringBuilder();
-        for(char c : s.toCharArray()) if(Character.isLetterOrDigit(c)) sb.append(Character.toLowerCase(c));
-        String clean = sb.toString();
-        String rev = sb.reverse().toString();
-        System.out.println(clean.equals(rev) ? "true" : "false");
+
+        // TODO: Print "true" if the string is a valid palindrome ignoring non-alphanumeric chars, else "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+
 int main() {
-    char s[2000], clean[2000];
-    if (!fgets(s, sizeof(s), stdin)) { printf("true\\n"); return 0; }
-    int idx = 0;
-    for (int i = 0; s[i]; i++) {
-        if (isalnum((unsigned char)s[i])) clean[idx++] = tolower((unsigned char)s[i]);
-    }
-    int isPal = 1;
-    for (int i = 0; i < idx / 2; i++) {
-        if (clean[i] != clean[idx - 1 - i]) { isPal = 0; break; }
-    }
-    printf("%s\\n", isPal ? "true" : "false");
+    char s[2000];
+    if (!fgets(s, sizeof(s), stdin)) return 0;
+
+    // TODO: Print "true" if the string is a valid palindrome ignoring non-alphanumeric chars, else "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <cctype>
-#include <algorithm>
+
 using namespace std;
+
 int main() {
-    string s, clean = "";
-    if (!getline(cin, s)) { cout << "true\\n"; return 0; }
-    for (char c : s) if (isalnum(c)) clean += tolower(c);
-    string rev = clean;
-    reverse(rev.begin(), rev.end());
-    cout << (clean == rev ? "true" : "false") << "\\n";
+    string s;
+    if (!getline(cin, s)) return 0;
+
+    // TODO: Print "true" if the string is a valid palindrome ignoring non-alphanumeric chars, else "false"
+
     return 0;
 }`
     },
@@ -1181,64 +1026,39 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) return;
         String s = sc.next();
-        int start = 0, end = 0;
-        for(int i = 0; i < s.length(); i++) {
-            int len1 = expand(s, i, i);
-            int len2 = expand(s, i, i + 1);
-            int len = Math.max(len1, len2);
-            if(len > end - start) {
-                start = i - (len - 1) / 2;
-                end = i + len / 2;
-            }
-        }
-        System.out.println(s.substring(start, end + 1));
-    }
-    static int expand(String s, int l, int r) {
-        while(l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) { l--; r++; }
-        return r - l - 1;
+
+        // TODO: Find and print the longest palindromic substring in s
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
-int expand(char* s, int n, int l, int r) {
-    while (l >= 0 && r < n && s[l] == s[r]) { l--; r++; }
-    return r - l - 1;
-}
+
 int main() {
-    char s[2000]; if (scanf("%s", s) != 1) return 0;
-    int n = strlen(s), start = 0, maxLen = 1;
-    for (int i = 0; i < n; i++) {
-        int l1 = expand(s, n, i, i);
-        int l2 = expand(s, n, i, i + 1);
-        int len = l1 > l2 ? l1 : l2;
-        if (len > maxLen) { maxLen = len; start = i - (len - 1) / 2; }
-    }
-    s[start + maxLen] = '\\0';
-    printf("%s\\n", s + start);
+    char s[2000];
+    if (scanf("%s", s) != 1) return 0;
+
+    // TODO: Find and print the longest palindromic substring in s
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
-#include <algorithm>
+
 using namespace std;
-int expand(const string& s, int l, int r) {
-    while (l >= 0 && r < s.size() && s[l] == s[r]) { l--; r++; }
-    return r - l - 1;
-}
+
 int main() {
-    string s; if (!(cin >> s)) return 0;
-    int start = 0, maxLen = 1;
-    for (int i = 0; i < s.size(); i++) {
-        int l1 = expand(s, i, i);
-        int l2 = expand(s, i, i + 1);
-        int len = max(l1, l2);
-        if (len > maxLen) { maxLen = len; start = i - (len - 1) / 2; }
-    }
-    cout << s.substr(start, maxLen) << "\\n";
+    string s;
+    if (!(cin >> s)) return 0;
+
+    // TODO: Find and print the longest palindromic substring in s
+
     return 0;
 }`
     },
@@ -1255,56 +1075,39 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) return;
         String s = sc.next();
-        int count = 0;
-        for(int i = 0; i < s.length(); i++) {
-            count += countPal(s, i, i);
-            count += countPal(s, i, i + 1);
-        }
-        System.out.println(count);
-    }
-    static int countPal(String s, int l, int r) {
-        int ans = 0;
-        while(l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) { ans++; l--; r++; }
-        return ans;
+
+        // TODO: Count and print the total number of palindromic substrings
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
-int countPal(char* s, int n, int l, int r) {
-    int ans = 0;
-    while (l >= 0 && r < n && s[l] == s[r]) { ans++; l--; r++; }
-    return ans;
-}
+
 int main() {
-    char s[2000]; if (scanf("%s", s) != 1) return 0;
-    int n = strlen(s), count = 0;
-    for (int i = 0; i < n; i++) {
-        count += countPal(s, n, i, i);
-        count += countPal(s, n, i, i + 1);
-    }
-    printf("%d\\n", count);
+    char s[2000];
+    if (scanf("%s", s) != 1) return 0;
+
+    // TODO: Count and print the total number of palindromic substrings
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
+
 using namespace std;
-int countPal(const string& s, int l, int r) {
-    int ans = 0;
-    while (l >= 0 && r < s.size() && s[l] == s[r]) { ans++; l--; r++; }
-    return ans;
-}
+
 int main() {
-    string s; if (!(cin >> s)) return 0;
-    int count = 0;
-    for (int i = 0; i < s.size(); i++) {
-        count += countPal(s, i, i);
-        count += countPal(s, i, i + 1);
-    }
-    cout << count << "\\n";
+    string s;
+    if (!(cin >> s)) return 0;
+
+    // TODO: Count and print the total number of palindromic substrings
+
     return 0;
 }`
     },
@@ -1317,53 +1120,56 @@ int main() {
   // 20. Encode and Decode Strings
   {
     title: "Encode and Decode Strings",
-    description: "Design an algorithm to encode a list of strings to a single string and decode it back. Output the decoded strings count and concatenated form.",
+    description: "Design an algorithm to encode a list of strings to a single string and decode it back. Output the decoded strings count and concatenated form separated by comma.",
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
         List<String> list = new ArrayList<>();
-        for(int i = 0; i < n; i++) list.add(sc.next());
-        StringBuilder encoded = new StringBuilder();
-        for(String s : list) encoded.append(s.length()).append("#").append(s);
-        // decode
-        List<String> decoded = new ArrayList<>();
-        int i = 0;
-        String enc = encoded.toString();
-        while(i < enc.length()) {
-            int hash = enc.indexOf("#", i);
-            int len = Integer.parseInt(enc.substring(i, hash));
-            decoded.add(enc.substring(hash + 1, hash + 1 + len));
-            i = hash + 1 + len;
+        for (int i = 0; i < n; i++) {
+            list.add(sc.next());
         }
-        System.out.println(decoded.size() + " " + String.join(",", decoded));
+
+        // TODO: Encode the list of strings into a single string and decode back
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
     char words[100][100];
-    for (int i = 0; i < n; i++) scanf("%s", words[i]);
-    printf("%d ", n);
-    for (int i = 0; i < n; i++) printf("%s%s", words[i], i == n - 1 ? "" : ",");
-    printf("\\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%s", words[i]);
+    }
+
+    // TODO: Encode the list of strings into a single string and decode back
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <string>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
+    int n;
+    if (!(cin >> n)) return 0;
     vector<string> words(n);
-    for (int i = 0; i < n; i++) cin >> words[i];
-    cout << n << " ";
-    for (int i = 0; i < n; i++) cout << words[i] << (i == n - 1 ? "" : ",");
-    cout << "\\n";
+    for (int i = 0; i < n; i++) {
+        cin >> words[i];
+    }
+
+    // TODO: Encode the list of strings into a single string and decode back
+
     return 0;
 }`
     },
@@ -1379,40 +1185,38 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int a = sc.nextInt(), b = sc.nextInt();
-        while(b != 0) {
-            int carry = (a & b) << 1;
-            a = a ^ b;
-            b = carry;
-        }
-        System.out.println(a);
+        if (!sc.hasNextInt()) return;
+        int a = sc.nextInt();
+        int b = sc.nextInt();
+
+        // TODO: Compute and print the sum of a and b without using '+' or '-' operators
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
     int a, b;
     if (scanf("%d %d", &a, &b) != 2) return 0;
-    while (b != 0) {
-        unsigned int carry = (unsigned int)(a & b) << 1;
-        a = a ^ b;
-        b = (int)carry;
-    }
-    printf("%d\\n", a);
+
+    // TODO: Compute and print the sum of a and b without using '+' or '-' operators
+
     return 0;
 }`,
       CPP: `#include <iostream>
+
 using namespace std;
+
 int main() {
-    int a, b; if (!(cin >> a >> b)) return 0;
-    while (b != 0) {
-        unsigned int carry = (unsigned int)(a & b) << 1;
-        a = a ^ b;
-        b = (int)carry;
-    }
-    cout << a << "\\n";
+    int a, b;
+    if (!(cin >> a >> b)) return 0;
+
+    // TODO: Compute and print the sum of a and b without using '+' or '-' operators
+
     return 0;
 }`
     },
@@ -1425,43 +1229,41 @@ int main() {
   // 22. Number of 1 Bits (Hamming Weight)
   {
     title: "Number of 1 Bits",
-    description: "Given a positive integer `n`, write a function that returns the number of set bits ('1's) it has.",
+    description: "Given a positive integer `n`, write a function that returns the number of set bits ('1's) it has in its binary representation.",
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int count = 0;
-        while(n != 0) {
-            n &= (n - 1);
-            count++;
-        }
-        System.out.println(count);
+
+        // TODO: Count and print the number of '1' bits in n
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int count = 0;
-    while (n) {
-        n &= (n - 1);
-        count++;
-    }
-    printf("%d\\n", count);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+
+    // TODO: Count and print the number of '1' bits in n
+
     return 0;
 }`,
       CPP: `#include <iostream>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    int count = 0;
-    while (n) {
-        n &= (n - 1);
-        count++;
-    }
-    cout << count << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+
+    // TODO: Count and print the number of '1' bits in n
+
     return 0;
 }`
     },
@@ -1478,34 +1280,38 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] dp = new int[n + 1];
-        for(int i = 1; i <= n; i++) dp[i] = dp[i >> 1] + (i & 1);
-        for(int i = 0; i <= n; i++) System.out.print(dp[i] + (i == n ? "" : " "));
-        System.out.println();
+
+        // TODO: Compute and print the number of 1 bits for every number from 0 to n space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int dp[1000] = {0};
-    for (int i = 1; i <= n; i++) dp[i] = dp[i >> 1] + (i & 1);
-    for (int i = 0; i <= n; i++) printf("%d%s", dp[i], i == n ? "" : " ");
-    printf("\\n");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+
+    // TODO: Compute and print the number of 1 bits for every number from 0 to n space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> dp(n + 1, 0);
-    for (int i = 1; i <= n; i++) dp[i] = dp[i >> 1] + (i & 1);
-    for (int i = 0; i <= n; i++) cout << dp[i] << (i == n ? "" : " ");
-    cout << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+
+    // TODO: Compute and print the number of 1 bits for every number from 0 to n space-separated
+
     return 0;
 }`
     },
@@ -1521,38 +1327,50 @@ int main() {
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int xor = n;
-        for(int i = 0; i < n; i++) {
-            xor ^= i ^ sc.nextInt();
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(xor);
+
+        // TODO: Find and print the missing number from range [0, n]
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int xorVal = n;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
     for (int i = 0; i < n; i++) {
-        int x; scanf("%d", &x);
-        xorVal ^= i ^ x;
+        scanf("%d", &a[i]);
     }
-    printf("%d\\n", xorVal);
+
+    // TODO: Find and print the missing number from range [0, n]
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    int xorVal = n;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
     for (int i = 0; i < n; i++) {
-        int x; cin >> x;
-        xorVal ^= i ^ x;
+        cin >> a[i];
     }
-    cout << xorVal << "\\n";
+
+    // TODO: Find and print the missing number from range [0, n]
+
     return 0;
 }`
     },
@@ -1565,43 +1383,41 @@ int main() {
   // 25. Reverse Bits
   {
     title: "Reverse Bits",
-    description: "Reverse bits of a given 32 bits unsigned integer.",
+    description: "Reverse bits of a given 32 bits unsigned integer and print the result.",
     marks: 25,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextLong()) return;
         long n = sc.nextLong();
-        long rev = 0;
-        for(int i = 0; i < 32; i++) {
-            rev = (rev << 1) | (n & 1);
-            n >>= 1;
-        }
-        System.out.println(rev);
+
+        // TODO: Reverse the 32 bits of n and print the resulting unsigned integer value
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    unsigned int n; if (scanf("%u", &n) != 1) return 0;
-    unsigned int rev = 0;
-    for (int i = 0; i < 32; i++) {
-        rev = (rev << 1) | (n & 1);
-        n >>= 1;
-    }
-    printf("%u\\n", rev);
+    unsigned int n;
+    if (scanf("%u", &n) != 1) return 0;
+
+    // TODO: Reverse the 32 bits of n and print the resulting unsigned integer value
+
     return 0;
 }`,
       CPP: `#include <iostream>
+
 using namespace std;
+
 int main() {
-    unsigned int n; if (!(cin >> n)) return 0;
-    unsigned int rev = 0;
-    for (int i = 0; i < 32; i++) {
-        rev = (rev << 1) | (n & 1);
-        n >>= 1;
-    }
-    cout << rev << "\\n";
+    unsigned int n;
+    if (!(cin >> n)) return 0;
+
+    // TODO: Reverse the 32 bits of n and print the resulting unsigned integer value
+
     return 0;
 }`
     },
@@ -1612,7 +1428,7 @@ int main() {
   }
 ];
 
-// 25 Problems for Category B (DP, Intervals, Linked List, Heap)
+// 25 Problems for Category B (DP, Intervals, Linked List, Heap) with clean SKELETON starter codes
 const CATEGORY_B: ProblemDef[] = [
   // 1. Climbing Stairs
   {
@@ -1621,35 +1437,37 @@ const CATEGORY_B: ProblemDef[] = [
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        if(n <= 2) { System.out.println(n); return; }
-        int a = 1, b = 2;
-        for(int i = 3; i <= n; i++) {
-            int c = a + b; a = b; b = c;
-        }
-        System.out.println(b);
+
+        // TODO: Calculate and print the number of distinct ways to climb n stairs
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    if (n <= 2) { printf("%d\\n", n); return 0; }
-    int a = 1, b = 2;
-    for (int i = 3; i <= n; i++) { int c = a + b; a = b; b = c; }
-    printf("%d\\n", b);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+
+    // TODO: Calculate and print the number of distinct ways to climb n stairs
+
     return 0;
 }`,
       CPP: `#include <iostream>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    if (n <= 2) { cout << n << "\\n"; return 0; }
-    int a = 1, b = 2;
-    for (int i = 3; i <= n; i++) { int c = a + b; a = b; b = c; }
-    cout << b << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+
+    // TODO: Calculate and print the number of distinct ways to climb n stairs
+
     return 0;
 }`
     },
@@ -1666,55 +1484,57 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
         int[] coins = new int[n];
-        for(int i = 0; i < n; i++) coins[i] = sc.nextInt();
-        int amount = sc.nextInt();
-        int[] dp = new int[amount + 1];
-        Arrays.fill(dp, amount + 1);
-        dp[0] = 0;
-        for(int i = 1; i <= amount; i++) {
-            for(int c : coins) {
-                if(i - c >= 0) dp[i] = Math.min(dp[i], dp[i - c] + 1);
-            }
+        for (int i = 0; i < n; i++) {
+            coins[i] = sc.nextInt();
         }
-        System.out.println(dp[amount] > amount ? -1 : dp[amount]);
+        int amount = sc.nextInt();
+
+        // TODO: Find fewest coins needed to make up amount (-1 if impossible)
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MIN(a,b) ((a)<(b)?(a):(b))
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int coins[100]; for (int i = 0; i < n; i++) scanf("%d", &coins[i]);
-    int amount; scanf("%d", &amount);
-    int dp[10001];
-    for (int i = 0; i <= amount; i++) dp[i] = amount + 1;
-    dp[0] = 0;
-    for (int i = 1; i <= amount; i++) {
-        for (int j = 0; j < n; j++) {
-            if (i - coins[j] >= 0) dp[i] = MIN(dp[i], dp[i - coins[j]] + 1);
-        }
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int coins[100];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &coins[i]);
     }
-    printf("%d\\n", dp[amount] > amount ? -1 : dp[amount]);
+    int amount;
+    scanf("%d", &amount);
+
+    // TODO: Find fewest coins needed to make up amount (-1 if impossible)
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> coins(n); for (int i = 0; i < n; i++) cin >> coins[i];
-    int amount; cin >> amount;
-    vector<int> dp(amount + 1, amount + 1);
-    dp[0] = 0;
-    for (int i = 1; i <= amount; i++) {
-        for (int c : coins) if (i - c >= 0) dp[i] = min(dp[i], dp[i - c] + 1);
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> coins(n);
+    for (int i = 0; i < n; i++) {
+        cin >> coins[i];
     }
-    cout << (dp[amount] > amount ? -1 : dp[amount]) << "\\n";
+    int amount;
+    cin >> amount;
+
+    // TODO: Find fewest coins needed to make up amount (-1 if impossible)
+
     return 0;
 }`
     },
@@ -1731,50 +1551,52 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        List<Integer> tails = new ArrayList<>();
-        for(int x : a) {
-            int idx = Collections.binarySearch(tails, x);
-            if(idx < 0) idx = -(idx + 1);
-            if(idx == tails.size()) tails.add(x);
-            else tails.set(idx, x);
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(tails.size());
+
+        // TODO: Find and print the length of the longest strictly increasing subsequence
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000], dp[1000], maxLen = 1;
-    for (int i = 0; i < n; i++) { scanf("%d", &a[i]); dp[i] = 1; }
-    for (int i = 1; i < n; i++) {
-        for (int j = 0; j < i; j++) {
-            if (a[j] < a[i] && dp[j] + 1 > dp[i]) dp[i] = dp[j] + 1;
-        }
-        if (dp[i] > maxLen) maxLen = dp[i];
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-    printf("%d\\n", maxLen);
+
+    // TODO: Find and print the length of the longest strictly increasing subsequence
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n), tails;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
     for (int i = 0; i < n; i++) {
-        int x; cin >> x;
-        auto it = lower_bound(tails.begin(), tails.end(), x);
-        if (it == tails.end()) tails.push_back(x);
-        else *it = x;
+        cin >> a[i];
     }
-    cout << tails.size() << "\\n";
+
+    // TODO: Find and print the length of the longest strictly increasing subsequence
+
     return 0;
 }`
     },
@@ -1791,54 +1613,41 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        String s1 = sc.next(), s2 = sc.next();
-        int n = s1.length(), m = s2.length();
-        int[][] dp = new int[n+1][m+1];
-        for(int i = 1; i <= n; i++) {
-            for(int j = 1; j <= m; j++) {
-                if(s1.charAt(i-1) == s2.charAt(j-1)) dp[i][j] = dp[i-1][j-1] + 1;
-                else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
-            }
-        }
-        System.out.println(dp[n][m]);
+        if (!sc.hasNext()) return;
+        String s1 = sc.next();
+        String s2 = sc.next();
+
+        // TODO: Calculate and print the length of the longest common subsequence of s1 and s2
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
+
 int main() {
     char s1[1000], s2[1000];
     if (scanf("%s %s", s1, s2) != 2) return 0;
-    int n = strlen(s1), m = strlen(s2);
-    int dp[1001][1001] = {0};
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j <= m; j++) {
-            if (s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
-            else dp[i][j] = MAX(dp[i-1][j], dp[i][j-1]);
-        }
-    }
-    printf("%d\\n", dp[n][m]);
+
+    // TODO: Calculate and print the length of the longest common subsequence of s1 and s2
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <vector>
-#include <algorithm>
+
 using namespace std;
+
 int main() {
-    string s1, s2; if (!(cin >> s1 >> s2)) return 0;
-    int n = s1.size(), m = s2.size();
-    vector<vector<int>> dp(n+1, vector<int>(m+1, 0));
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j <= m; j++) {
-            if (s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
-            else dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
-        }
-    }
-    cout << dp[n][m] << "\\n";
+    string s1, s2;
+    if (!(cin >> s1 >> s2)) return 0;
+
+    // TODO: Calculate and print the length of the longest common subsequence of s1 and s2
+
     return 0;
 }`
     },
@@ -1855,65 +1664,55 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) return;
         String s = sc.next();
         int n = sc.nextInt();
         Set<String> dict = new HashSet<>();
-        for(int i = 0; i < n; i++) dict.add(sc.next());
-        boolean[] dp = new boolean[s.length() + 1];
-        dp[0] = true;
-        for(int i = 1; i <= s.length(); i++) {
-            for(int j = 0; j < i; j++) {
-                if(dp[j] && dict.contains(s.substring(j, i))) { dp[i] = true; break; }
-            }
+        for (int i = 0; i < n; i++) {
+            dict.add(sc.next());
         }
-        System.out.println(dp[s.length()] ? "true" : "false");
+
+        // TODO: Print "true" if s can be segmented using words in dict, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
-int inDict(char dict[100][100], int n, char* sub) {
-    for (int i = 0; i < n; i++) if (strcmp(dict[i], sub) == 0) return 1;
-    return 0;
-}
+
 int main() {
-    char s[1000], dict[100][100]; int n;
+    char s[1000], dict[100][100];
+    int n;
     if (scanf("%s %d", s, &n) != 2) return 0;
-    for (int i = 0; i < n; i++) scanf("%s", dict[i]);
-    int len = strlen(s), dp[1001] = {0};
-    dp[0] = 1;
-    for (int i = 1; i <= len; i++) {
-        for (int j = 0; j < i; j++) {
-            if (dp[j]) {
-                char sub[1000];
-                strncpy(sub, s + j, i - j);
-                sub[i - j] = '\\0';
-                if (inDict(dict, n, sub)) { dp[i] = 1; break; }
-            }
-        }
+    for (int i = 0; i < n; i++) {
+        scanf("%s", dict[i]);
     }
-    printf("%s\\n", dp[len] ? "true" : "false");
+
+    // TODO: Print "true" if s can be segmented using words in dict, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <vector>
 #include <unordered_set>
+
 using namespace std;
+
 int main() {
-    string s; int n; if (!(cin >> s >> n)) return 0;
+    string s;
+    int n;
+    if (!(cin >> s >> n)) return 0;
     unordered_set<string> dict;
-    for (int i = 0; i < n; i++) { string w; cin >> w; dict.insert(w); }
-    vector<bool> dp(s.size() + 1, false);
-    dp[0] = true;
-    for (int i = 1; i <= s.size(); i++) {
-        for (int j = 0; j < i; j++) {
-            if (dp[j] && dict.count(s.substr(j, i - j))) { dp[i] = true; break; }
-        }
+    for (int i = 0; i < n; i++) {
+        string w; cin >> w; dict.insert(w);
     }
-    cout << (dp[s.size()] ? "true" : "false") << "\\n";
+
+    // TODO: Print "true" if s can be segmented using words in dict, otherwise "false"
+
     return 0;
 }`
     },
@@ -1930,56 +1729,55 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
-    static int count = 0;
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
+        int[] candidates = new int[n];
+        for (int i = 0; i < n; i++) {
+            candidates[i] = sc.nextInt();
+        }
         int target = sc.nextInt();
-        backtrack(a, 0, target);
-        System.out.println(count);
-    }
-    static void backtrack(int[] a, int idx, int remain) {
-        if(remain == 0) { count++; return; }
-        if(remain < 0 || idx == a.length) return;
-        backtrack(a, idx, remain - a[idx]);
-        backtrack(a, idx + 1, remain);
+
+        // TODO: Count and print the number of unique combinations summing to target
+        
     }
 }`,
       C: `#include <stdio.h>
-int count = 0;
-void backtrack(int* a, int n, int idx, int remain) {
-    if (remain == 0) { count++; return; }
-    if (remain < 0 || idx == n) return;
-    backtrack(a, n, idx, remain - a[idx]);
-    backtrack(a, n, idx + 1, remain);
-}
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[100]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int target; scanf("%d", &target);
-    backtrack(a, n, 0, target);
-    printf("%d\\n", count);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[100];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    int target;
+    scanf("%d", &target);
+
+    // TODO: Count and print the number of unique combinations summing to target
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
-int countComb = 0;
-void backtrack(const vector<int>& a, int idx, int remain) {
-    if (remain == 0) { countComb++; return; }
-    if (remain < 0 || idx == a.size()) return;
-    backtrack(a, idx, remain - a[idx]);
-    backtrack(a, idx + 1, remain);
-}
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    int target; cin >> target;
-    backtrack(a, 0, target);
-    cout << countComb << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    int target;
+    cin >> target;
+
+    // TODO: Count and print the number of unique combinations summing to target
+
     return 0;
 }`
     },
@@ -1996,47 +1794,52 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int prev1 = 0, prev2 = 0;
-        for(int i = 0; i < n; i++) {
-            int x = sc.nextInt();
-            int curr = Math.max(prev1, prev2 + x);
-            prev2 = prev1;
-            prev1 = curr;
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println(prev1);
+
+        // TODO: Calculate and print max money you can rob without robbing adjacent houses
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int prev1 = 0, prev2 = 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
     for (int i = 0; i < n; i++) {
-        int x; scanf("%d", &x);
-        int curr = MAX(prev1, prev2 + x);
-        prev2 = prev1;
-        prev1 = curr;
+        scanf("%d", &a[i]);
     }
-    printf("%d\\n", prev1);
+
+    // TODO: Calculate and print max money you can rob without robbing adjacent houses
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    int prev1 = 0, prev2 = 0;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
     for (int i = 0; i < n; i++) {
-        int x; cin >> x;
-        int curr = max(prev1, prev2 + x);
-        prev2 = prev1;
-        prev1 = curr;
+        cin >> a[i];
     }
-    cout << prev1 << "\\n";
+
+    // TODO: Calculate and print max money you can rob without robbing adjacent houses
+
     return 0;
 }`
     },
@@ -2052,52 +1855,52 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        if(n == 1) { System.out.println(a[0]); return; }
-        System.out.println(Math.max(rob(a, 0, n - 2), rob(a, 1, n - 1)));
-    }
-    static int rob(int[] a, int start, int end) {
-        int p1 = 0, p2 = 0;
-        for(int i = start; i <= end; i++) {
-            int c = Math.max(p1, p2 + a[i]);
-            p2 = p1; p1 = c;
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        return p1;
+
+        // TODO: Calculate max money from houses arranged in a circle
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
-int rob(int* a, int start, int end) {
-    int p1 = 0, p2 = 0;
-    for (int i = start; i <= end; i++) { int c = MAX(p1, p2 + a[i]); p2 = p1; p1 = c; }
-    return p1;
-}
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    if (n == 1) { printf("%d\\n", a[0]); return 0; }
-    printf("%d\\n", MAX(rob(a, 0, n - 2), rob(a, 1, n - 1)));
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+
+    // TODO: Calculate max money from houses arranged in a circle
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
-int robLinear(const vector<int>& a, int start, int end) {
-    int p1 = 0, p2 = 0;
-    for (int i = start; i <= end; i++) { int c = max(p1, p2 + a[i]); p2 = p1; p1 = c; }
-    return p1;
-}
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    if (n == 1) { cout << a[0] << "\\n"; return 0; }
-    cout << max(robLinear(a, 0, n - 2), robLinear(a, 1, n - 1)) << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // TODO: Calculate max money from houses arranged in a circle
+
     return 0;
 }`
     },
@@ -2114,57 +1917,40 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) return;
         String s = sc.next();
-        int n = s.length();
-        int[] dp = new int[n + 1];
-        dp[0] = 1;
-        dp[1] = s.charAt(0) == '0' ? 0 : 1;
-        for(int i = 2; i <= n; i++) {
-            int one = Integer.parseInt(s.substring(i-1, i));
-            int two = Integer.parseInt(s.substring(i-2, i));
-            if(one >= 1) dp[i] += dp[i-1];
-            if(two >= 10 && two <= 26) dp[i] += dp[i-2];
-        }
-        System.out.println(dp[n]);
+
+        // TODO: Calculate and print the number of possible decoding ways
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
+
 int main() {
-    char s[1000]; if (scanf("%s", s) != 1) return 0;
-    int n = strlen(s), dp[1001] = {0};
-    dp[0] = 1;
-    dp[1] = s[0] == '0' ? 0 : 1;
-    for (int i = 2; i <= n; i++) {
-        int one = s[i-1] - '0';
-        int two = (s[i-2] - '0') * 10 + (s[i-1] - '0');
-        if (one >= 1) dp[i] += dp[i-1];
-        if (two >= 10 && two <= 26) dp[i] += dp[i-2];
-    }
-    printf("%d\\n", dp[n]);
+    char s[1000];
+    if (scanf("%s", s) != 1) return 0;
+
+    // TODO: Calculate and print the number of possible decoding ways
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <string>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    string s; if (!(cin >> s)) return 0;
-    int n = s.size();
-    vector<int> dp(n + 1, 0);
-    dp[0] = 1;
-    dp[1] = s[0] == '0' ? 0 : 1;
-    for (int i = 2; i <= n; i++) {
-        int one = s[i-1] - '0';
-        int two = stoi(s.substr(i-2, 2));
-        if (one >= 1) dp[i] += dp[i-1];
-        if (two >= 10 && two <= 26) dp[i] += dp[i-2];
-    }
-    cout << dp[n] << "\\n";
+    string s;
+    if (!(cin >> s)) return 0;
+
+    // TODO: Calculate and print the number of possible decoding ways
+
     return 0;
 }`
     },
@@ -2181,36 +1967,38 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int m = sc.nextInt(), n = sc.nextInt();
-        long ans = 1;
-        for(int i = 1; i < m; i++) {
-            ans = ans * (n - 1 + i) / i;
-        }
-        System.out.println(ans);
+        if (!sc.hasNextInt()) return;
+        int m = sc.nextInt();
+        int n = sc.nextInt();
+
+        // TODO: Compute and print the number of unique paths from top-left to bottom-right
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int m, n; if (scanf("%d %d", &m, &n) != 2) return 0;
-    long long ans = 1;
-    for (int i = 1; i < m; i++) {
-        ans = ans * (n - 1 + i) / i;
-    }
-    printf("%lld\\n", ans);
+    int m, n;
+    if (scanf("%d %d", &m, &n) != 2) return 0;
+
+    // TODO: Compute and print the number of unique paths from top-left to bottom-right
+
     return 0;
 }`,
       CPP: `#include <iostream>
+
 using namespace std;
+
 int main() {
-    int m, n; if (!(cin >> m >> n)) return 0;
-    long long ans = 1;
-    for (int i = 1; i < m; i++) {
-        ans = ans * (n - 1 + i) / i;
-    }
-    cout << ans << "\\n";
+    int m, n;
+    if (!(cin >> m >> n)) return 0;
+
+    // TODO: Compute and print the number of unique paths from top-left to bottom-right
+
     return 0;
 }`
     },
@@ -2227,44 +2015,52 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int reachable = 0;
-        for(int i = 0; i < n; i++) {
-            int x = sc.nextInt();
-            if(i > reachable) { System.out.println("false"); return; }
-            reachable = Math.max(reachable, i + x);
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
         }
-        System.out.println("true");
+
+        // TODO: Print "true" if you can reach the last index, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int reachable = 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
     for (int i = 0; i < n; i++) {
-        int x; scanf("%d", &x);
-        if (i > reachable) { printf("false\\n"); return 0; }
-        reachable = MAX(reachable, i + x);
+        scanf("%d", &a[i]);
     }
-    printf("true\\n");
+
+    // TODO: Print "true" if you can reach the last index, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    int reachable = 0;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
     for (int i = 0; i < n; i++) {
-        int x; cin >> x;
-        if (i > reachable) { cout << "false\\n"; return 0; }
-        reachable = max(reachable, i + x);
+        cin >> a[i];
     }
-    cout << "true\\n";
+
+    // TODO: Print "true" if you can reach the last index, otherwise "false"
+
     return 0;
 }`
     },
@@ -2280,62 +2076,59 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
         int[][] intervals = new int[n][2];
-        for(int i = 0; i < n; i++) { intervals[i][0] = sc.nextInt(); intervals[i][1] = sc.nextInt(); }
-        int ns = sc.nextInt(), ne = sc.nextInt();
-        List<int[]> res = new ArrayList<>();
-        int i = 0;
-        while(i < n && intervals[i][1] < ns) res.add(intervals[i++]);
-        while(i < n && intervals[i][0] <= ne) {
-            ns = Math.min(ns, intervals[i][0]);
-            ne = Math.max(ne, intervals[i][1]);
-            i++;
+        for (int i = 0; i < n; i++) {
+            intervals[i][0] = sc.nextInt();
+            intervals[i][1] = sc.nextInt();
         }
-        res.add(new int[]{ns, ne});
-        while(i < n) res.add(intervals[i++]);
-        System.out.println(res.size());
+        int newStart = sc.nextInt();
+        int newEnd = sc.nextInt();
+
+        // TODO: Insert new interval, merge overlaps, and print the resulting intervals count
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MIN(a,b) ((a)<(b)?(a):(b))
-#define MAX(a,b) ((a)>(b)?(a):(b))
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
     int s[100], e[100];
-    for (int i = 0; i < n; i++) scanf("%d %d", &s[i], &e[i]);
-    int ns, ne; scanf("%d %d", &ns, &ne);
-    int count = 0, i = 0;
-    while (i < n && e[i] < ns) { count++; i++; }
-    while (i < n && s[i] <= ne) { ns = MIN(ns, s[i]); ne = MAX(ne, e[i]); i++; }
-    count++;
-    while (i < n) { count++; i++; }
-    printf("%d\\n", count);
+    for (int i = 0; i < n; i++) {
+        scanf("%d %d", &s[i], &e[i]);
+    }
+    int ns, ne;
+    scanf("%d %d", &ns, &ne);
+
+    // TODO: Insert new interval, merge overlaps, and print the resulting intervals count
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
+    int n;
+    if (!(cin >> n)) return 0;
     vector<pair<int, int>> intervals(n);
-    for (int i = 0; i < n; i++) cin >> intervals[i].first >> intervals[i].second;
-    int ns, ne; cin >> ns >> ne;
-    vector<pair<int, int>> res;
-    int i = 0;
-    while (i < n && intervals[i].second < ns) res.push_back(intervals[i++]);
-    while (i < n && intervals[i].first <= ne) {
-        ns = min(ns, intervals[i].first);
-        ne = max(ne, intervals[i].second);
-        i++;
+    for (int i = 0; i < n; i++) {
+        cin >> intervals[i].first >> intervals[i].second;
     }
-    res.push_back({ns, ne});
-    while (i < n) res.push_back(intervals[i++]);
-    cout << res.size() << "\\n";
+    int ns, ne;
+    cin >> ns >> ne;
+
+    // TODO: Insert new interval, merge overlaps, and print the resulting intervals count
+
     return 0;
 }`
     },
@@ -2351,54 +2144,53 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[][] a = new int[n][2];
-        for(int i = 0; i < n; i++) { a[i][0] = sc.nextInt(); a[i][1] = sc.nextInt(); }
-        Arrays.sort(a, (x, y) -> Integer.compare(x[0], y[0]));
-        int count = 0, curEnd = -1;
-        for(int[] intv : a) {
-            if(curEnd == -1 || intv[0] > curEnd) { count++; curEnd = intv[1]; }
-            else curEnd = Math.max(curEnd, intv[1]);
+        int[][] intervals = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            intervals[i][0] = sc.nextInt();
+            intervals[i][1] = sc.nextInt();
         }
-        System.out.println(count);
+
+        // TODO: Merge overlapping intervals and print the final count of intervals
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
-typedef struct { int s, e; } Interval;
-int cmp(const void* a, const void* b) { return ((Interval*)a)->s - ((Interval*)b)->s; }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    Interval a[1000];
-    for (int i = 0; i < n; i++) scanf("%d %d", &a[i].s, &a[i].e);
-    qsort(a, n, sizeof(Interval), cmp);
-    int count = 0, curEnd = -1;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int s[1000], e[1000];
     for (int i = 0; i < n; i++) {
-        if (curEnd == -1 || a[i].s > curEnd) { count++; curEnd = a[i].e; }
-        else curEnd = MAX(curEnd, a[i].e);
+        scanf("%d %d", &s[i], &e[i]);
     }
-    printf("%d\\n", count);
+
+    // TODO: Merge overlapping intervals and print the final count of intervals
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<pair<int, int>> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i].first >> a[i].second;
-    sort(a.begin(), a.end());
-    int count = 0, curEnd = -1;
-    for (auto& p : a) {
-        if (curEnd == -1 || p.first > curEnd) { count++; curEnd = p.second; }
-        else curEnd = max(curEnd, p.second);
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<pair<int, int>> intervals(n);
+    for (int i = 0; i < n; i++) {
+        cin >> intervals[i].first >> intervals[i].second;
     }
-    cout << count << "\\n";
+
+    // TODO: Merge overlapping intervals and print the final count of intervals
+
     return 0;
 }`
     },
@@ -2414,52 +2206,53 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[][] a = new int[n][2];
-        for(int i = 0; i < n; i++) { a[i][0] = sc.nextInt(); a[i][1] = sc.nextInt(); }
-        Arrays.sort(a, (x, y) -> Integer.compare(x[1], y[1]));
-        int removed = 0, prevEnd = Integer.MIN_VALUE;
-        for(int[] intv : a) {
-            if(intv[0] >= prevEnd) prevEnd = intv[1];
-            else removed++;
+        int[][] intervals = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            intervals[i][0] = sc.nextInt();
+            intervals[i][1] = sc.nextInt();
         }
-        System.out.println(removed);
+
+        // TODO: Find minimum number of intervals to remove for zero overlap
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-typedef struct { int s, e; } Interval;
-int cmp(const void* a, const void* b) { return ((Interval*)a)->e - ((Interval*)b)->e; }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    Interval a[1000]; for (int i = 0; i < n; i++) scanf("%d %d", &a[i].s, &a[i].e);
-    qsort(a, n, sizeof(Interval), cmp);
-    int removed = 0, prevEnd = -2e9;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int s[1000], e[1000];
     for (int i = 0; i < n; i++) {
-        if (a[i].s >= prevEnd) prevEnd = a[i].e;
-        else removed++;
+        scanf("%d %d", &s[i], &e[i]);
     }
-    printf("%d\\n", removed);
+
+    // TODO: Find minimum number of intervals to remove for zero overlap
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<pair<int, int>> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i].second >> a[i].first; // store as end, start
-    sort(a.begin(), a.end());
-    int removed = 0, prevEnd = -2e9;
-    for (auto& p : a) {
-        if (p.second >= prevEnd) prevEnd = p.first;
-        else removed++;
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<pair<int, int>> intervals(n);
+    for (int i = 0; i < n; i++) {
+        cin >> intervals[i].first >> intervals[i].second;
     }
-    cout << removed << "\\n";
+
+    // TODO: Find minimum number of intervals to remove for zero overlap
+
     return 0;
 }`
     },
@@ -2475,46 +2268,53 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[][] a = new int[n][2];
-        for(int i = 0; i < n; i++) { a[i][0] = sc.nextInt(); a[i][1] = sc.nextInt(); }
-        Arrays.sort(a, (x, y) -> Integer.compare(x[0], y[0]));
-        for(int i = 1; i < n; i++) {
-            if(a[i][0] < a[i-1][1]) { System.out.println("false"); return; }
+        int[][] intervals = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            intervals[i][0] = sc.nextInt();
+            intervals[i][1] = sc.nextInt();
         }
-        System.out.println("true");
+
+        // TODO: Print "true" if all meetings can be attended without overlap, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-typedef struct { int s, e; } Interval;
-int cmp(const void* a, const void* b) { return ((Interval*)a)->s - ((Interval*)b)->s; }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    Interval a[1000]; for (int i = 0; i < n; i++) scanf("%d %d", &a[i].s, &a[i].e);
-    qsort(a, n, sizeof(Interval), cmp);
-    for (int i = 1; i < n; i++) {
-        if (a[i].s < a[i-1].e) { printf("false\\n"); return 0; }
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int s[1000], e[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d %d", &s[i], &e[i]);
     }
-    printf("true\\n");
+
+    // TODO: Print "true" if all meetings can be attended without overlap, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<pair<int, int>> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i].first >> a[i].second;
-    sort(a.begin(), a.end());
-    for (int i = 1; i < n; i++) {
-        if (a[i].first < a[i-1].second) { cout << "false\\n"; return 0; }
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<pair<int, int>> intervals(n);
+    for (int i = 0; i < n; i++) {
+        cin >> intervals[i].first >> intervals[i].second;
     }
-    cout << "true\\n";
+
+    // TODO: Print "true" if all meetings can be attended without overlap, otherwise "false"
+
     return 0;
 }`
     },
@@ -2530,54 +2330,54 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] starts = new int[n], ends = new int[n];
-        for(int i = 0; i < n; i++) { starts[i] = sc.nextInt(); ends[i] = sc.nextInt(); }
-        Arrays.sort(starts); Arrays.sort(ends);
-        int rooms = 0, endIdx = 0;
-        for(int i = 0; i < n; i++) {
-            if(starts[i] < ends[endIdx]) rooms++;
-            else endIdx++;
+        int[] starts = new int[n];
+        int[] ends = new int[n];
+        for (int i = 0; i < n; i++) {
+            starts[i] = sc.nextInt();
+            ends[i] = sc.nextInt();
         }
-        System.out.println(rooms);
+
+        // TODO: Find and print the minimum number of conference rooms required
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-int cmp(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
     int starts[1000], ends[1000];
-    for (int i = 0; i < n; i++) scanf("%d %d", &starts[i], &ends[i]);
-    qsort(starts, n, sizeof(int), cmp);
-    qsort(ends, n, sizeof(int), cmp);
-    int rooms = 0, endIdx = 0;
     for (int i = 0; i < n; i++) {
-        if (starts[i] < ends[endIdx]) rooms++;
-        else endIdx++;
+        scanf("%d %d", &starts[i], &ends[i]);
     }
-    printf("%d\\n", rooms);
+
+    // TODO: Find and print the minimum number of conference rooms required
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
+    int n;
+    if (!(cin >> n)) return 0;
     vector<int> starts(n), ends(n);
-    for (int i = 0; i < n; i++) cin >> starts[i] >> ends[i];
-    sort(starts.begin(), starts.end());
-    sort(ends.begin(), ends.end());
-    int rooms = 0, endIdx = 0;
     for (int i = 0; i < n; i++) {
-        if (starts[i] < ends[endIdx]) rooms++;
-        else endIdx++;
+        cin >> starts[i] >> ends[i];
     }
-    cout << rooms << "\\n";
+
+    // TODO: Find and print the minimum number of conference rooms required
+
     return 0;
 }`
     },
@@ -2589,36 +2389,55 @@ int main() {
   // 17. Reverse Linked List
   {
     title: "Reverse Linked List",
-    description: "Given the head of a singly linked list with N integers, reverse the list and print the reversed elements.",
+    description: "Given the head of a singly linked list with N integers, reverse the list and print the reversed elements separated by space.",
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
         int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        for(int i = n - 1; i >= 0; i--) System.out.print(a[i] + (i == 0 ? "" : " "));
-        System.out.println();
+        for (int i = 0; i < n; i++) {
+            a[i] = sc.nextInt();
+        }
+
+        // TODO: Reverse the linked list elements and print them space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
+#include <stdlib.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    for (int i = n - 1; i >= 0; i--) printf("%d%s", a[i], i == 0 ? "" : " ");
-    printf("\\n");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+
+    // TODO: Reverse the linked list elements and print them space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    for (int i = n - 1; i >= 0; i--) cout << a[i] << (i == 0 ? "" : " ");
-    cout << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // TODO: Reverse the linked list elements and print them space-separated
+
     return 0;
 }`
     },
@@ -2634,30 +2453,55 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        for(int i = 0; i < n; i++) sc.nextInt();
+        int[] vals = new int[n];
+        for (int i = 0; i < n; i++) {
+            vals[i] = sc.nextInt();
+        }
         int pos = sc.nextInt();
-        System.out.println(pos != -1 ? "true" : "false");
+
+        // TODO: Print "true" if the linked list has a cycle, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    for (int i = 0; i < n; i++) { int x; scanf("%d", &x); }
-    int pos; scanf("%d", &pos);
-    printf("%s\\n", pos != -1 ? "true" : "false");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int vals[1000];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &vals[i]);
+    }
+    int pos;
+    scanf("%d", &pos);
+
+    // TODO: Print "true" if the linked list has a cycle, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    for (int i = 0; i < n; i++) { int x; cin >> x; }
-    int pos; cin >> pos;
-    cout << (pos != -1 ? "true" : "false") << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> vals(n);
+    for (int i = 0; i < n; i++) {
+        cin >> vals[i];
+    }
+    int pos;
+    cin >> pos;
+
+    // TODO: Print "true" if the linked list has a cycle, otherwise "false"
+
     return 0;
 }`
     },
@@ -2673,59 +2517,55 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n]; for(int i = 0; i < n; i++) a[i] = sc.nextInt();
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) a[i] = sc.nextInt();
         int m = sc.nextInt();
-        int[] b = new int[m]; for(int i = 0; i < m; i++) b[i] = sc.nextInt();
-        int i = 0, j = 0;
-        List<Integer> res = new ArrayList<>();
-        while(i < n && j < m) {
-            if(a[i] <= b[j]) res.add(a[i++]);
-            else res.add(b[j++]);
-        }
-        while(i < n) res.add(a[i++]);
-        while(j < m) res.add(b[j++]);
-        for(int k = 0; k < res.size(); k++) System.out.print(res.get(k) + (k == res.size()-1 ? "" : " "));
-        System.out.println();
+        int[] b = new int[m];
+        for (int i = 0; i < m; i++) b[i] = sc.nextInt();
+
+        // TODO: Merge the two sorted arrays into one sorted sequence and print space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int m; scanf("%d", &m);
-    int b[1000]; for (int i = 0; i < m; i++) scanf("%d", &b[i]);
-    int i = 0, j = 0;
-    while (i < n && j < m) {
-        if (a[i] <= b[j]) printf("%d ", a[i++]);
-        else printf("%d ", b[j++]);
-    }
-    while (i < n) printf("%d%s", a[i++], i == n && j == m ? "" : " ");
-    while (j < m) printf("%d%s", b[j++], j == m ? "" : " ");
-    printf("\\n");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+    int m;
+    scanf("%d", &m);
+    int b[1000];
+    for (int i = 0; i < m; i++) scanf("%d", &b[i]);
+
+    // TODO: Merge the two sorted arrays into one sorted sequence and print space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    int m; cin >> m;
-    vector<int> b(m); for (int i = 0; i < m; i++) cin >> b[i];
-    int i = 0, j = 0;
-    vector<int> res;
-    while (i < n && j < m) {
-        if (a[i] <= b[j]) res.push_back(a[i++]);
-        else res.push_back(b[j++]);
-    }
-    while (i < n) res.push_back(a[i++]);
-    while (j < m) res.push_back(b[j++]);
-    for (int k = 0; k < res.size(); k++) cout << res[k] << (k == res.size()-1 ? "" : " ");
-    cout << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    int m;
+    cin >> m;
+    vector<int> b(m);
+    for (int i = 0; i < m; i++) cin >> b[i];
+
+    // TODO: Merge the two sorted arrays into one sorted sequence and print space-separated
+
     return 0;
 }`
     },
@@ -2741,52 +2581,58 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int k = sc.nextInt();
-        PriorityQueue<Integer> pq = new PriorityQueue<>();
-        for(int i = 0; i < k; i++) {
+        List<List<Integer>> lists = new ArrayList<>();
+        for (int i = 0; i < k; i++) {
             int len = sc.nextInt();
-            for(int j = 0; j < len; j++) pq.add(sc.nextInt());
+            List<Integer> list = new ArrayList<>();
+            for (int j = 0; j < len; j++) list.add(sc.nextInt());
+            lists.add(list);
         }
-        while(!pq.isEmpty()) {
-            System.out.print(pq.poll() + (pq.isEmpty() ? "" : " "));
-        }
-        System.out.println();
+
+        // TODO: Merge all k sorted lists using a PriorityQueue / min-heap and print space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-int cmp(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
-    int k; if (scanf("%d", &k) != 1) return 0;
+    int k;
+    if (scanf("%d", &k) != 1) return 0;
     int all[5000], total = 0;
     for (int i = 0; i < k; i++) {
         int len; scanf("%d", &len);
         for (int j = 0; j < len; j++) scanf("%d", &all[total++]);
     }
-    qsort(all, total, sizeof(int), cmp);
-    for (int i = 0; i < total; i++) printf("%d%s", all[i], i == total - 1 ? "" : " ");
-    printf("\\n");
+
+    // TODO: Merge all k sorted lists into a single sorted array and print space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <queue>
+
 using namespace std;
+
 int main() {
-    int k; if (!(cin >> k)) return 0;
-    priority_queue<int, vector<int>, greater<int>> pq;
+    int k;
+    if (!(cin >> k)) return 0;
+    vector<vector<int>> lists(k);
     for (int i = 0; i < k; i++) {
         int len; cin >> len;
-        for (int j = 0; j < len; j++) { int x; cin >> x; pq.push(x); }
+        lists[i].resize(len);
+        for (int j = 0; j < len; j++) cin >> lists[i][j];
     }
-    while (!pq.empty()) {
-        cout << pq.top(); pq.pop();
-        if (!pq.empty()) cout << " ";
-    }
-    cout << "\\n";
+
+    // TODO: Merge all k sorted lists using a priority_queue and print space-separated
+
     return 0;
 }`
     },
@@ -2801,47 +2647,49 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int m = sc.nextInt();
         int[] a = new int[m];
-        for(int i = 0; i < m; i++) a[i] = sc.nextInt();
+        for (int i = 0; i < m; i++) a[i] = sc.nextInt();
         int n = sc.nextInt();
-        int removeIdx = m - n;
-        for(int i = 0; i < m; i++) {
-            if(i == removeIdx) continue;
-            System.out.print(a[i] + " ");
-        }
-        System.out.println();
+
+        // TODO: Remove the n-th node from end of the list and print remaining elements space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int m; if (scanf("%d", &m) != 1) return 0;
-    int a[1000]; for (int i = 0; i < m; i++) scanf("%d", &a[i]);
-    int n; scanf("%d", &n);
-    int removeIdx = m - n;
-    for (int i = 0; i < m; i++) {
-        if (i == removeIdx) continue;
-        printf("%d ", a[i]);
-    }
-    printf("\\n");
+    int m;
+    if (scanf("%d", &m) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < m; i++) scanf("%d", &a[i]);
+    int n;
+    scanf("%d", &n);
+
+    // TODO: Remove the n-th node from end of the list and print remaining elements space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int m; if (!(cin >> m)) return 0;
-    vector<int> a(m); for (int i = 0; i < m; i++) cin >> a[i];
-    int n; cin >> n;
-    int removeIdx = m - n;
-    for (int i = 0; i < m; i++) {
-        if (i == removeIdx) continue;
-        cout << a[i] << " ";
-    }
-    cout << "\\n";
+    int m;
+    if (!(cin >> m)) return 0;
+    vector<int> a(m);
+    for (int i = 0; i < m; i++) cin >> a[i];
+    int n;
+    cin >> n;
+
+    // TODO: Remove the n-th node from end of the list and print remaining elements space-separated
+
     return 0;
 }`
     },
@@ -2856,47 +2704,44 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
         int[] a = new int[n];
-        for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        int l = 0, r = n - 1;
-        while(l <= r) {
-            if(l == r) { System.out.print(a[l] + " "); break; }
-            System.out.print(a[l] + " " + a[r] + " ");
-            l++; r--;
-        }
-        System.out.println();
+        for (int i = 0; i < n; i++) a[i] = sc.nextInt();
+
+        // TODO: Reorder the list elements interleaving front and back and print space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int l = 0, r = n - 1;
-    while (l <= r) {
-        if (l == r) { printf("%d ", a[l]); break; }
-        printf("%d %d ", a[l], a[r]);
-        l++; r--;
-    }
-    printf("\\n");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+
+    // TODO: Reorder the list elements interleaving front and back and print space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    int l = 0, r = n - 1;
-    while (l <= r) {
-        if (l == r) { cout << a[l] << " "; break; }
-        cout << a[l] << " " << a[r] << " ";
-        l++; r--;
-    }
-    cout << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+
+    // TODO: Reorder the list elements interleaving front and back and print space-separated
+
     return 0;
 }`
     },
@@ -2912,66 +2757,52 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        Map<Integer, Integer> map = new HashMap<>();
-        for(int i = 0; i < n; i++) {
-            int x = sc.nextInt();
-            map.put(x, map.getOrDefault(x, 0) + 1);
-        }
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) a[i] = sc.nextInt();
         int k = sc.nextInt();
-        List<Map.Entry<Integer, Integer>> list = new ArrayList<>(map.entrySet());
-        list.sort((a, b) -> b.getValue().compareTo(a.getValue()));
-        List<Integer> res = new ArrayList<>();
-        for(int i = 0; i < k; i++) res.add(list.get(i).getKey());
-        Collections.sort(res);
-        for(int i = 0; i < k; i++) System.out.print(res.get(i) + (i == k-1 ? "" : " "));
-        System.out.println();
+
+        // TODO: Find k most frequent elements and print them in ascending order
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-typedef struct { int val, count; } Pair;
-int cmp(const void* a, const void* b) { return ((Pair*)b)->count - ((Pair*)a)->count; }
-int cmpVal(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int k; scanf("%d", &k);
-    Pair pairs[1000]; int pSize = 0;
-    for (int i = 0; i < n; i++) {
-        int found = -1;
-        for (int j = 0; j < pSize; j++) if (pairs[j].val == a[i]) { found = j; break; }
-        if (found != -1) pairs[found].count++;
-        else { pairs[pSize].val = a[i]; pairs[pSize].count = 1; pSize++; }
-    }
-    qsort(pairs, pSize, sizeof(Pair), cmp);
-    int res[100]; for (int i = 0; i < k; i++) res[i] = pairs[i].val;
-    qsort(res, k, sizeof(int), cmpVal);
-    for (int i = 0; i < k; i++) printf("%d%s", res[i], i == k-1 ? "" : " ");
-    printf("\\n");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+    int k;
+    scanf("%d", &k);
+
+    // TODO: Find k most frequent elements and print them in ascending order
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    unordered_map<int, int> mp;
-    for (int i = 0; i < n; i++) { int x; cin >> x; mp[x]++; }
-    int k; cin >> k;
-    vector<pair<int, int>> v;
-    for (auto& p : mp) v.push_back({p.second, p.first});
-    sort(v.rbegin(), v.rend());
-    vector<int> res;
-    for (int i = 0; i < k; i++) res.push_back(v[i].second);
-    sort(res.begin(), res.end());
-    for (int i = 0; i < k; i++) cout << res[i] << (i == k-1 ? "" : " ");
-    cout << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    int k;
+    cin >> k;
+
+    // TODO: Find k most frequent elements and print them in ascending order
+
     return 0;
 }`
     },
@@ -2987,43 +2818,47 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        List<Double> list = new ArrayList<>();
-        for(int i = 0; i < n; i++) list.add((double)sc.nextInt());
-        Collections.sort(list);
-        double median = 0;
-        if(n % 2 == 1) median = list.get(n / 2);
-        else median = (list.get(n / 2 - 1) + list.get(n / 2)) / 2.0;
-        System.out.printf("%.1f\\n", median);
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) a[i] = sc.nextInt();
+
+        // TODO: Compute and print the median with 1 decimal place (e.g. 2.0 or 1.5)
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-int cmp(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    qsort(a, n, sizeof(int), cmp);
-    double med = 0;
-    if (n % 2 == 1) med = a[n / 2];
-    else med = (a[n / 2 - 1] + a[n / 2]) / 2.0;
-    printf("%.1f\\n", med);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+
+    // TODO: Compute and print the median with 1 decimal place (e.g. 2.0 or 1.5)
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <iomanip>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    sort(a.begin(), a.end());
-    double med = (n % 2 == 1) ? a[n / 2] : (a[n / 2 - 1] + a[n / 2]) / 2.0;
-    cout << fixed << setprecision(1) << med << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+
+    // TODO: Compute and print the median with 1 decimal place (e.g. 2.0 or 1.5)
+
     return 0;
 }`
     },
@@ -3039,38 +2874,51 @@ int main() {
     marks: 35,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        PriorityQueue<Integer> pq = new PriorityQueue<>();
-        for(int i = 0; i < n; i++) {
-            pq.add(sc.nextInt());
-            if(pq.size() > (n - sc.nextInt() + 1)) {} // handled below
-        }
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) a[i] = sc.nextInt();
+        int k = sc.nextInt();
+
+        // TODO: Find and print the k-th largest element in the array
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-int cmp(const void* a, const void* b) { return (*(int*)b - *(int*)a); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int k; scanf("%d", &k);
-    qsort(a, n, sizeof(int), cmp);
-    printf("%d\\n", a[k-1]);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+    int k;
+    scanf("%d", &k);
+
+    // TODO: Find and print the k-th largest element in the array
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    int k; cin >> k;
-    sort(a.rbegin(), a.rend());
-    cout << a[k-1] << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    int k;
+    cin >> k;
+
+    // TODO: Find and print the k-th largest element in the array
+
     return 0;
 }`
     },
@@ -3081,7 +2929,7 @@ int main() {
   }
 ];
 
-// 25 Problems for Category C (Tree, Graph, Matrix)
+// 25 Problems for Category C (Tree, Graph, Matrix) with clean SKELETON starter codes
 const CATEGORY_C: ProblemDef[] = [
   // 1. Maximum Depth of Binary Tree
   {
@@ -3090,30 +2938,44 @@ const CATEGORY_C: ProblemDef[] = [
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        if(n == 0) { System.out.println(0); return; }
-        int depth = (int)(Math.log(n) / Math.log(2)) + 1;
-        System.out.println(depth);
+        int[] tree = new int[n];
+        for (int i = 0; i < n; i++) tree[i] = sc.nextInt();
+
+        // TODO: Calculate and print the maximum depth of the binary tree
+        
     }
 }`,
       C: `#include <stdio.h>
-#include <math.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1 || n == 0) { printf("0\\n"); return 0; }
-    int depth = (int)(log(n) / log(2)) + 1;
-    printf("%d\\n", depth);
+    int n;
+    if (scanf("%d", &n) != 1 || n == 0) { printf("0\\n"); return 0; }
+    int tree[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &tree[i]);
+
+    // TODO: Calculate and print the maximum depth of the binary tree
+
     return 0;
 }`,
       CPP: `#include <iostream>
-#include <cmath>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n) || n == 0) { cout << 0 << "\\n"; return 0; }
-    int depth = (int)(log(n) / log(2)) + 1;
-    cout << depth << "\\n";
+    int n;
+    if (!(cin >> n) || n == 0) { cout << 0 << "\\n"; return 0; }
+    vector<int> tree(n);
+    for (int i = 0; i < n; i++) cin >> tree[i];
+
+    // TODO: Calculate and print the maximum depth of the binary tree
+
     return 0;
 }`
     },
@@ -3129,36 +2991,47 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n]; for(int i = 0; i < n; i++) a[i] = sc.nextInt();
+        int[] a = new int[n]; for (int i = 0; i < n; i++) a[i] = sc.nextInt();
         int m = sc.nextInt();
-        int[] b = new int[m]; for(int i = 0; i < m; i++) b[i] = sc.nextInt();
-        System.out.println(Arrays.equals(a, b) ? "true" : "false");
+        int[] b = new int[m]; for (int i = 0; i < m; i++) b[i] = sc.nextInt();
+
+        // TODO: Print "true" if tree a and tree b are structurally identical and have same values, else "false"
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
     int a[100]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
     int m; scanf("%d", &m);
     int b[100]; for (int i = 0; i < m; i++) scanf("%d", &b[i]);
-    if (n != m) { printf("false\\n"); return 0; }
-    for (int i = 0; i < n; i++) if (a[i] != b[i]) { printf("false\\n"); return 0; }
-    printf("true\\n");
+
+    // TODO: Print "true" if tree a and tree b are structurally identical and have same values, else "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
+    int n;
+    if (!(cin >> n)) return 0;
     vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
     int m; cin >> m;
     vector<int> b(m); for (int i = 0; i < m; i++) cin >> b[i];
-    cout << (a == b ? "true" : "false") << "\\n";
+
+    // TODO: Print "true" if tree a and tree b are structurally identical and have same values, else "false"
+
     return 0;
 }`
     },
@@ -3174,27 +3047,44 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        for(int i = 0; i < n; i++) sc.nextInt();
-        System.out.println(n);
+        int[] tree = new int[n];
+        for (int i = 0; i < n; i++) tree[i] = sc.nextInt();
+
+        // TODO: Invert the binary tree and print the inverted tree size
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    for (int i = 0; i < n; i++) { int x; scanf("%d", &x); }
-    printf("%d\\n", n);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int tree[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &tree[i]);
+
+    // TODO: Invert the binary tree and print the inverted tree size
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    for (int i = 0; i < n; i++) { int x; cin >> x; }
-    cout << n << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> tree(n);
+    for (int i = 0; i < n; i++) cin >> tree[i];
+
+    // TODO: Invert the binary tree and print the inverted tree size
+
     return 0;
 }`
     },
@@ -3210,44 +3100,44 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int maxVal = Integer.MIN_VALUE, sum = 0;
-        for(int i = 0; i < n; i++) {
-            int x = sc.nextInt();
-            maxVal = Math.max(maxVal, x);
-            if(x > 0) sum += x;
-        }
-        System.out.println(sum > 0 ? sum : maxVal);
+        int[] nodes = new int[n];
+        for (int i = 0; i < n; i++) nodes[i] = sc.nextInt();
+
+        // TODO: Compute and print the maximum path sum in the binary tree
+        
     }
 }`,
       C: `#include <stdio.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int maxVal = -2e9, sum = 0;
-    for (int i = 0; i < n; i++) {
-        int x; scanf("%d", &x);
-        maxVal = MAX(maxVal, x);
-        if (x > 0) sum += x;
-    }
-    printf("%d\\n", sum > 0 ? sum : maxVal);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int nodes[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &nodes[i]);
+
+    // TODO: Compute and print the maximum path sum in the binary tree
+
     return 0;
 }`,
       CPP: `#include <iostream>
-#include <algorithm>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    int maxVal = -2e9, sum = 0;
-    for (int i = 0; i < n; i++) {
-        int x; cin >> x;
-        maxVal = max(maxVal, x);
-        if (x > 0) sum += x;
-    }
-    cout << (sum > 0 ? sum : maxVal) << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> nodes(n);
+    for (int i = 0; i < n; i++) cin >> nodes[i];
+
+    // TODO: Compute and print the maximum path sum in the binary tree
+
     return 0;
 }`
     },
@@ -3263,27 +3153,44 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        if(n == 0) { System.out.println(0); return; }
-        System.out.println((int)(Math.log(n) / Math.log(2)) + 1);
+        int[] nodes = new int[n];
+        for (int i = 0; i < n; i++) nodes[i] = sc.nextInt();
+
+        // TODO: Compute and print the number of levels in the binary tree
+        
     }
 }`,
       C: `#include <stdio.h>
-#include <math.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1 || n == 0) { printf("0\\n"); return 0; }
-    printf("%d\\n", (int)(log(n)/log(2)) + 1);
+    int n;
+    if (scanf("%d", &n) != 1 || n == 0) { printf("0\\n"); return 0; }
+    int nodes[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &nodes[i]);
+
+    // TODO: Compute and print the number of levels in the binary tree
+
     return 0;
 }`,
       CPP: `#include <iostream>
-#include <cmath>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n) || n == 0) { cout << 0 << "\\n"; return 0; }
-    cout << (int)(log(n)/log(2)) + 1 << "\\n";
+    int n;
+    if (!(cin >> n) || n == 0) { cout << 0 << "\\n"; return 0; }
+    vector<int> nodes(n);
+    for (int i = 0; i < n; i++) cin >> nodes[i];
+
+    // TODO: Compute and print the number of levels in the binary tree
+
     return 0;
 }`
     },
@@ -3298,24 +3205,44 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        System.out.println(n);
+        int[] nodes = new int[n];
+        for (int i = 0; i < n; i++) nodes[i] = sc.nextInt();
+
+        // TODO: Serialize tree to string and deserialize back, then print node count
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    printf("%d\\n", n);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int nodes[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &nodes[i]);
+
+    // TODO: Serialize tree to string and deserialize back, then print node count
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    cout << n << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> nodes(n);
+    for (int i = 0; i < n; i++) cin >> nodes[i];
+
+    // TODO: Serialize tree to string and deserialize back, then print node count
+
     return 0;
 }`
     },
@@ -3330,33 +3257,47 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        for(int i = 0; i < n; i++) sc.nextInt();
+        int[] root = new int[n]; for (int i = 0; i < n; i++) root[i] = sc.nextInt();
         int m = sc.nextInt();
-        for(int i = 0; i < m; i++) sc.nextInt();
-        System.out.println(m <= n ? "true" : "false");
+        int[] subRoot = new int[m]; for (int i = 0; i < m; i++) subRoot[i] = sc.nextInt();
+
+        // TODO: Print "true" if subRoot is a subtree of root, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    for (int i = 0; i < n; i++) { int x; scanf("%d", &x); }
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int root[100]; for (int i = 0; i < n; i++) scanf("%d", &root[i]);
     int m; scanf("%d", &m);
-    for (int i = 0; i < m; i++) { int x; scanf("%d", &x); }
-    printf("%s\\n", m <= n ? "true" : "false");
+    int subRoot[100]; for (int i = 0; i < m; i++) scanf("%d", &subRoot[i]);
+
+    // TODO: Print "true" if subRoot is a subtree of root, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    for (int i = 0; i < n; i++) { int x; cin >> x; }
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> root(n); for (int i = 0; i < n; i++) cin >> root[i];
     int m; cin >> m;
-    for (int i = 0; i < m; i++) { int x; cin >> x; }
-    cout << (m <= n ? "true" : "false") << "\\n";
+    vector<int> subRoot(m); for (int i = 0; i < m; i++) cin >> subRoot[i];
+
+    // TODO: Print "true" if subRoot is a subtree of root, otherwise "false"
+
     return 0;
 }`
     },
@@ -3371,27 +3312,46 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int rootVal = sc.nextInt();
-        System.out.println(rootVal);
+        int[] preorder = new int[n]; for (int i = 0; i < n; i++) preorder[i] = sc.nextInt();
+        int[] inorder = new int[n]; for (int i = 0; i < n; i++) inorder[i] = sc.nextInt();
+
+        // TODO: Construct binary tree and print the root node value
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int rootVal; scanf("%d", &rootVal);
-    printf("%d\\n", rootVal);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int preorder[100], inorder[100];
+    for (int i = 0; i < n; i++) scanf("%d", &preorder[i]);
+    for (int i = 0; i < n; i++) scanf("%d", &inorder[i]);
+
+    // TODO: Construct binary tree and print the root node value
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    int rootVal; cin >> rootVal;
-    cout << rootVal << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> preorder(n), inorder(n);
+    for (int i = 0; i < n; i++) cin >> preorder[i];
+    for (int i = 0; i < n; i++) cin >> inorder[i];
+
+    // TODO: Construct binary tree and print the root node value
+
     return 0;
 }`
     },
@@ -3406,34 +3366,44 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n]; for(int i = 0; i < n; i++) a[i] = sc.nextInt();
-        boolean valid = true;
-        if(n >= 3 && (a[1] >= a[0] || a[2] <= a[0])) valid = false;
-        System.out.println(valid ? "true" : "false");
+        int[] nodes = new int[n];
+        for (int i = 0; i < n; i++) nodes[i] = sc.nextInt();
+
+        // TODO: Print "true" if the tree is a valid BST, otherwise "false"
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[100]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int valid = 1;
-    if (n >= 3 && (a[1] >= a[0] || a[2] <= a[0])) valid = 0;
-    printf("%s\\n", valid ? "true" : "false");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int nodes[100];
+    for (int i = 0; i < n; i++) scanf("%d", &nodes[i]);
+
+    // TODO: Print "true" if the tree is a valid BST, otherwise "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    bool valid = true;
-    if (n >= 3 && (a[1] >= a[0] || a[2] <= a[0])) valid = false;
-    cout << (valid ? "true" : "false") << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> nodes(n);
+    for (int i = 0; i < n; i++) cin >> nodes[i];
+
+    // TODO: Print "true" if the tree is a valid BST, otherwise "false"
+
     return 0;
 }`
     },
@@ -3449,37 +3419,51 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[] a = new int[n]; for(int i = 0; i < n; i++) a[i] = sc.nextInt();
+        int[] nodes = new int[n];
+        for (int i = 0; i < n; i++) nodes[i] = sc.nextInt();
         int k = sc.nextInt();
-        Arrays.sort(a);
-        System.out.println(a[k - 1]);
+
+        // TODO: Find and print the k-th smallest element in the BST
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-int cmp(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    int k; scanf("%d", &k);
-    qsort(a, n, sizeof(int), cmp);
-    printf("%d\\n", a[k - 1]);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int nodes[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &nodes[i]);
+    int k;
+    scanf("%d", &k);
+
+    // TODO: Find and print the k-th smallest element in the BST
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<int> a(n); for (int i = 0; i < n; i++) cin >> a[i];
-    int k; cin >> k;
-    sort(a.begin(), a.end());
-    cout << a[k - 1] << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> nodes(n);
+    for (int i = 0; i < n; i++) cin >> nodes[i];
+    int k;
+    cin >> k;
+
+    // TODO: Find and print the k-th smallest element in the BST
+
     return 0;
 }`
     },
@@ -3495,36 +3479,39 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int root = sc.nextInt();
-        int p = sc.nextInt(), q = sc.nextInt();
-        if(p > q) { int t = p; p = q; q = t; }
-        if(root >= p && root <= q) System.out.println(root);
-        else if(root > q) System.out.println(p);
-        else System.out.println(q);
+        if (!sc.hasNextInt()) return;
+        int rootVal = sc.nextInt();
+        int p = sc.nextInt();
+        int q = sc.nextInt();
+
+        // TODO: Find and print the lowest common ancestor (LCA) value of p and q
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int root, p, q;
-    if (scanf("%d %d %d", &root, &p, &q) != 3) return 0;
-    if (p > q) { int t = p; p = q; q = t; }
-    if (root >= p && root <= q) printf("%d\\n", root);
-    else if (root > q) printf("%d\\n", p);
-    else printf("%d\\n", q);
+    int rootVal, p, q;
+    if (scanf("%d %d %d", &rootVal, &p, &q) != 3) return 0;
+
+    // TODO: Find and print the lowest common ancestor (LCA) value of p and q
+
     return 0;
 }`,
       CPP: `#include <iostream>
-#include <algorithm>
+
 using namespace std;
+
 int main() {
-    int root, p, q; if (!(cin >> root >> p >> q)) return 0;
-    if (p > q) swap(p, q);
-    if (root >= p && root <= q) cout << root << "\\n";
-    else if (root > q) cout << p << "\\n";
-    else cout << q << "\\n";
+    int rootVal, p, q;
+    if (!(cin >> rootVal >> p >> q)) return 0;
+
+    // TODO: Find and print the lowest common ancestor (LCA) value of p and q
+
     return 0;
 }`
     },
@@ -3540,42 +3527,51 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
         List<String> words = new ArrayList<>();
-        for(int i = 0; i < n; i++) words.add(sc.next());
+        for (int i = 0; i < n; i++) words.add(sc.next());
         String prefix = sc.next();
-        boolean found = false;
-        for(String w : words) if(w.startsWith(prefix)) { found = true; break; }
-        System.out.println(found ? "true" : "false");
+
+        // TODO: Implement Trie to insert words and print "true" if prefix exists, else "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    char words[100][100]; for (int i = 0; i < n; i++) scanf("%s", words[i]);
-    char prefix[100]; scanf("%s", prefix);
-    int found = 0, pLen = strlen(prefix);
-    for (int i = 0; i < n; i++) {
-        if (strncmp(words[i], prefix, pLen) == 0) { found = 1; break; }
-    }
-    printf("%s\\n", found ? "true" : "false");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    char words[100][100];
+    for (int i = 0; i < n; i++) scanf("%s", words[i]);
+    char prefix[100];
+    scanf("%s", prefix);
+
+    // TODO: Implement Trie to insert words and print "true" if prefix exists, else "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <string>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<string> words(n); for (int i = 0; i < n; i++) cin >> words[i];
-    string prefix; cin >> prefix;
-    bool found = false;
-    for (auto& w : words) if (w.rfind(prefix, 0) == 0) { found = true; break; }
-    cout << (found ? "true" : "false") << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<string> words(n);
+    for (int i = 0; i < n; i++) cin >> words[i];
+    string prefix;
+    cin >> prefix;
+
+    // TODO: Implement Trie to insert words and print "true" if prefix exists, else "false"
+
     return 0;
 }`
     },
@@ -3591,38 +3587,51 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        Set<String> set = new HashSet<>();
-        for(int i = 0; i < n; i++) set.add(sc.next());
-        String q = sc.next();
-        System.out.println(set.contains(q) ? "true" : "false");
+        List<String> words = new ArrayList<>();
+        for (int i = 0; i < n; i++) words.add(sc.next());
+        String query = sc.next();
+
+        // TODO: Check if query exists in the dictionary and print "true" or "false"
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <string.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    char words[100][100]; for (int i = 0; i < n; i++) scanf("%s", words[i]);
-    char q[100]; scanf("%s", q);
-    int found = 0;
-    for (int i = 0; i < n; i++) if (strcmp(words[i], q) == 0) { found = 1; break; }
-    printf("%s\\n", found ? "true" : "false");
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    char words[100][100];
+    for (int i = 0; i < n; i++) scanf("%s", words[i]);
+    char query[100];
+    scanf("%s", query);
+
+    // TODO: Check if query exists in the dictionary and print "true" or "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <string>
-#include <unordered_set>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    unordered_set<string> s;
-    for (int i = 0; i < n; i++) { string w; cin >> w; s.insert(w); }
-    string q; cin >> q;
-    cout << (s.count(q) ? "true" : "false") << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<string> words(n);
+    for (int i = 0; i < n; i++) cin >> words[i];
+    string query;
+    cin >> query;
+
+    // TODO: Check if query exists in the dictionary and print "true" or "false"
+
     return 0;
 }`
     },
@@ -3638,38 +3647,60 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int m = sc.nextInt(), n = sc.nextInt();
-        String board = "";
-        for(int i = 0; i < m; i++) board += sc.next();
-        int k = sc.nextInt();
-        int found = 0;
-        for(int i = 0; i < k; i++) {
-            String w = sc.next();
-            if(board.contains(w.substring(0, 1))) found++;
+        if (!sc.hasNextInt()) return;
+        int m = sc.nextInt();
+        int n = sc.nextInt();
+        char[][] board = new char[m][n];
+        for (int i = 0; i < m; i++) {
+            String row = sc.next();
+            for (int j = 0; j < n; j++) board[i][j] = row.charAt(j);
         }
-        System.out.println(found);
+        int k = sc.nextInt();
+        String[] words = new String[k];
+        for (int i = 0; i < k; i++) words[i] = sc.next();
+
+        // TODO: Search words on board via Trie + Backtracking DFS and print count of found words
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int m, n; if (scanf("%d %d", &m, &n) != 2) return 0;
-    char board[1000] = "";
-    for (int i = 0; i < m; i++) { char row[100]; scanf("%s", row); }
-    int k; scanf("%d", &k);
-    printf("%d\\n", k > 0 ? 1 : 0);
+    int m, n;
+    if (scanf("%d %d", &m, &n) != 2) return 0;
+    char board[100][100];
+    for (int i = 0; i < m; i++) scanf("%s", board[i]);
+    int k;
+    scanf("%d", &k);
+    char words[100][100];
+    for (int i = 0; i < k; i++) scanf("%s", words[i]);
+
+    // TODO: Search words on board via Trie + Backtracking DFS and print count of found words
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+#include <string>
+
 using namespace std;
+
 int main() {
-    int m, n; if (!(cin >> m >> n)) return 0;
-    for (int i = 0; i < m; i++) { string r; cin >> r; }
-    int k; cin >> k;
-    for (int i = 0; i < k; i++) { string w; cin >> w; }
-    cout << (k > 0 ? 1 : 0) << "\\n";
+    int m, n;
+    if (!(cin >> m >> n)) return 0;
+    vector<string> board(m);
+    for (int i = 0; i < m; i++) cin >> board[i];
+    int k;
+    cin >> k;
+    vector<string> words(k);
+    for (int i = 0; i < k; i++) cin >> words[i];
+
+    // TODO: Search words on board via Trie + Backtracking DFS and print count of found words
+
     return 0;
 }`
     },
@@ -3684,24 +3715,47 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        System.out.println(n);
+        // Read edges
+        List<int[]> edges = new ArrayList<>();
+        while (sc.hasNextInt()) {
+            edges.add(new int[]{sc.nextInt(), sc.nextInt()});
+        }
+
+        // TODO: Clone graph using DFS/BFS and print the cloned node count
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    printf("%d\\n", n);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int u, v;
+    while (scanf("%d %d", &u, &v) == 2) {}
+
+    // TODO: Clone graph using DFS/BFS and print the cloned node count
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    cout << n << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    int u, v;
+    while (cin >> u >> v) {}
+
+    // TODO: Clone graph using DFS/BFS and print the cloned node count
+
     return 0;
 }`
     },
@@ -3716,79 +3770,52 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int numCourses = sc.nextInt();
         int m = sc.nextInt();
-        int[] inDegree = new int[numCourses];
-        List<List<Integer>> adj = new ArrayList<>();
-        for(int i = 0; i < numCourses; i++) adj.add(new ArrayList<>());
-        for(int i = 0; i < m; i++) {
-            int u = sc.nextInt(), v = sc.nextInt();
-            adj.get(v).add(u);
-            inDegree[u]++;
+        int[][] prerequisites = new int[m][2];
+        for (int i = 0; i < m; i++) {
+            prerequisites[i][0] = sc.nextInt();
+            prerequisites[i][1] = sc.nextInt();
         }
-        Queue<Integer> q = new LinkedList<>();
-        for(int i = 0; i < numCourses; i++) if(inDegree[i] == 0) q.add(i);
-        int visited = 0;
-        while(!q.isEmpty()) {
-            int curr = q.poll();
-            visited++;
-            for(int next : adj.get(curr)) {
-                if(--inDegree[next] == 0) q.add(next);
-            }
-        }
-        System.out.println(visited == numCourses ? "true" : "false");
+
+        // TODO: Detect cycle using Kahn's algorithm or DFS and print "true" if courses can be finished, else "false"
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n, m; if (scanf("%d %d", &n, &m) != 2) return 0;
-    int inDegree[100] = {0}, adj[100][100] = {0}, adjSize[100] = {0};
+    int numCourses, m;
+    if (scanf("%d %d", &numCourses, &m) != 2) return 0;
+    int u[100], v[100];
     for (int i = 0; i < m; i++) {
-        int u, v; scanf("%d %d", &u, &v);
-        adj[v][adjSize[v]++] = u;
-        inDegree[u]++;
+        scanf("%d %d", &u[i], &v[i]);
     }
-    int q[100], head = 0, tail = 0;
-    for (int i = 0; i < n; i++) if (inDegree[i] == 0) q[tail++] = i;
-    int visited = 0;
-    while (head < tail) {
-        int curr = q[head++];
-        visited++;
-        for (int i = 0; i < adjSize[curr]; i++) {
-            int next = adj[curr][i];
-            if (--inDegree[next] == 0) q[tail++] = next;
-        }
-    }
-    printf("%s\\n", visited == n ? "true" : "false");
+
+    // TODO: Detect cycle using Kahn's algorithm or DFS and print "true" if courses can be finished, else "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
-#include <queue>
+
 using namespace std;
+
 int main() {
-    int numCourses, m; if (!(cin >> numCourses >> m)) return 0;
-    vector<int> inDegree(numCourses, 0);
-    vector<vector<int>> adj(numCourses);
+    int numCourses, m;
+    if (!(cin >> numCourses >> m)) return 0;
+    vector<pair<int, int>> prerequisites(m);
     for (int i = 0; i < m; i++) {
-        int u, v; cin >> u >> v;
-        adj[v].push_back(u);
-        inDegree[u]++;
+        cin >> prerequisites[i].first >> prerequisites[i].second;
     }
-    queue<int> q;
-    for (int i = 0; i < numCourses; i++) if (inDegree[i] == 0) q.push(i);
-    int visited = 0;
-    while (!q.empty()) {
-        int curr = q.front(); q.pop();
-        visited++;
-        for (int next : adj[curr]) {
-            if (--inDegree[next] == 0) q.push(next);
-        }
-    }
-    cout << (visited == numCourses ? "true" : "false") << "\\n";
+
+    // TODO: Detect cycle using Kahn's algorithm or DFS and print "true" if courses can be finished, else "false"
+
     return 0;
 }`
     },
@@ -3804,45 +3831,51 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int m = sc.nextInt(), n = sc.nextInt();
-        int count = 0;
-        for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++) {
-                sc.nextInt();
-                if(i == 0 || j == n - 1) count++;
-            }
+        if (!sc.hasNextInt()) return;
+        int m = sc.nextInt();
+        int n = sc.nextInt();
+        int[][] heights = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) heights[i][j] = sc.nextInt();
         }
-        System.out.println(count);
+
+        // TODO: Compute and print the number of cells reaching both Pacific and Atlantic oceans
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int m, n; if (scanf("%d %d", &m, &n) != 2) return 0;
-    int count = 0;
+    int m, n;
+    if (scanf("%d %d", &m, &n) != 2) return 0;
+    int heights[100][100];
     for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            int x; scanf("%d", &x);
-            if (i == 0 || j == n - 1) count++;
-        }
+        for (int j = 0; j < n; j++) scanf("%d", &heights[i][j]);
     }
-    printf("%d\\n", count);
+
+    // TODO: Compute and print the number of cells reaching both Pacific and Atlantic oceans
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int m, n; if (!(cin >> m >> n)) return 0;
-    int count = 0;
+    int m, n;
+    if (!(cin >> m >> n)) return 0;
+    vector<vector<int>> heights(m, vector<int>(n));
     for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            int x; cin >> x;
-            if (i == 0 || j == n - 1) count++;
-        }
+        for (int j = 0; j < n; j++) cin >> heights[i][j];
     }
-    cout << count << "\\n";
+
+    // TODO: Compute and print the number of cells reaching both Pacific and Atlantic oceans
+
     return 0;
 }`
     },
@@ -3857,71 +3890,49 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int m = sc.nextInt(), n = sc.nextInt();
+        if (!sc.hasNextInt()) return;
+        int m = sc.nextInt();
+        int n = sc.nextInt();
         char[][] grid = new char[m][n];
-        for(int i = 0; i < m; i++) {
+        for (int i = 0; i < m; i++) {
             String row = sc.next();
-            for(int j = 0; j < n; j++) grid[i][j] = row.charAt(j);
+            for (int j = 0; j < n; j++) grid[i][j] = row.charAt(j);
         }
-        int count = 0;
-        for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++) {
-                if(grid[i][j] == '1') { count++; dfs(grid, i, j, m, n); }
-            }
-        }
-        System.out.println(count);
-    }
-    static void dfs(char[][] grid, int r, int c, int m, int n) {
-        if(r < 0 || r >= m || c < 0 || c >= n || grid[r][c] != '1') return;
-        grid[r][c] = '0';
-        dfs(grid, r+1, c, m, n); dfs(grid, r-1, c, m, n);
-        dfs(grid, r, c+1, m, n); dfs(grid, r, c-1, m, n);
+
+        // TODO: Count and print the total number of connected islands of '1's using DFS / BFS
+        
     }
 }`,
       C: `#include <stdio.h>
-void dfs(char grid[100][100], int r, int c, int m, int n) {
-    if (r < 0 || r >= m || c < 0 || c >= n || grid[r][c] != '1') return;
-    grid[r][c] = '0';
-    dfs(grid, r+1, c, m, n); dfs(grid, r-1, c, m, n);
-    dfs(grid, r, c+1, m, n); dfs(grid, r, c-1, m, n);
-}
+
 int main() {
-    int m, n; if (scanf("%d %d", &m, &n) != 2) return 0;
+    int m, n;
+    if (scanf("%d %d", &m, &n) != 2) return 0;
     char grid[100][100];
     for (int i = 0; i < m; i++) scanf("%s", grid[i]);
-    int count = 0;
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (grid[i][j] == '1') { count++; dfs(grid, i, j, m, n); }
-        }
-    }
-    printf("%d\\n", count);
+
+    // TODO: Count and print the total number of connected islands of '1's using DFS / BFS
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <string>
+
 using namespace std;
-void dfs(vector<string>& grid, int r, int c, int m, int n) {
-    if (r < 0 || r >= m || c < 0 || c >= n || grid[r][c] != '1') return;
-    grid[r][c] = '0';
-    dfs(grid, r+1, c, m, n); dfs(grid, r-1, c, m, n);
-    dfs(grid, r, c+1, m, n); dfs(grid, r, c-1, m, n);
-}
+
 int main() {
-    int m, n; if (!(cin >> m >> n)) return 0;
+    int m, n;
+    if (!(cin >> m >> n)) return 0;
     vector<string> grid(m);
     for (int i = 0; i < m; i++) cin >> grid[i];
-    int count = 0;
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (grid[i][j] == '1') { count++; dfs(grid, i, j, m, n); }
-        }
-    }
-    cout << count << "\\n";
+
+    // TODO: Count and print the total number of connected islands of '1's using DFS / BFS
+
     return 0;
 }`
     },
@@ -3937,58 +3948,46 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        Set<Integer> set = new HashSet<>();
-        for(int i = 0; i < n; i++) set.add(sc.nextInt());
-        int maxLen = 0;
-        for(int x : set) {
-            if(!set.contains(x - 1)) {
-                int curr = x, len = 1;
-                while(set.contains(curr + 1)) { curr++; len++; }
-                maxLen = Math.max(maxLen, len);
-            }
-        }
-        System.out.println(maxLen);
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) nums[i] = sc.nextInt();
+
+        // TODO: Find and print the length of the longest consecutive sequence in O(n)
+        
     }
 }`,
       C: `#include <stdio.h>
 #include <stdlib.h>
-#define MAX(a,b) ((a)>(b)?(a):(b))
-int cmp(const void* a, const void* b) { return (*(int*)a - *(int*)b); }
+
 int main() {
-    int n; if (scanf("%d", &n) != 1 || n == 0) { printf("0\\n"); return 0; }
-    int a[1000]; for (int i = 0; i < n; i++) scanf("%d", &a[i]);
-    qsort(a, n, sizeof(int), cmp);
-    int maxLen = 1, currLen = 1;
-    for (int i = 1; i < n; i++) {
-        if (a[i] == a[i-1]) continue;
-        if (a[i] == a[i-1] + 1) currLen++;
-        else { maxLen = MAX(maxLen, currLen); currLen = 1; }
-    }
-    printf("%d\\n", MAX(maxLen, currLen));
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+
+    // TODO: Find and print the length of the longest consecutive sequence in O(n)
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
 #include <unordered_set>
-#include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n) || n == 0) { cout << 0 << "\\n"; return 0; }
-    unordered_set<int> s;
-    for (int i = 0; i < n; i++) { int x; cin >> x; s.insert(x); }
-    int maxLen = 0;
-    for (int x : s) {
-        if (!s.count(x - 1)) {
-            int curr = x, len = 1;
-            while (s.count(curr + 1)) { curr++; len++; }
-            maxLen = max(maxLen, len);
-        }
-    }
-    cout << maxLen << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+
+    // TODO: Find and print the length of the longest consecutive sequence in O(n)
+
     return 0;
 }`
     },
@@ -4004,42 +4003,45 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        Set<Character> chars = new HashSet<>();
-        for(int i = 0; i < n; i++) {
-            String w = sc.next();
-            for(char c : w.toCharArray()) chars.add(c);
-        }
-        System.out.println(chars.size());
+        String[] words = new String[n];
+        for (int i = 0; i < n; i++) words[i] = sc.next();
+
+        // TODO: Count and print the total number of distinct characters in the alien language
+        
     }
 }`,
       C: `#include <stdio.h>
-#include <string.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int seen[256] = {0}, count = 0;
-    for (int i = 0; i < n; i++) {
-        char w[100]; scanf("%s", w);
-        for (int j = 0; w[j]; j++) if (!seen[(unsigned char)w[j]]++) count++;
-    }
-    printf("%d\\n", count);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    char words[100][100];
+    for (int i = 0; i < n; i++) scanf("%s", words[i]);
+
+    // TODO: Count and print the total number of distinct characters in the alien language
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
 #include <string>
-#include <unordered_set>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    unordered_set<char> chars;
-    for (int i = 0; i < n; i++) {
-        string w; cin >> w;
-        for (char c : w) chars.insert(c);
-    }
-    cout << chars.size() << "\\n";
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<string> words(n);
+    for (int i = 0; i < n; i++) cin >> words[i];
+
+    // TODO: Count and print the total number of distinct characters in the alien language
+
     return 0;
 }`
     },
@@ -4055,26 +4057,48 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt(), e = sc.nextInt();
-        System.out.println(e == n - 1 ? "true" : "false");
+        if (!sc.hasNextInt()) return;
+        int n = sc.nextInt();
+        int e = sc.nextInt();
+        int[][] edges = new int[e][2];
+        for (int i = 0; i < e; i++) {
+            edges[i][0] = sc.nextInt();
+            edges[i][1] = sc.nextInt();
+        }
+
+        // TODO: Print "true" if the graph is a valid tree (connected and acyclic), else "false"
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n, e; if (scanf("%d %d", &n, &e) != 2) return 0;
-    for (int i = 0; i < e; i++) { int u, v; scanf("%d %d", &u, &v); }
-    printf("%s\\n", e == n - 1 ? "true" : "false");
+    int n, e;
+    if (scanf("%d %d", &n, &e) != 2) return 0;
+    int u[100], v[100];
+    for (int i = 0; i < e; i++) scanf("%d %d", &u[i], &v[i]);
+
+    // TODO: Print "true" if the graph is a valid tree (connected and acyclic), else "false"
+
     return 0;
 }`,
       CPP: `#include <iostream>
+#include <vector>
+
 using namespace std;
+
 int main() {
-    int n, e; if (!(cin >> n >> e)) return 0;
-    for (int i = 0; i < e; i++) { int u, v; cin >> u >> v; }
-    cout << (e == n - 1 ? "true" : "false") << "\\n";
+    int n, e;
+    if (!(cin >> n >> e)) return 0;
+    vector<pair<int, int>> edges(e);
+    for (int i = 0; i < e; i++) cin >> edges[i].first >> edges[i].second;
+
+    // TODO: Print "true" if the graph is a valid tree (connected and acyclic), else "false"
+
     return 0;
 }`
     },
@@ -4090,51 +4114,48 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt(), m = sc.nextInt();
-        int[] parent = new int[n];
-        for(int i = 0; i < n; i++) parent[i] = i;
-        int comps = n;
-        for(int i = 0; i < m; i++) {
-            int u = sc.nextInt(), v = sc.nextInt();
-            int pu = find(parent, u), pv = find(parent, v);
-            if(pu != pv) { parent[pu] = pv; comps--; }
+        if (!sc.hasNextInt()) return;
+        int n = sc.nextInt();
+        int m = sc.nextInt();
+        int[][] edges = new int[m][2];
+        for (int i = 0; i < m; i++) {
+            edges[i][0] = sc.nextInt();
+            edges[i][1] = sc.nextInt();
         }
-        System.out.println(comps);
+
+        // TODO: Compute and print the number of connected components using Disjoint Set Union (DSU) or BFS/DFS
+        
     }
-    static int find(int[] p, int i) { return p[i] == i ? i : (p[i] = find(p, p[i])); }
 }`,
       C: `#include <stdio.h>
-int find(int* p, int i) { return p[i] == i ? i : (p[i] = find(p, p[i])); }
+
 int main() {
-    int n, m; if (scanf("%d %d", &n, &m) != 2) return 0;
-    int parent[100]; for (int i = 0; i < n; i++) parent[i] = i;
-    int comps = n;
-    for (int i = 0; i < m; i++) {
-        int u, v; scanf("%d %d", &u, &v);
-        int pu = find(parent, u), pv = find(parent, v);
-        if (pu != pv) { parent[pu] = pv; comps--; }
-    }
-    printf("%d\\n", comps);
+    int n, m;
+    if (scanf("%d %d", &n, &m) != 2) return 0;
+    int u[100], v[100];
+    for (int i = 0; i < m; i++) scanf("%d %d", &u[i], &v[i]);
+
+    // TODO: Compute and print the number of connected components using Disjoint Set Union (DSU) or BFS/DFS
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
-#include <numeric>
+
 using namespace std;
-int findP(vector<int>& p, int i) { return p[i] == i ? i : (p[i] = findP(p, p[i])); }
+
 int main() {
-    int n, m; if (!(cin >> n >> m)) return 0;
-    vector<int> p(n); iota(p.begin(), p.end(), 0);
-    int comps = n;
-    for (int i = 0; i < m; i++) {
-        int u, v; cin >> u >> v;
-        int pu = findP(p, u), pv = findP(p, v);
-        if (pu != pv) { p[pu] = pv; comps--; }
-    }
-    cout << comps << "\\n";
+    int n, m;
+    if (!(cin >> n >> m)) return 0;
+    vector<pair<int, int>> edges(m);
+    for (int i = 0; i < m; i++) cin >> edges[i].first >> edges[i].second;
+
+    // TODO: Compute and print the number of connected components using Disjoint Set Union (DSU) or BFS/DFS
+
     return 0;
 }`
     },
@@ -4150,66 +4171,51 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int m = sc.nextInt(), n = sc.nextInt();
-        int[][] mat = new int[m][n];
-        boolean[] rows = new boolean[m], cols = new boolean[n];
-        for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++) {
-                mat[i][j] = sc.nextInt();
-                if(mat[i][j] == 0) { rows[i] = true; cols[j] = true; }
-            }
+        if (!sc.hasNextInt()) return;
+        int m = sc.nextInt();
+        int n = sc.nextInt();
+        int[][] matrix = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) matrix[i][j] = sc.nextInt();
         }
-        for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++) {
-                if(rows[i] || cols[j]) mat[i][j] = 0;
-                System.out.print(mat[i][j] + (j == n - 1 ? "" : " "));
-            }
-            System.out.println();
-        }
+
+        // TODO: Set entire row and column to 0 if an element is 0 in place, and print the resulting matrix
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int m, n; if (scanf("%d %d", &m, &n) != 2) return 0;
-    int mat[100][100], rows[100] = {0}, cols[100] = {0};
+    int m, n;
+    if (scanf("%d %d", &m, &n) != 2) return 0;
+    int matrix[100][100];
     for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            scanf("%d", &mat[i][j]);
-            if (mat[i][j] == 0) { rows[i] = 1; cols[j] = 1; }
-        }
+        for (int j = 0; j < n; j++) scanf("%d", &matrix[i][j]);
     }
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (rows[i] || cols[j]) mat[i][j] = 0;
-            printf("%d%s", mat[i][j], j == n - 1 ? "" : " ");
-        }
-        printf("\\n");
-    }
+
+    // TODO: Set entire row and column to 0 if an element is 0 in place, and print the resulting matrix
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int m, n; if (!(cin >> m >> n)) return 0;
-    vector<vector<int>> mat(m, vector<int>(n));
-    vector<bool> rows(m, false), cols(n, false);
+    int m, n;
+    if (!(cin >> m >> n)) return 0;
+    vector<vector<int>> matrix(m, vector<int>(n));
     for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            cin >> mat[i][j];
-            if (mat[i][j] == 0) { rows[i] = true; cols[j] = true; }
-        }
+        for (int j = 0; j < n; j++) cin >> matrix[i][j];
     }
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (rows[i] || cols[j]) mat[i][j] = 0;
-            cout << mat[i][j] << (j == n - 1 ? "" : " ");
-        }
-        cout << "\\n";
-    }
+
+    // TODO: Set entire row and column to 0 if an element is 0 in place, and print the resulting matrix
+
     return 0;
 }`
     },
@@ -4224,62 +4230,51 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int m = sc.nextInt(), n = sc.nextInt();
-        int[][] mat = new int[m][n];
-        for(int i = 0; i < m; i++) for(int j = 0; j < n; j++) mat[i][j] = sc.nextInt();
-        int top = 0, bottom = m - 1, left = 0, right = n - 1;
-        List<Integer> res = new ArrayList<>();
-        while(top <= bottom && left <= right) {
-            for(int j = left; j <= right; j++) res.add(mat[top][j]);
-            top++;
-            for(int i = top; i <= bottom; i++) res.add(mat[i][right]);
-            right--;
-            if(top <= bottom) { for(int j = right; j >= left; j--) res.add(mat[bottom][j]); bottom--; }
-            if(left <= right) { for(int i = bottom; i >= top; i--) res.add(mat[i][left]); left++; }
+        if (!sc.hasNextInt()) return;
+        int m = sc.nextInt();
+        int n = sc.nextInt();
+        int[][] matrix = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) matrix[i][j] = sc.nextInt();
         }
-        for(int i = 0; i < res.size(); i++) System.out.print(res.get(i) + (i == res.size()-1 ? "" : " "));
-        System.out.println();
+
+        // TODO: Traverse and print all elements in spiral order space-separated
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int m, n; if (scanf("%d %d", &m, &n) != 2) return 0;
-    int mat[100][100];
-    for (int i = 0; i < m; i++) for (int j = 0; j < n; j++) scanf("%d", &mat[i][j]);
-    int top = 0, bottom = m - 1, left = 0, right = n - 1;
-    while (top <= bottom && left <= right) {
-        for (int j = left; j <= right; j++) printf("%d ", mat[top][j]);
-        top++;
-        for (int i = top; i <= bottom; i++) printf("%d ", mat[i][right]);
-        right--;
-        if (top <= bottom) { for (int j = right; j >= left; j--) printf("%d ", mat[bottom][j]); bottom--; }
-        if (left <= right) { for (int i = bottom; i >= top; i--) printf("%d ", mat[i][left]); left++; }
+    int m, n;
+    if (scanf("%d %d", &m, &n) != 2) return 0;
+    int matrix[100][100];
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) scanf("%d", &matrix[i][j]);
     }
-    printf("\\n");
+
+    // TODO: Traverse and print all elements in spiral order space-separated
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
+
 using namespace std;
+
 int main() {
-    int m, n; if (!(cin >> m >> n)) return 0;
-    vector<vector<int>> mat(m, vector<int>(n));
-    for (int i = 0; i < m; i++) for (int j = 0; j < n; j++) cin >> mat[i][j];
-    int top = 0, bottom = m - 1, left = 0, right = n - 1;
-    vector<int> res;
-    while (top <= bottom && left <= right) {
-        for (int j = left; j <= right; j++) res.push_back(mat[top][j]);
-        top++;
-        for (int i = top; i <= bottom; i++) res.push_back(mat[i][right]);
-        right--;
-        if (top <= bottom) { for (int j = right; j >= left; j--) res.push_back(mat[bottom][j]); bottom--; }
-        if (left <= right) { for (int i = bottom; i >= top; i--) res.push_back(mat[i][left]); left++; }
+    int m, n;
+    if (!(cin >> m >> n)) return 0;
+    vector<vector<int>> matrix(m, vector<int>(n));
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) cin >> matrix[i][j];
     }
-    for (int i = 0; i < res.size(); i++) cout << res[i] << (i == res.size()-1 ? "" : " ");
-    cout << "\\n";
+
+    // TODO: Traverse and print all elements in spiral order space-separated
+
     return 0;
 }`
     },
@@ -4294,67 +4289,50 @@ int main() {
     marks: 40,
     starterCodes: {
       JAVA: `import java.util.*;
+
 public class Solution {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
         int n = sc.nextInt();
-        int[][] mat = new int[n][n];
-        for(int i = 0; i < n; i++) for(int j = 0; j < n; j++) mat[i][j] = sc.nextInt();
-        // transpose
-        for(int i = 0; i < n; i++) {
-            for(int j = i + 1; j < n; j++) {
-                int t = mat[i][j]; mat[i][j] = mat[j][i]; mat[j][i] = t;
-            }
+        int[][] matrix = new int[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) matrix[i][j] = sc.nextInt();
         }
-        // reverse each row
-        for(int i = 0; i < n; i++) {
-            for(int j = 0; j < n / 2; j++) {
-                int t = mat[i][j]; mat[i][j] = mat[i][n - 1 - j]; mat[i][n - 1 - j] = t;
-            }
-        }
-        for(int i = 0; i < n; i++) {
-            for(int j = 0; j < n; j++) System.out.print(mat[i][j] + (j == n - 1 ? "" : " "));
-            System.out.println();
-        }
+
+        // TODO: Rotate the matrix by 90 degrees clockwise in place and print it
+        
     }
 }`,
       C: `#include <stdio.h>
+
 int main() {
-    int n; if (scanf("%d", &n) != 1) return 0;
-    int mat[100][100];
-    for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) scanf("%d", &mat[i][j]);
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int matrix[100][100];
     for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-            int t = mat[i][j]; mat[i][j] = mat[j][i]; mat[j][i] = t;
-        }
+        for (int j = 0; j < n; j++) scanf("%d", &matrix[i][j]);
     }
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n / 2; j++) {
-            int t = mat[i][j]; mat[i][j] = mat[i][n - 1 - j]; mat[i][n - 1 - j] = t;
-        }
-    }
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) printf("%d%s", mat[i][j], j == n - 1 ? "" : " ");
-        printf("\\n");
-    }
+
+    // TODO: Rotate the matrix by 90 degrees clockwise in place and print it
+
     return 0;
 }`,
       CPP: `#include <iostream>
 #include <vector>
-#include <algorithm>
+
 using namespace std;
+
 int main() {
-    int n; if (!(cin >> n)) return 0;
-    vector<vector<int>> mat(n, vector<int>(n));
-    for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) cin >> mat[i][j];
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<vector<int>> matrix(n, vector<int>(n));
     for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) swap(mat[i][j], mat[j][i]);
+        for (int j = 0; j < n; j++) cin >> matrix[i][j];
     }
-    for (int i = 0; i < n; i++) reverse(mat[i].begin(), mat[i].end());
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) cout << mat[i][j] << (j == n - 1 ? "" : " ");
-        cout << "\\n";
-    }
+
+    // TODO: Rotate the matrix by 90 degrees clockwise in place and print it
+
     return 0;
 }`
     },
@@ -4367,6 +4345,7 @@ int main() {
 async function seedBlind75Assessments() {
   console.log("================================================================================");
   console.log("   🚀 SEEDING 25 ASSESSMENTS COVERING ALL 75 TUF BLIND 75 PROBLEMS");
+  console.log("   (Clean Problem Titles & Empty Starter Logic Skeletons for Students)");
   console.log("================================================================================\n");
 
   const totalAssessments = 25;
@@ -4421,7 +4400,7 @@ async function seedBlind75Assessments() {
         assessmentId: assessment.id,
         sectionId: secA.id,
         type: "CODING",
-        title: `Q1: ${probA.title}`,
+        title: probA.title,
         description: probA.description,
         marks: probA.marks,
         allowedLanguages: "JAVA,C,CPP",
@@ -4457,7 +4436,7 @@ async function seedBlind75Assessments() {
         assessmentId: assessment.id,
         sectionId: secB.id,
         type: "CODING",
-        title: `Q2: ${probB.title}`,
+        title: probB.title,
         description: probB.description,
         marks: probB.marks,
         allowedLanguages: "JAVA,C,CPP",
@@ -4493,7 +4472,7 @@ async function seedBlind75Assessments() {
         assessmentId: assessment.id,
         sectionId: secC.id,
         type: "CODING",
-        title: `Q3: ${probC.title}`,
+        title: probC.title,
         description: probC.description,
         marks: probC.marks,
         allowedLanguages: "JAVA,C,CPP",
@@ -4514,11 +4493,11 @@ async function seedBlind75Assessments() {
       },
     });
 
-    console.log(`   ✅ Successfully seeded ${code} (Total 100 Marks)\n`);
+    console.log(`   ✅ Successfully seeded ${code} with clean problem titles & skeleton starters (Total 100 Marks)\n`);
   }
 
   console.log("================================================================================");
-  console.log("   🎉 ALL 25 ASSESSMENTS (75 BLIND 75 PROBLEMS) SEEDED WITH 100% COVERAGE!");
+  console.log("   🎉 ALL 25 ASSESSMENTS RESEEDED WITH SKELETON CODE & CLEAN TITLES!");
   console.log("================================================================================");
 }
 
