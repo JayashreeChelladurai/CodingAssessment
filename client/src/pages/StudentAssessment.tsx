@@ -125,6 +125,7 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
   const [showExitModal, setShowExitModal] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<string>("All changes saved");
+  const [submitToast, setSubmitToast] = useState<string | null>(null);
 
   const activeQuestion: Question | undefined = orderedQuestions[currentQuestionIdx];
 
@@ -291,6 +292,13 @@ int main() {
 
     return () => clearInterval(interval);
   }, [attempt.id, assessment.id, drafts, mcqResponses, flaggedQuestions, remainingSeconds, isLocked, isSubmitted]);
+
+  // 4. Reset Console / Terminal Output on Question Change
+  useEffect(() => {
+    setCodingResult(null);
+    setCustomResult(null);
+    setCustomInput("");
+  }, [currentQuestionIdx]);
 
   const handleEnterFullscreen = async () => {
     try {
@@ -461,6 +469,10 @@ int main() {
           submissions: [...otherSubs, res.submission],
         };
       });
+
+      // Show immediate feedback
+      setSubmitToast("Code Submitted Successfully!");
+      setTimeout(() => setSubmitToast(null), 3000);
     } catch (err: any) {
       alert(err.message || "Failed to submit solution");
     } finally {
@@ -714,6 +726,7 @@ int main() {
                     <MonacoCodeEditor
                       code={currentCode}
                       language={currentLanguage}
+                      questionId={activeQuestion?.id}
                       onChange={handleCodeChange}
                     />
                   </div>
@@ -811,6 +824,14 @@ int main() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Small Submission Notification Toast */}
+      {submitToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 border border-emerald-400/50 animate-bounce">
+          <CheckCircle className="w-4 h-4 text-emerald-200" />
+          <span>{submitToast}</span>
         </div>
       )}
     </div>

@@ -9,18 +9,16 @@ authRouter.post("/admin-login", (req, res) => {
   const { passcode, username } = req.body;
   const cleanPass = String(passcode || "").trim();
 
-  // Allow configured ADMIN_PASSCODE, admin123, prof@2026, admin, or professor
+  // Check configured ADMIN_PASSCODE or prof@2026 / admin123
   const isValid =
     cleanPass === ADMIN_PASSCODE ||
-    cleanPass.toLowerCase() === "admin123" ||
-    cleanPass.toLowerCase() === "admin" ||
     cleanPass === "prof@2026" ||
-    cleanPass.toLowerCase() === "professor";
+    cleanPass === "admin123";
 
   if (!isValid) {
     return res.status(401).json({
       success: false,
-      error: "Invalid professor passcode. Use 'admin123' or 'prof@2026'.",
+      error: "Invalid professor security passcode. Access denied.",
     });
   }
 

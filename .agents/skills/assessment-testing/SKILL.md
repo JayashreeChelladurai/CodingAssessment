@@ -317,3 +317,12 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
 # 12. Data Integrity
 - [x] Submissions atomic and persisted in SQLite / PostgreSQL
 - [x] Assessment data survives server restart
+
+---
+
+# 13. UI/UX & Authentication Guardrails
+- [x] **Undo Isolation / Disabled**: Undo (Ctrl+Z / Cmd+Z) and Redo operations are disabled and isolated per question to prevent bleeding changes across different problems.
+- [x] **Submission Feedback**: Clicking 'Submit Solution' or 'Finish Test' immediately shows a clear confirmation response badge/toast ("Code Submitted Successfully!").
+- [x] **Terminal Output Auto-Reset**: Switching between coding questions immediately clears/resets the terminal console so previous question outputs never linger.
+- [x] **Professor Authentication Privacy**: Professor portal strictly validates security passcodes, gives zero password hints in error responses, and never auto-fills credentials to unauthorized users.
+
