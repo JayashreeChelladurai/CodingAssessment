@@ -320,9 +320,39 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
 
 ---
 
-# 13. UI/UX & Authentication Guardrails
-- [x] **Undo Isolation / Disabled**: Undo (Ctrl+Z / Cmd+Z) and Redo operations are disabled and isolated per question to prevent bleeding changes across different problems.
-- [x] **Submission Feedback**: Clicking 'Submit Solution' or 'Finish Test' immediately shows a clear confirmation response badge/toast ("Code Submitted Successfully!").
-- [x] **Terminal Output Auto-Reset**: Switching between coding questions immediately clears/resets the terminal console so previous question outputs never linger.
-- [x] **Professor Authentication Privacy**: Professor portal strictly validates security passcodes, gives zero password hints in error responses, and never auto-fills credentials to unauthorized users.
+# 13. UI/UX & Authentication Guardrails & Verification Procedures
+
+### 13.1 Undo Operation Isolation & Prevention
+- [x] **Undo (Ctrl+Z / Cmd+Z) and Redo (Ctrl+Y / Ctrl+Shift+Z) Disabled**: Monaco editor keybindings for undo/redo are explicitly unmounted or disabled in the student attempt interface.
+- [x] **Model Path Isolation**: Every question and language pair has an isolated Monaco model path (`path="file:///inmemory_question_${questionId}_${language}"`) to prevent text state bleeding across questions.
+- **Verification Procedure**:
+  1. Type code in Question 1.
+  2. Navigate to Question 2 via the Question Palette or Next button.
+  3. Press `Ctrl+Z` / `Cmd+Z` multiple times.
+  4. Verify that Question 2's code does not revert to or inherit Question 1's edits.
+
+### 13.2 Submission Confirmation Response
+- [x] **Instant Visual Toast / Badge**: Submitting code via 'Submit Solution' or finishing an assessment immediately renders a green confirmation notification ("Code Submitted Successfully!") with a checkmark icon.
+- [x] **Auto-Dismissal**: The confirmation banner automatically fades after 3 seconds without blocking user interaction.
+- **Verification Procedure**:
+  1. Write and test a solution.
+  2. Click the 'Submit Solution' button.
+  3. Verify the floating green confirmation toast appears at the bottom-right and disappears smoothly.
+
+### 13.3 Terminal Output Auto-Reset on Question Switch
+- [x] **Console State Clearing**: Switching between coding questions automatically clears `codingResult`, `customResult`, and resets `customInput`.
+- [x] **Zero Stale Output**: The terminal console never displays the stdout, stderr, or test case execution results of a previously compiled question.
+- **Verification Procedure**:
+  1. Click 'Run Sample Cases' or 'Submit Solution' on Question 1 -> Verify output is shown in the terminal.
+  2. Click on Question 2 in the palette.
+  3. Verify the terminal is cleared and ready for Question 2's execution.
+
+### 13.4 Professor Authentication Security & Zero Credential Leakage
+- [x] **No Password Hints in Error Responses**: The backend API endpoint (`POST /api/auth/admin-login`) returns a generic error (`"Invalid professor security passcode. Access denied."`) with zero suggestions, hints, or password samples.
+- [x] **No Pre-filled Passcodes**: The professor login page never pre-fills passcodes or includes debug auto-fill helpers for unauthorized users.
+- [x] **Strict Passcode Verification**: Enforce verification strictly against the server's configured `ADMIN_PASSCODE` / `prof@2026`.
+- **Verification Procedure**:
+  1. Enter an incorrect passcode (e.g., `invalid123`) on the Professor Login screen.
+  2. Verify that login is rejected with a generic access denied message and no password values are exposed in the UI or network response.
+
 
