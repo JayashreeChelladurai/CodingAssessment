@@ -355,4 +355,51 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
   1. Enter an incorrect passcode (e.g., `invalid123`) on the Professor Login screen.
   2. Verify that login is rejected with a generic access denied message and no password values are exposed in the UI or network response.
 
+---
+
+# 14. Editor Form Guardrails, Section Shuffling & Imminent Timeout Alerts
+
+### 14.1 Pre-Save Field Validation, Error Badges & Auto-Scroll
+- [x] **Required Field Enforcement**: Validates assessment title, code, duration, section titles, question titles, positive marks, MCQ option text, and correct answer selections before submission.
+- [x] **Contextual Error Highlighting**: Invalid inputs render glowing red borders (`border-rose-500 ring-1 ring-rose-500/50 bg-rose-950/20`) and inline error badges.
+- [x] **Smooth Auto-Scroll to First Error**: Clicking 'Save Assessment' with missing fields smoothly scrolls the viewport directly to the first invalid field and focuses it.
+- **Verification Procedure**:
+  1. Open the Assessment Editor and clear the Assessment Title or leave an MCQ option blank.
+  2. Click 'Save Assessment'.
+  3. Verify the screen automatically scrolls to the first invalid field, highlights it in red with an error message, and displays a validation summary notice.
+
+### 14.2 Pure Single-Click Additions for Sections, Questions & MCQ Options
+- [x] **Pure Immutable Updates**: State handlers for adding sections, questions, and MCQ options use pure `.map()` updates, completely eliminating duplicate/double item entries on a single click.
+- **Verification Procedure**:
+  1. In the Assessment Editor, click '+ Add Section', '+ MCQ Question', '+ Coding Problem', or '+ Add Option'.
+  2. Verify that exactly one item is created per click without duplicates.
+
+### 14.3 Section-Constrained Question Sequence Shuffling
+- [x] **Intra-Section Randomization Only**: When `shuffleQuestions` is enabled, candidate question sequence is randomized *only within* each specific section (Part-A questions stay in Part-A, Part-B questions stay in Part-B), strictly preserving the institutional section sequence.
+- **Verification Procedure**:
+  1. Create a multi-section exam with Part-A (MCQs) and Part-B (Coding) with `shuffleQuestions: true`.
+  2. Start attempts for 2 different students.
+  3. Verify that student question orders vary within Part-A and within Part-B, but Part-A questions never cross into Part-B.
+
+### 14.4 Instructor Portal Save Confirmation Toast
+- [x] **Save Success Banner**: Saving an assessment in the Professor Portal immediately displays an animated green confirmation toast ("Assessment saved successfully!").
+- **Verification Procedure**:
+  1. Edit or create an assessment and click 'Save Assessment'.
+  2. Verify the green toast appears at the bottom-right before navigating back to the dashboard.
+
+### 14.5 Instructor Logout Confirmation Modal
+- [x] **Accidental Logout Prevention**: Clicking 'Logout' in the Instructor Portal opens a confirmation modal ("Confirm Instructor Logout?") asking the user to confirm before clearing the session token.
+- **Verification Procedure**:
+  1. On the Professor Dashboard, click 'Logout'.
+  2. Verify a confirmation dialog appears.
+  3. Click 'Cancel' -> Verify session remains active. Click 'Yes, Log Out' -> Verify session is terminated and redirected.
+
+### 14.6 Enhanced Final-Minutes Urgency Timer & Alerts
+- [x] **$< 5$ Minutes (Warning Alert)**: Glowing amber badge with animated pulse and 'Ending Soon' indicator.
+- [x] **$< 2$ Minutes (Critical Urgency Alert)**: Deep crimson bouncing glow with spinning clock icon, 'Ending' badge, and a top-bar warning banner: `⚠️ Final Cut-off Warning: Less than 2 minutes remaining! All work will auto-submit at 00:00.`
+- **Verification Procedure**:
+  1. Launch a student attempt and fast-forward the remaining time to 110 seconds.
+  2. Verify the top urgency alert banner appears and the navbar countdown transitions to a pulsating crimson emergency theme.
+
+
 

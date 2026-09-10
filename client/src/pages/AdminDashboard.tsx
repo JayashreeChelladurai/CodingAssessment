@@ -35,6 +35,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
 
   useEffect(() => {
     loadAssessments();
@@ -107,10 +108,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              localStorage.removeItem("prof_admin_token");
-              onNavigateToStudent();
-            }}
+            onClick={() => setShowLogoutModal(true)}
             className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-950/40 text-rose-300 hover:bg-rose-900/50 transition border border-rose-800/40"
           >
             Logout
@@ -288,6 +286,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
         </div>
       </main>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-slate-900 border border-rose-900/50 rounded-2xl p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-400">
+              <Shield className="w-6 h-6" />
+              <h3 className="text-lg font-bold text-white">Confirm Instructor Logout?</h3>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Are you sure you want to log out of the Professor Exam Portal? Your active session token will be cleared.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem("prof_admin_token");
+                  setShowLogoutModal(false);
+                  onNavigateToStudent();
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/50 transition"
+              >
+                Yes, Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

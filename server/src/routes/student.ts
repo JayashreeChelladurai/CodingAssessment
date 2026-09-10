@@ -148,10 +148,39 @@ studentRouter.post("/start", async (req, res) => {
         remaining = Math.min(remaining, secondsUntilEnd);
       }
 
-      // Generate question order (shuffled if enabled)
-      let questionOrder = assessment.questions.map((q) => q.id);
-      if (assessment.shuffleQuestions) {
-        questionOrder = shuffleArray(questionOrder);
+      // Generate question order (shuffled ONLY within each specific section, preserving section sequence!)
+      let questionOrder: string[] = [];
+      const sections = assessment.sections && assessment.sections.length > 0
+        ? [...assessment.sections].sort((a, b) => a.order - b.order)
+        : [];
+
+      if (sections.length > 0) {
+        for (const sec of sections) {
+          const secQuestions = assessment.questions
+            .filter((q) => q.sectionId === sec.id)
+            .sort((a, b) => a.order - b.order);
+
+          let secQIds = secQuestions.map((q) => q.id);
+          if (assessment.shuffleQuestions) {
+            secQIds = shuffleArray(secQIds);
+          }
+          questionOrder.push(...secQIds);
+        }
+
+        // Include any orphan questions without sectionId if any
+        const orphanQuestions = assessment.questions
+          .filter((q) => !q.sectionId)
+          .sort((a, b) => a.order - b.order);
+        let orphanQIds = orphanQuestions.map((q) => q.id);
+        if (assessment.shuffleQuestions) {
+          orphanQIds = shuffleArray(orphanQIds);
+        }
+        questionOrder.push(...orphanQIds);
+      } else {
+        questionOrder = assessment.questions.map((q) => q.id);
+        if (assessment.shuffleQuestions) {
+          questionOrder = shuffleArray(questionOrder);
+        }
       }
 
       // Generate option orders for MCQs (shuffled)

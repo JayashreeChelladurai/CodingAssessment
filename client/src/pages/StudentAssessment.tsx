@@ -582,6 +582,14 @@ int main() {
         />
       )}
 
+      {/* Urgent Final Countdown Banner */}
+      {remainingSeconds <= 120 && (
+        <div className="bg-gradient-to-r from-rose-950 via-rose-900 to-rose-950 border-b border-rose-500 text-rose-100 px-4 py-1.5 flex items-center justify-center gap-2 text-xs font-bold animate-pulse shadow-lg z-30">
+          <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" />
+          <span>⚠️ Final Cut-off Warning: Less than 2 minutes remaining! All work will auto-submit at 00:00.</span>
+        </div>
+      )}
+
       {/* Top Navbar */}
       <header className="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -600,14 +608,23 @@ int main() {
           </div>
 
           <div
-            className={`flex items-center gap-2 px-3 py-1 rounded-lg font-mono text-sm font-bold border ${
-              remainingSeconds < 300
-                ? "bg-rose-950/50 text-rose-400 border-rose-800 animate-pulse"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-mono text-sm font-extrabold border transition-all duration-300 ${
+              remainingSeconds <= 120
+                ? "bg-rose-950 text-rose-200 border-rose-500 shadow-lg shadow-rose-950/80 animate-bounce ring-2 ring-rose-500/60"
+                : remainingSeconds <= 300
+                ? "bg-amber-950/70 text-amber-300 border-amber-500/80 shadow-md shadow-amber-950/50 animate-pulse ring-1 ring-amber-500/40"
                 : "bg-slate-800 text-emerald-400 border-slate-700"
             }`}
           >
-            <Clock className="w-4 h-4" />
+            <Clock className={`w-4 h-4 ${remainingSeconds <= 120 ? "text-rose-400 animate-spin" : remainingSeconds <= 300 ? "text-amber-400" : "text-emerald-400"}`} />
             <span>{formatTimer(remainingSeconds)}</span>
+            {remainingSeconds <= 300 && (
+              <span className={`text-[10px] uppercase font-sans font-bold px-1.5 py-0.5 rounded ${
+                remainingSeconds <= 120 ? "bg-rose-600 text-white" : "bg-amber-600 text-black"
+              }`}>
+                {remainingSeconds <= 120 ? "Ending" : "Ending Soon"}
+              </span>
+            )}
           </div>
 
           <button
