@@ -401,5 +401,22 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
   1. Launch a student attempt and fast-forward the remaining time to 110 seconds.
   2. Verify the top urgency alert banner appears and the navbar countdown transitions to a pulsating crimson emergency theme.
 
+### 14.7 Auto-Submission on Timeout & Finalization for All Drafted Questions
+- [x] **Full Draft Auto-Evaluation**: When timer reaches 00:00 (or on manual test finish), all draft code written across all coding questions (and selected MCQ options) is automatically evaluated against all test cases and submitted as official `Submission` records.
+- [x] **Zero Lost Work**: Candidates receive full credit for whatever logic they have completed even if they forgot to click 'Submit Solution' on individual questions before the cutoff.
+- **Verification Procedure**:
+  1. Start an attempt, type partial/complete solutions in Q1 and Q2 in draft mode without clicking 'Submit Solution'.
+  2. Allow the timer to expire or click 'Finish Test'.
+  3. Verify in Instructor Gradebook that Q1 and Q2 are automatically graded with corresponding test case scores and submitted source code.
+
+### 14.8 Instructor Submitted Code & Telemetry Inspector
+- [x] **1-Click Code Inspection**: Clicking 'View Code' or clicking any question mark pill in the Gradebook opens the interactive Code Inspector Modal.
+- [x] **Syntax & Test Matrix Telemetry**: Displays student's complete source code (with Copy Code button), execution status, compile error logs, and detailed breakdown for all 10 test cases (input, expected, actual stdout, stderr, execution ms).
+- **Verification Procedure**:
+  1. Open Gradebook for `Test2`.
+  2. Click 'View Code' for a student.
+  3. Inspect question tabs (Q1 to Q5) -> Verify code, syntax layout, copy button, and test case telemetry cards.
+
+
 
 
