@@ -274,4 +274,13 @@ export const api = {
     if (!res.ok) throw new Error(await res.text());
     return res.blob();
   },
+
+  autogradeAll: async (assessmentId: string) => {
+    const res = await fetch(`${API_BASE}/results/${assessmentId}/autograde-all`, {
+      method: "POST",
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
 };

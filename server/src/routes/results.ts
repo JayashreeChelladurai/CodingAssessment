@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { requireAdminSession } from "../services/auth.js";
+import { autoGradeAndFinalizeAttempt } from "./student.js";
 
 export const resultsRouter = Router();
 
@@ -13,10 +14,31 @@ function sanitizeCsvCell(raw: unknown): string {
   return `"${safeValue}"`;
 }
 
-// 1. Get Gradebook Analytics & Combined Scores (Admin)
+// 1. Get Gradebook Analytics, Submissions & Code (Admin)
 resultsRouter.get("/:assessmentId", async (req, res) => {
   try {
     const { assessmentId } = req.params;
+
+    // Check for any in-progress attempts that have expired time and finalize them
+    const inProgressAttempts = await prisma.studentAttempt.findMany({
+      where: {
+        assessmentId,
+        status: "IN_PROGRESS",
+      },
+      include: { assessment: true },
+    });
+
+    const now = Date.now();
+    for (const att of inProgressAttempts) {
+      const durationMs = (att.assessment.durationMinutes || 60) * 60 * 1000;
+      const startedMs = new Date(att.startedAt).getTime();
+      const isExpiredByClock = now - startedMs > durationMs + 60000; // 1 min grace buffer
+      const isExpiredBySeconds = att.remainingSeconds <= 0;
+
+      if (isExpiredByClock || isExpiredBySeconds) {
+        await autoGradeAndFinalizeAttempt(att.id, "TIME_EXPIRED");
+      }
+    }
 
     const assessment = await prisma.assessment.findUnique({
       where: { id: assessmentId },
@@ -26,19 +48,24 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
           include: {
             questions: {
               orderBy: { order: "asc" },
-              select: { id: true, type: true, title: true, marks: true, order: true },
+              include: {
+                testCases: { orderBy: { order: "asc" } },
+              },
             },
           },
         },
         questions: {
           orderBy: { order: "asc" },
-          select: { id: true, type: true, title: true, marks: true, order: true },
+          include: {
+            testCases: { orderBy: { order: "asc" } },
+          },
         },
         attempts: {
           include: {
             violations: { orderBy: { timestamp: "desc" } },
             submissions: {
-              include: { question: { select: { id: true, type: true, title: true, marks: true } } },
+              include: { question: true },
+              orderBy: { submittedAt: "desc" },
             },
           },
           orderBy: { startedAt: "desc" },
@@ -53,7 +80,7 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
     const totalPossibleMarks = assessment.questions.reduce((sum, q) => sum + q.marks, 0);
 
     const students = assessment.attempts.map((att) => {
-      const questionScores: Record<string, { score: number; maxScore: number; status: string; type: string }> = {};
+      const questionScores: Record<string, { score: number; maxScore: number; status: string; type: string; submissionId?: string }> = {};
       let totalEarnedScore = 0;
       let mcqScore = 0;
       let codingScore = 0;
@@ -74,6 +101,7 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
           maxScore: q.marks,
           status: sub ? sub.status : "NOT_SUBMITTED",
           type: q.type,
+          submissionId: sub ? sub.id : undefined,
         };
       });
 
@@ -87,6 +115,23 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
         violationCount: att.violationCount,
         violations: att.violations,
         questionScores,
+        submissions: att.submissions.map((s) => ({
+          id: s.id,
+          questionId: s.questionId,
+          type: s.type,
+          language: s.language,
+          code: s.code,
+          score: s.score,
+          maxScore: s.maxScore,
+          passedTestCases: s.passedTestCases,
+          totalTestCases: s.totalTestCases,
+          status: s.status,
+          testCaseResults: s.testCaseResults,
+          selectedOptions: s.selectedOptions,
+          submittedAt: s.submittedAt,
+        })),
+        drafts: att.drafts,
+        mcqResponses: att.mcqResponses,
         mcqScore: Number(mcqScore.toFixed(2)),
         codingScore: Number(codingScore.toFixed(2)),
         totalScore: Number(totalEarnedScore.toFixed(2)),
@@ -108,6 +153,26 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
       },
       students,
     });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Force Auto-Grade All Attempts for this assessment
+resultsRouter.post("/:assessmentId/autograde-all", async (req, res) => {
+  try {
+    const { assessmentId } = req.params;
+    const attempts = await prisma.studentAttempt.findMany({
+      where: { assessmentId },
+    });
+
+    let gradedCount = 0;
+    for (const att of attempts) {
+      await autoGradeAndFinalizeAttempt(att.id, att.status === "IN_PROGRESS" ? "TIME_EXPIRED" : (att.status as any));
+      gradedCount++;
+    }
+
+    res.json({ success: true, gradedCount });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { isSebRequest } from "../services/sebService.js";
+import { gradeStudentCode, gradeMcqQuestion } from "../services/gradingService.js";
 import {
   issueAttemptSessionToken,
   requireAttemptSession,
@@ -396,7 +397,241 @@ studentRouter.post("/submit-mcq", requireAttemptSession, async (req: Authenticat
   }
 });
 
-// 5. Finish / Final Submit Assessment
+export function extractDraftCodeForQuestion(
+  drafts: any,
+  questionId: string,
+  allowedLanguages: string[] = ["JAVA"]
+): { code: string; language: string } | null {
+  if (!drafts || typeof drafts !== "object") return null;
+
+  // 1. Check for compound keys: `${questionId}_${lang}`
+  for (const lang of allowedLanguages) {
+    const key = `${questionId}_${lang.toUpperCase()}`;
+    if (typeof drafts[key] === "string" && drafts[key].trim().length > 0) {
+      return { code: drafts[key], language: lang.toUpperCase() };
+    }
+  }
+
+  // 2. Check for nested object drafts[questionId]
+  const val = drafts[questionId];
+  if (typeof val === "object" && val !== null) {
+    for (const lang of allowedLanguages) {
+      if (typeof val[lang] === "string" && val[lang].trim().length > 0) {
+        return { code: val[lang], language: lang.toUpperCase() };
+      }
+    }
+    for (const k of Object.keys(val)) {
+      if (typeof val[k] === "string" && val[k].trim().length > 0) {
+        return { code: val[k], language: k.toUpperCase() };
+      }
+    }
+  }
+
+  // 3. Check for direct string drafts[questionId]
+  if (typeof val === "string" && val.trim().length > 0) {
+    const lang = allowedLanguages[0] || "JAVA";
+    return { code: val, language: lang.toUpperCase() };
+  }
+
+  return null;
+}
+
+export async function autoGradeAndFinalizeAttempt(
+  attemptId: string,
+  markStatus: "SUBMITTED" | "TIME_EXPIRED" = "SUBMITTED"
+) {
+  const attempt = await prisma.studentAttempt.findUnique({
+    where: { id: attemptId },
+    include: {
+      assessment: {
+        include: {
+          questions: {
+            include: {
+              testCases: { orderBy: { order: "asc" } },
+            },
+            orderBy: { order: "asc" },
+          },
+        },
+      },
+      submissions: true,
+    },
+  });
+
+  if (!attempt) return null;
+
+  let drafts: any = {};
+  try {
+    drafts = typeof attempt.drafts === "string" ? JSON.parse(attempt.drafts || "{}") : (attempt.drafts || {});
+  } catch {
+    drafts = {};
+  }
+
+  let mcqResponses: Record<string, string[]> = {};
+  try {
+    mcqResponses = typeof attempt.mcqResponses === "string" ? JSON.parse(attempt.mcqResponses || "{}") : (attempt.mcqResponses || {});
+  } catch {
+    mcqResponses = {};
+  }
+
+  const existingSubmissions = attempt.submissions || [];
+  let totalScore = 0;
+
+  for (const q of attempt.assessment.questions) {
+    const existingSub = existingSubmissions.find((s) => s.questionId === q.id);
+
+    if (q.type === "CODING") {
+      const allowedLangs = q.allowedLanguages
+        ? q.allowedLanguages.split(",").map((l) => l.trim().toUpperCase())
+        : ["JAVA", "C", "CPP"];
+
+      const draftInfo = extractDraftCodeForQuestion(drafts, q.id, allowedLangs);
+
+      if (draftInfo && draftInfo.code.trim().length > 0) {
+        if (existingSub && existingSub.code === draftInfo.code) {
+          totalScore += existingSub.score;
+          continue;
+        }
+
+        const grading = await gradeStudentCode(draftInfo.language, draftInfo.code, q, false);
+        totalScore += grading.totalScore;
+
+        if (existingSub) {
+          await prisma.submission.update({
+            where: { id: existingSub.id },
+            data: {
+              type: "CODING",
+              language: draftInfo.language,
+              code: draftInfo.code,
+              score: grading.totalScore,
+              maxScore: grading.maxScore,
+              passedTestCases: grading.passedTestCases,
+              totalTestCases: grading.totalTestCases,
+              status: grading.status,
+              testCaseResults: JSON.stringify(grading.results),
+              submittedAt: new Date(),
+            },
+          });
+        } else {
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "CODING",
+              language: draftInfo.language,
+              code: draftInfo.code,
+              score: grading.totalScore,
+              maxScore: grading.maxScore,
+              passedTestCases: grading.passedTestCases,
+              totalTestCases: grading.totalTestCases,
+              status: grading.status,
+              testCaseResults: JSON.stringify(grading.results),
+              submittedAt: new Date(),
+            },
+          });
+        }
+      } else {
+        if (existingSub) {
+          totalScore += existingSub.score;
+        } else {
+          const starterCode = q.starterCode || "";
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "CODING",
+              language: allowedLangs[0] || "JAVA",
+              code: starterCode,
+              score: 0,
+              maxScore: q.marks,
+              passedTestCases: 0,
+              totalTestCases: q.testCases.length,
+              status: "NOT_SUBMITTED",
+              testCaseResults: "[]",
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
+    } else if (q.type === "MCQ") {
+      const selected = mcqResponses[q.id];
+      if (selected && selected.length > 0) {
+        let correctAnswers: string[] = [];
+        try {
+          correctAnswers = JSON.parse(q.correctAnswers || "[]");
+        } catch {
+          correctAnswers = [];
+        }
+
+        const grading = gradeMcqQuestion(selected, correctAnswers, q.marks, q.negativeMarks || 0);
+        totalScore += grading.score;
+
+        if (existingSub) {
+          await prisma.submission.update({
+            where: { id: existingSub.id },
+            data: {
+              type: "MCQ",
+              selectedOptions: JSON.stringify(selected),
+              score: grading.score,
+              maxScore: q.marks,
+              status: grading.isCorrect ? "ACCEPTED" : "WRONG_ANSWER",
+              submittedAt: new Date(),
+            },
+          });
+        } else {
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "MCQ",
+              selectedOptions: JSON.stringify(selected),
+              score: grading.score,
+              maxScore: q.marks,
+              status: grading.isCorrect ? "ACCEPTED" : "WRONG_ANSWER",
+              submittedAt: new Date(),
+            },
+          });
+        }
+      } else {
+        if (existingSub) {
+          totalScore += existingSub.score;
+        } else {
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "MCQ",
+              selectedOptions: "[]",
+              score: 0,
+              maxScore: q.marks,
+              status: "NOT_SUBMITTED",
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+  }
+
+  const finalAttempt = await prisma.studentAttempt.update({
+    where: { id: attempt.id },
+    data: {
+      status: markStatus,
+      score: Number(totalScore.toFixed(2)),
+      submittedAt: new Date(),
+      remainingSeconds: 0,
+    },
+    include: {
+      submissions: {
+        include: { question: true },
+      },
+      violations: true,
+    },
+  });
+
+  return finalAttempt;
+}
+
+// 5. Finish / Final Submit Assessment (Auto-grades all drafted coding & MCQ questions!)
 studentRouter.post("/finish", requireAttemptSession, async (req: AuthenticatedRequest, res) => {
   try {
     const { attemptId } = req.body;
@@ -408,21 +643,14 @@ studentRouter.post("/finish", requireAttemptSession, async (req: AuthenticatedRe
     if (!attempt) {
       return res.status(404).json({ error: "Attempt not found." });
     }
-    if (attempt.status === "SUBMITTED") {
-      return res.status(409).json({ error: "Attempt already submitted." });
+    if (attempt.status === "SUBMITTED" || attempt.status === "TIME_EXPIRED") {
+      return res.json({ success: true, attempt });
     }
 
-    const updatedAttempt = await prisma.studentAttempt.update({
-      where: { id: attemptId },
-      data: {
-        status: "SUBMITTED",
-        submittedAt: new Date(),
-        remainingSeconds: 0,
-      },
-      include: { submissions: true },
-    });
+    // Auto-grade whatever student has written across all questions!
+    const finalizedAttempt = await autoGradeAndFinalizeAttempt(attemptId, "SUBMITTED");
 
-    res.json({ success: true, attempt: updatedAttempt });
+    res.json({ success: true, attempt: finalizedAttempt });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
