@@ -178,10 +178,11 @@ resultsRouter.post("/:assessmentId/autograde-all", async (req, res) => {
   }
 });
 
-// 2. Export Gradebook to CSV
+// 2. Export Gradebook to CSV / Excel (Detailed Choices & Answers + Summary)
 resultsRouter.get("/:assessmentId/export", async (req, res) => {
   try {
     const { assessmentId } = req.params;
+    const mode = (req.query.mode as string) || "detailed"; // "detailed" | "summary"
 
     const assessment = await prisma.assessment.findUnique({
       where: { id: assessmentId },
@@ -202,7 +203,10 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
 
     const totalPossibleMarks = assessment.questions.reduce((sum, q) => sum + q.marks, 0);
 
-    const headers = [
+    const letterMap = ["A", "B", "C", "D", "E", "F", "G"];
+
+    // Build header row based on export mode
+    const headers: string[] = [
       "Roll Number",
       "Student Name",
       "Status",
@@ -212,10 +216,28 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
       "Total Score",
       "Max Score",
       "Percentage (%)",
-      ...assessment.questions.map((q, idx) => `Q${idx + 1} [${q.type}] (${q.title}) [${q.marks}m]`),
-      "Started At",
-      "Submitted At",
     ];
+
+    if (mode === "summary") {
+      // Summary mode: only numeric marks per question
+      assessment.questions.forEach((q, idx) => {
+        headers.push(`Q${idx + 1} Score [${q.type}] (${q.marks}m)`);
+      });
+    } else {
+      // Detailed mode: Selected choice, correct answer, and score per question
+      assessment.questions.forEach((q, idx) => {
+        if (q.type === "MCQ") {
+          headers.push(`Q${idx + 1} Selected Choice`);
+          headers.push(`Q${idx + 1} Correct Answer`);
+          headers.push(`Q${idx + 1} Score (${q.marks}m)`);
+        } else {
+          headers.push(`Q${idx + 1} Coding Submission`);
+          headers.push(`Q${idx + 1} Score (${q.marks}m)`);
+        }
+      });
+    }
+
+    headers.push("Started At", "Submitted At");
 
     const rows: string[][] = [headers];
 
@@ -224,13 +246,92 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
       let mcqScore = 0;
       let codingScore = 0;
 
-      const qScores = assessment.questions.map((q) => {
+      let mcqResponsesMap: Record<string, string[]> = {};
+      try {
+        mcqResponsesMap = JSON.parse(att.mcqResponses || "{}");
+      } catch {
+        mcqResponsesMap = {};
+      }
+
+      const questionColumns: string[] = [];
+
+      assessment.questions.forEach((q, idx) => {
         const sub = att.submissions.find((s) => s.questionId === q.id);
         const score = sub ? sub.score : 0;
         totalEarnedScore += score;
         if (q.type === "MCQ") mcqScore += score;
         else codingScore += score;
-        return score.toFixed(1);
+
+        if (mode === "summary") {
+          questionColumns.push(sanitizeCsvCell(score.toFixed(1)));
+        } else {
+          if (q.type === "MCQ") {
+            // Parse options
+            let options: Array<{ id: string; text: string }> = [];
+            try {
+              options = JSON.parse(q.options || "[]");
+            } catch {
+              options = [];
+            }
+
+            // Parse correct answers
+            let correctAnswers: string[] = [];
+            try {
+              correctAnswers = JSON.parse(q.correctAnswers || "[]");
+            } catch {
+              correctAnswers = [];
+            }
+
+            // Parse selected answers
+            let selected: string[] = [];
+            if (sub && sub.selectedOptions) {
+              try {
+                selected = JSON.parse(sub.selectedOptions);
+              } catch {
+                selected = [];
+              }
+            } else if (mcqResponsesMap[q.id]) {
+              selected = mcqResponsesMap[q.id];
+            }
+
+            // Format selected choice string
+            let selectedText = "[Unanswered]";
+            if (selected.length > 0) {
+              selectedText = selected
+                .map((selId) => {
+                  const optIdx = options.findIndex((o) => o.id === selId);
+                  const letter = optIdx >= 0 ? letterMap[optIdx] : selId;
+                  const optObj = options.find((o) => o.id === selId);
+                  return optObj ? `${letter}: ${optObj.text}` : letter;
+                })
+                .join(" | ");
+            }
+
+            // Format correct answer string
+            let correctText = "";
+            if (correctAnswers.length > 0) {
+              correctText = correctAnswers
+                .map((ansId) => {
+                  const optIdx = options.findIndex((o) => o.id === ansId);
+                  const letter = optIdx >= 0 ? letterMap[optIdx] : ansId;
+                  const optObj = options.find((o) => o.id === ansId);
+                  return optObj ? `${letter}: ${optObj.text}` : letter;
+                })
+                .join(" | ");
+            }
+
+            questionColumns.push(sanitizeCsvCell(selectedText));
+            questionColumns.push(sanitizeCsvCell(correctText));
+            questionColumns.push(sanitizeCsvCell(score.toFixed(1)));
+          } else {
+            // Coding question
+            const statusText = sub
+              ? `${sub.status} (${sub.passedTestCases || 0}/${sub.totalTestCases || 0} passed)`
+              : "[Not Submitted]";
+            questionColumns.push(sanitizeCsvCell(statusText));
+            questionColumns.push(sanitizeCsvCell(score.toFixed(1)));
+          }
+        }
       });
 
       const percentage = totalPossibleMarks > 0 ? ((totalEarnedScore / totalPossibleMarks) * 100).toFixed(1) : "0";
@@ -245,16 +346,19 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
         sanitizeCsvCell(totalEarnedScore.toFixed(2)),
         sanitizeCsvCell(totalPossibleMarks.toString()),
         sanitizeCsvCell(`${percentage}%`),
-        ...qScores.map((score) => sanitizeCsvCell(score)),
+        ...questionColumns,
         sanitizeCsvCell(att.startedAt.toISOString()),
         sanitizeCsvCell(att.submittedAt ? att.submittedAt.toISOString() : ""),
       ]);
     });
 
-    const csvContent = rows.map((r) => r.join(",")).join("\r\n");
+    const csvContent = "\uFEFF" + rows.map((r) => r.join(",")).join("\r\n");
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="Gradebook_${assessment.code}.csv"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${assessment.code}_Student_Responses_${mode}.csv"`
+    );
     res.send(csvContent);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

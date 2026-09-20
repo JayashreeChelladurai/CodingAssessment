@@ -89,14 +89,14 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = (mode: "detailed" | "summary" = "detailed") => {
     api
-      .exportResultsCsv(assessment.id)
+      .exportResultsCsv(assessment.id, mode)
       .then(async (blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `gradebook-${assessment.code || assessment.id}.csv`;
+        link.download = `${assessment.code || assessment.id}_Student_Responses_${mode}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -148,7 +148,7 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
           <div>
             <h1 className="font-bold text-base text-white flex items-center gap-2">
               <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-              <span>Gradebook & Submitted Code Collector</span>
+              <span>Gradebook & Student Response Collector</span>
             </h1>
             <p className="text-xs text-slate-400 font-mono mt-0.5">{assessment.title} ({assessment.code})</p>
           </div>
@@ -173,11 +173,21 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
           </button>
 
           <button
-            onClick={handleExportCSV}
+            onClick={() => handleExportCSV("detailed")}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-md shadow-emerald-950/50"
+            title="Export full report including student selected choices and correct answers for all questions"
           >
             <Download className="w-4 h-4" />
-            <span>Export CSV</span>
+            <span>Export Detailed Excel (CSV)</span>
+          </button>
+
+          <button
+            onClick={() => handleExportCSV("summary")}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700"
+            title="Export marks summary only"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Summary CSV</span>
           </button>
         </div>
       </header>
@@ -604,13 +614,53 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                   ) : (
                     /* MCQ QUESTION CONTENT */
                     <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4 text-xs">
-                      <h4 className="font-bold text-white">MCQ Responses</h4>
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <h4 className="font-bold text-white flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-emerald-400" />
+                          <span>Student Selected Choice & Answer Key</span>
+                        </h4>
+                        <span className="text-[11px] font-mono text-slate-400">
+                          {activeSubmission ? (
+                            activeSubmission.score > 0 ? (
+                              <span className="text-emerald-400 font-bold">✓ Correct (+{activeSubmission.score}m)</span>
+                            ) : activeSubmission.status === "NOT_SUBMITTED" ? (
+                              <span className="text-slate-500">Unanswered</span>
+                            ) : (
+                              <span className="text-rose-400 font-bold">✗ Incorrect ({activeSubmission.score}m)</span>
+                            )
+                          ) : (
+                            <span className="text-slate-500">Not Attempted</span>
+                          )}
+                        </span>
+                      </div>
+
+                      {/* Question Description */}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 text-slate-200 text-xs whitespace-pre-wrap leading-relaxed font-sans">
+                        {activeQuestion.description}
+                      </div>
+
                       {(() => {
                         let selected: string[] = [];
+                        if (activeSubmission?.selectedOptions) {
+                          try {
+                            selected = JSON.parse(activeSubmission.selectedOptions || "[]");
+                          } catch {
+                            selected = [];
+                          }
+                        } else if (inspectStudent?.mcqResponses) {
+                          try {
+                            const map = JSON.parse(inspectStudent.mcqResponses || "{}");
+                            selected = map[activeQuestion.id] || [];
+                          } catch {
+                            selected = [];
+                          }
+                        }
+
+                        let correctAnswers: string[] = [];
                         try {
-                          selected = JSON.parse(activeSubmission?.selectedOptions || "[]");
+                          correctAnswers = JSON.parse(activeQuestion.correctAnswers || "[]");
                         } catch {
-                          selected = [];
+                          correctAnswers = [];
                         }
 
                         let options: any[] = [];
@@ -620,28 +670,74 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                           options = [];
                         }
 
+                        const optionLetters = ["A", "B", "C", "D", "E", "F", "G"];
+
                         return (
-                          <div className="space-y-2">
-                            {options.map((opt: any) => {
+                          <div className="space-y-2.5">
+                            {options.map((opt: any, optIdx: number) => {
                               const isChosen = selected.includes(opt.id);
+                              const isCorrect = correctAnswers.includes(opt.id);
+                              const letter = optionLetters[optIdx] || `${optIdx + 1}`;
+
+                              let borderBgClass = "bg-slate-900/80 border-slate-800 text-slate-300";
+                              if (isChosen && isCorrect) {
+                                borderBgClass = "bg-emerald-950/40 border-emerald-500 text-emerald-200 shadow-sm shadow-emerald-950";
+                              } else if (isChosen && !isCorrect) {
+                                borderBgClass = "bg-rose-950/40 border-rose-500 text-rose-200 shadow-sm shadow-rose-950";
+                              } else if (!isChosen && isCorrect) {
+                                borderBgClass = "bg-emerald-950/20 border-emerald-800/60 text-emerald-300";
+                              }
+
                               return (
                                 <div
                                   key={opt.id}
-                                  className={`p-3 rounded-xl border flex items-center justify-between ${
-                                    isChosen
-                                      ? "bg-emerald-950/30 border-emerald-800/50 text-emerald-300 font-semibold"
-                                      : "bg-slate-900 border-slate-800 text-slate-400"
-                                  }`}
+                                  className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition ${borderBgClass}`}
                                 >
-                                  <span>{opt.text}</span>
-                                  {isChosen && (
-                                    <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">
-                                      Selected
-                                    </span>
-                                  )}
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                                        isChosen && isCorrect
+                                          ? "bg-emerald-600 text-white"
+                                          : isChosen && !isCorrect
+                                          ? "bg-rose-600 text-white"
+                                          : isCorrect
+                                          ? "bg-emerald-950 text-emerald-400 border border-emerald-700"
+                                          : "bg-slate-800 text-slate-400"
+                                      }`}
+                                    >
+                                      {letter}
+                                    </div>
+                                    <span className="text-xs font-medium leading-relaxed">{opt.text}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {isChosen && (
+                                      <span
+                                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                          isCorrect
+                                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                            : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                        }`}
+                                      >
+                                        Student Selected {isCorrect ? "✓" : "✗"}
+                                      </span>
+                                    )}
+                                    {isCorrect && !isChosen && (
+                                      <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-700/50 font-bold px-2 py-0.5 rounded-full">
+                                        Correct Answer Key
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
+
+                            {activeQuestion.explanation && (
+                              <div className="mt-4 p-4 rounded-xl bg-indigo-950/30 border border-indigo-900/40 text-indigo-200 text-xs leading-relaxed space-y-1">
+                                <strong className="text-indigo-400 block font-semibold">Solution Explanation:</strong>
+                                <p>{activeQuestion.explanation}</p>
+                              </div>
+                            )}
                           </div>
                         );
                       })()}

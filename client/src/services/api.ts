@@ -263,12 +263,12 @@ export const api = {
     return res.json();
   },
 
-  getExportUrl: (assessmentId: string) => {
-    return `${API_BASE}/results/${assessmentId}/export`;
+  getExportUrl: (assessmentId: string, mode: "detailed" | "summary" = "detailed") => {
+    return `${API_BASE}/results/${assessmentId}/export?mode=${mode}`;
   },
 
-  exportResultsCsv: async (assessmentId: string) => {
-    const res = await fetch(`${API_BASE}/results/${assessmentId}/export`, {
+  exportResultsCsv: async (assessmentId: string, mode: "detailed" | "summary" = "detailed") => {
+    const res = await fetch(`${API_BASE}/results/${assessmentId}/export?mode=${mode}`, {
       headers: adminHeaders(),
     });
     if (!res.ok) throw new Error(await res.text());
