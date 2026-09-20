@@ -10,6 +10,9 @@ import { studentRouter } from "./routes/student.js";
 import { executionRouter } from "./routes/execution.js";
 import { resultsRouter } from "./routes/results.js";
 import { authRouter } from "./routes/auth.js";
+import { initDatabaseOptimizations } from "./db.js";
+
+initDatabaseOptimizations();
 
 const clientDist = path.resolve(__dirname, "../../client/dist");
 

@@ -84,7 +84,32 @@ function isAttemptMatch(claims: AttemptClaims | null, attemptId?: string) {
   return claims.attemptId === attemptId;
 }
 
+let ioInstance: SocketIOServer | null = null;
+
+export function getIO(): SocketIOServer | null {
+  return ioInstance;
+}
+
+export function broadcastStudentUnlocked(attemptId: string, assessmentId: string, data: any) {
+  if (!ioInstance) return;
+  ioInstance.to(`student:${attemptId}`).emit("student:unlocked", data);
+  if (assessmentId) {
+    ioInstance.to(`assessment:${assessmentId}`).emit("student:unlocked", data);
+  }
+}
+
+export function broadcastStudentUpdated(assessmentId: string, updatedAttempt: any) {
+  if (!ioInstance) return;
+  ioInstance.to(`admin:${assessmentId}`).emit("admin:student_updated", updatedAttempt);
+}
+
+export function broadcastStudentsList(assessmentId: string, attempts: any[]) {
+  if (!ioInstance) return;
+  ioInstance.to(`admin:${assessmentId}`).emit("admin:students_list", attempts);
+}
+
 export function setupSocketService(io: SocketIOServer) {
+  ioInstance = io;
   io.on("connection", (socket) => {
     const authSocket = socket as AuthenticatedSocket;
 

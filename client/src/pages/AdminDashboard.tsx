@@ -17,7 +17,9 @@ import {
   Download,
   Shield,
   Layers,
-  HelpCircle
+  HelpCircle,
+  Lock,
+  Unlock
 } from "lucide-react";
 
 interface AdminDashboardProps {
@@ -39,6 +41,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   useEffect(() => {
     loadAssessments();
+    const interval = setInterval(() => {
+      api.getAssessments().then(setAssessments).catch(() => {});
+    }, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadAssessments = async () => {
@@ -50,6 +56,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       console.error("Failed to load assessments:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUnlockAll = async (id: string, code: string) => {
+    try {
+      const res = await api.unlockAllStudents(id, 0);
+      await loadAssessments();
+      alert(`Successfully unlocked ${res.unlockedCount ?? 0} students for '${code}'!`);
+    } catch (err: any) {
+      alert(err.message || "Failed to unlock students");
     }
   };
 
@@ -169,6 +185,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {assessments.map((ass) => {
                 const totalAttempts = ass.attempts?.length || 0;
+                const lockedCount = (ass.attempts || []).filter((a: any) => a.status === "LOCKED_OUT").length;
                 const mcqCount = (ass.questions || []).filter((q) => q.type === "MCQ").length;
                 const codingCount = (ass.questions || []).filter((q) => q.type === "CODING").length;
                 const sebDownloadUrl = api.getSebConfigUrl(ass.id);
@@ -185,6 +202,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
                               {ass.code}
                             </span>
+                            {lockedCount > 0 && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-600 text-white border border-rose-400 flex items-center gap-1 animate-pulse shadow-md">
+                                <Lock className="w-3 h-3" />
+                                <span>{lockedCount} Locked Out</span>
+                              </span>
+                            )}
                             {ass.requireSeb && (
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
                                 <Shield className="w-3 h-3 text-rose-400" />
@@ -251,6 +274,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     {/* Action Buttons */}
                     <div className="space-y-2 pt-2">
+                      {lockedCount > 0 && (
+                        <button
+                          onClick={() => handleUnlockAll(ass.id, ass.code)}
+                          className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition shadow-lg shadow-rose-950/50 animate-pulse border border-rose-400"
+                        >
+                          <Unlock className="w-3.5 h-3.5" />
+                          <span>1-Click Unlock All ({lockedCount} Locked Students)</span>
+                        </button>
+                      )}
+
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={() => onNavigateToLive(ass)}

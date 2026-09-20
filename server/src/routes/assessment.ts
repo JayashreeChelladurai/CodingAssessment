@@ -2,6 +2,11 @@ import { Router } from "express";
 import { prisma } from "../db.js";
 import { generateSebConfig } from "../services/sebService.js";
 import { requireAdminSession } from "../services/auth.js";
+import {
+  broadcastStudentUnlocked,
+  broadcastStudentUpdated,
+  broadcastStudentsList,
+} from "../services/socketService.js";
 
 export const assessmentRouter = Router();
 
@@ -392,6 +397,139 @@ assessmentRouter.post("/:id/clone", async (req, res) => {
     });
 
     res.status(201).json(fullCloned);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 9. Get Live Candidates for Proctoring (REST fallback for Live Monitor)
+assessmentRouter.get("/:id/live-candidates", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const attempts = await prisma.studentAttempt.findMany({
+      where: { assessmentId: id },
+      include: {
+        violations: { orderBy: { timestamp: "desc" } },
+        submissions: true,
+      },
+      orderBy: { startedAt: "desc" },
+    });
+    res.json(attempts);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 10. Unlock All Locked Students for an Assessment
+assessmentRouter.post("/:id/unlock-all", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { extraMinutes } = req.body;
+    const bonusSec = (Number(extraMinutes) || 0) * 60;
+
+    // Find all locked attempts for this assessment
+    const lockedAttempts = await prisma.studentAttempt.findMany({
+      where: { assessmentId: id, status: "LOCKED_OUT" },
+    });
+
+    if (lockedAttempts.length === 0) {
+      // Also fetch current list to return
+      const allAttempts = await prisma.studentAttempt.findMany({
+        where: { assessmentId: id },
+        include: { violations: { orderBy: { timestamp: "desc" } }, submissions: true },
+        orderBy: { startedAt: "desc" },
+      });
+      return res.json({ success: true, unlockedCount: 0, attempts: allAttempts });
+    }
+
+    // Resolve all open violations for these attempts
+    const lockedIds = lockedAttempts.map((a) => a.id);
+    await prisma.violation.updateMany({
+      where: { attemptId: { in: lockedIds }, resolved: false },
+      data: { resolved: true, resolvedAt: new Date() },
+    });
+
+    // Update each attempt to IN_PROGRESS and add any bonus seconds
+    for (const attempt of lockedAttempts) {
+      const newRemaining = Math.max(60, attempt.remainingSeconds + bonusSec);
+      const updated = await prisma.studentAttempt.update({
+        where: { id: attempt.id },
+        data: {
+          status: "IN_PROGRESS",
+          remainingSeconds: newRemaining,
+        },
+      });
+
+      // Broadcast unlock to the individual student
+      broadcastStudentUnlocked(attempt.id, id, {
+        remainingSeconds: newRemaining,
+        drafts: updated.drafts,
+        message: "Your exam has been unlocked by the instructor.",
+      });
+    }
+
+    // Fetch updated list of all attempts
+    const updatedAttempts = await prisma.studentAttempt.findMany({
+      where: { assessmentId: id },
+      include: { violations: { orderBy: { timestamp: "desc" } }, submissions: true },
+      orderBy: { startedAt: "desc" },
+    });
+
+    // Broadcast updated list to admin room
+    broadcastStudentsList(id, updatedAttempts);
+
+    console.log(`[ADMIN UNLOCK ALL] Unlocked ${lockedAttempts.length} students for assessment ${id}`);
+    res.json({ success: true, unlockedCount: lockedAttempts.length, attempts: updatedAttempts });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 11. Resume / Unlock Single Student Attempt
+assessmentRouter.post("/:id/resume/:attemptId", async (req, res) => {
+  try {
+    const { id, attemptId } = req.params;
+    const { extraMinutes } = req.body;
+    const bonusSec = (Number(extraMinutes) || 0) * 60;
+
+    const attempt = await prisma.studentAttempt.findUnique({
+      where: { id: attemptId },
+    });
+
+    if (!attempt || attempt.assessmentId !== id) {
+      return res.status(404).json({ error: "Student attempt not found for this assessment." });
+    }
+
+    const newRemaining = Math.max(60, attempt.remainingSeconds + bonusSec);
+
+    // Mark violations as resolved
+    await prisma.violation.updateMany({
+      where: { attemptId, resolved: false },
+      data: { resolved: true, resolvedAt: new Date() },
+    });
+
+    const updated = await prisma.studentAttempt.update({
+      where: { id: attemptId },
+      data: {
+        status: "IN_PROGRESS",
+        remainingSeconds: newRemaining,
+      },
+      include: {
+        violations: { orderBy: { timestamp: "desc" } },
+        submissions: true,
+      },
+    });
+
+    // Broadcast unlock to student and admin
+    broadcastStudentUnlocked(attemptId, id, {
+      remainingSeconds: newRemaining,
+      drafts: updated.drafts,
+      message: "Your exam has been resumed by the instructor.",
+    });
+    broadcastStudentUpdated(id, updated);
+
+    console.log(`[ADMIN RESUME] Unlocked student ${updated.rollNo} (${updated.studentName})`);
+    res.json({ success: true, attempt: updated });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

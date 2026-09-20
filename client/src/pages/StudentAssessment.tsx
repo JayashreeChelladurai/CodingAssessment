@@ -256,6 +256,43 @@ int main() {
     };
   }, [assessment.id, attempt.id, attempt.rollNo, attempt.studentName]);
 
+  const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
+
+  const checkUnlockStatus = useCallback(async () => {
+    try {
+      setIsCheckingStatus(true);
+      const res = await api.getAttemptStatus(attempt.id, attemptToken || undefined);
+      if (res && res.status === "IN_PROGRESS") {
+        setIsLocked(false);
+        setLockReason("");
+        if (typeof res.remainingSeconds === "number" && res.remainingSeconds > 0) {
+          setRemainingSeconds(res.remainingSeconds);
+        }
+        if (res.drafts) {
+          try {
+            const parsed = typeof res.drafts === "string" ? JSON.parse(res.drafts) : res.drafts;
+            setDrafts(parsed);
+          } catch {}
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  }, [attempt.id, attemptToken]);
+
+  // Periodic polling when locked out (auto-resumes candidate within 2 seconds)
+  useEffect(() => {
+    if (!isLocked || isSubmitted) return;
+
+    const poller = setInterval(() => {
+      checkUnlockStatus();
+    }, 2000);
+
+    return () => clearInterval(poller);
+  }, [isLocked, isSubmitted, checkUnlockStatus]);
+
   // 2. Countdown Timer
   useEffect(() => {
     if (isLocked || isSubmitted) return;
@@ -579,6 +616,8 @@ int main() {
           studentName={attempt.studentName}
           lockReason={lockReason}
           violationCount={violationCount}
+          onCheckStatus={checkUnlockStatus}
+          isChecking={isCheckingStatus}
         />
       )}
 

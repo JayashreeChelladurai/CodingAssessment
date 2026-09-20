@@ -61,25 +61,10 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
     }
   };
 
-  const handleBypassSebAndStart = async () => {
-    try {
-      setLoading(true);
-      setShowSebGatekeeper(false);
-      const res = await api.startAssessment(code, rollNo, studentName);
-      api.setAttemptToken(res.attemptToken || null);
-      onStartExam(res);
-    } catch (err: any) {
-      setError(err.message || "Failed to start assessment");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (showSebGatekeeper && assessmentInfo) {
     return (
       <SebGatekeeper
         assessment={assessmentInfo}
-        onBypassForTesting={handleBypassSebAndStart}
       />
     );
   }

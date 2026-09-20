@@ -283,4 +283,41 @@ export const api = {
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
+
+  // Live Proctoring & Unlocking
+  getLiveCandidates: async (assessmentId: string) => {
+    const res = await fetch(`${API_BASE}/assessments/${assessmentId}/live-candidates`, {
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  unlockAllStudents: async (assessmentId: string, extraMinutes: number = 0) => {
+    const res = await fetch(`${API_BASE}/assessments/${assessmentId}/unlock-all`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ extraMinutes }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  resumeStudent: async (assessmentId: string, attemptId: string, extraMinutes: number = 0) => {
+    const res = await fetch(`${API_BASE}/assessments/${assessmentId}/resume/${attemptId}`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ extraMinutes }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  getAttemptStatus: async (attemptId: string, attemptToken?: string) => {
+    const res = await fetch(`${API_BASE}/student/attempt-status/${attemptId}`, {
+      headers: studentHeaders(attemptToken),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
 };

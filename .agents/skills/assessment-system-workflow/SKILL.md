@@ -227,11 +227,15 @@ Every standard coding problem must adhere to the following institutional authori
   - Animated green confirmation toast appears only upon verified successful persistence.
 
 ### 3.6 Live Monitoring & Proctoring Dashboard
-* Accessible via `/admin/assessments/:id/monitor`.
-* **Real-time Telemetry (Socket.IO)**:
-  - Active candidate count.
-  - Individual student progress: current question, time remaining, answered count.
-  - **Focus Loss Counter**: Displays count of tab-switches or fullscreen exits with timestamped audit logs.
+* Accessible via `/admin/assessments/:id/monitor` and directly on the Admin Assessment card.
+* **Real-time Telemetry (Dual Channel: WebSockets + 3s HTTP Polling Fallback)**:
+  - Active candidate count, actively solving candidates, locked-out candidates, and completed submissions.
+  - Live Candidate Grid with real-time status badges (`IN_PROGRESS`, `LOCKED_OUT`, `SUBMITTED`).
+  - **Live Infraction Feed**: Instant telemetry stream capturing timestamped security infractions.
+* **1-Click Bulk & Individual Unlocking**:
+  - **Global Unlock Button (`POST /api/assessments/:id/unlock-all`)**: Instantly resumes all locked candidates across the assessment in a single click, marks violation records as resolved in SQLite, and emits `student:unlocked` via Socket.IO.
+  - **Individual Resume (`POST /api/assessments/:id/resume/:attemptId`)**: Unlocks specific candidate with optional bonus time allocation (+5m, +10m).
+  - **Dashboard Quick-Action**: Assessment cards display a pulsating red warning badge when candidates are locked out, equipped with a 1-click "Unlock All" button without needing to navigate into the sub-monitor.
 
 ### 3.7 Results, Evaluation & Gradebook
 * Accessible via `/admin/assessments/:id/results` and `/admin/assessments/:id/gradebook`.
@@ -291,10 +295,14 @@ stateDiagram-v2
 
 ### 4.3 Proctoring, Fullscreen & Focus Tracking
 * **Fullscreen Lock**: Attempt immediately enters fullscreen mode (`document.documentElement.requestFullscreen()`).
-* **Tab-Switch & Blur Tracking**:
-  - `window.addEventListener('blur')` and `document.addEventListener('visibilitychange')` detect window changes.
-  - Event recorded via `POST /api/student/proctor-log` and broadcast to instructor live monitor.
-  - Student receives a warning notification on returning to the screen.
+* **Debounced Tab-Switch & Blur Tracking**:
+  - `window.addEventListener('blur')` and `document.addEventListener('visibilitychange')` detect window state transitions with a **2.5-second debounced grace period**.
+  - Momentary focus jitters (such as clicking editor scrollbars, dropdown menus, or browser permission prompts) will NOT trigger premature false-positive lockouts.
+  - Hard window departures (>2.5s sustained loss) are safely logged with immediate code draft auto-saving.
+* **Self-Healing Lockout Screen**:
+  - When locked, candidate's code drafts remain 100% intact in the database and local storage.
+  - Lockout screen executes background polling (`GET /api/student/attempt-status/:attemptId`) every 2.0 seconds and includes a manual "Check Status & Resume Now" button.
+  - Once the instructor clicks "Unlock", candidate's screen automatically clears within 2 seconds without requiring browser refresh or code re-entry.
 
 ### 4.4 Navigation & Question Palette
 * Left/Top Navigation Palette color codes every question:

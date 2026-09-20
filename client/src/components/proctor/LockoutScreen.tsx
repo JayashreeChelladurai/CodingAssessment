@@ -6,6 +6,8 @@ interface LockoutScreenProps {
   studentName: string;
   lockReason: string;
   violationCount: number;
+  onCheckStatus?: () => void;
+  isChecking?: boolean;
 }
 
 export const LockoutScreen: React.FC<LockoutScreenProps> = ({
@@ -13,6 +15,8 @@ export const LockoutScreen: React.FC<LockoutScreenProps> = ({
   studentName,
   lockReason,
   violationCount,
+  onCheckStatus,
+  isChecking = false,
 }) => {
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none">
@@ -60,14 +64,27 @@ export const LockoutScreen: React.FC<LockoutScreenProps> = ({
           <div className="text-xs text-emerald-300 space-y-1">
             <p className="font-semibold text-emerald-200">Your code draft is safe</p>
             <p className="text-emerald-400/80">
-              All your written code has been auto-saved to the server. Your timer is currently paused.
+              All your written code is saved on the server. As soon as your instructor resumes your test, this screen will automatically unlock.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-3 text-xs text-slate-400 pt-2">
-          <RefreshCw className="w-4 h-4 text-slate-500 animate-spin" />
-          <span>Waiting for your professor to resume your assessment...</span>
+        <div className="space-y-3 pt-2">
+          {onCheckStatus && (
+            <button
+              onClick={onCheckStatus}
+              disabled={isChecking}
+              className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700 flex items-center justify-center gap-2 shadow-lg"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? "animate-spin text-emerald-400" : "text-slate-400"}`} />
+              <span>{isChecking ? "Checking Professor Approval..." : "Check Status & Resume Now"}</span>
+            </button>
+          )}
+
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+            <RefreshCw className="w-3.5 h-3.5 text-slate-500 animate-spin" />
+            <span>Auto-checking instructor unlock every 2 seconds...</span>
+          </div>
         </div>
       </div>
     </div>

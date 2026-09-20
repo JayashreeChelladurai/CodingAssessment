@@ -36,28 +36,40 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
       }
     };
 
+    let blurTimer: any = null;
+
     // 2. Visibility change (Tab switch / Minimize)
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        onViolation("TAB_SWITCH", "Document became hidden (switched tab or minimized window).");
-      }
-    };
-
-    // 3. Window blur / Control Loss (Clicked outside, Alt+Tabbed, or clicked ChatGPT/overlay)
-    const handleBlur = () => {
-      setTimeout(() => {
-        if (!document.hasFocus() && !isLocked && !isCompleted) {
-          onViolation("CONTROL_LOST", "Input control departed from exam window (interacted with external window/overlay).");
+        blurTimer = setTimeout(() => {
+          if (document.hidden && !isLocked && !isCompleted) {
+            onViolation("TAB_SWITCH", "Candidate switched tab or minimized window.");
+          }
+        }, 1500);
+      } else {
+        if (blurTimer) {
+          clearTimeout(blurTimer);
+          blurTimer = null;
         }
-      }, 100);
+      }
     };
 
-    // 3b. Active Proactive Focus Poller (catches silent overlay focus steals every 200ms)
-    const focusPoller = setInterval(() => {
-      if (!document.hasFocus() && !isLocked && !isCompleted) {
-        onViolation("CONTROL_LOST", "Active window focus was lost to an external overlay or background application.");
+    // 3. Window blur / Focus loss with grace period (prevents false-positives on clicking prompts or editor widgets)
+    const handleBlur = () => {
+      if (blurTimer) clearTimeout(blurTimer);
+      blurTimer = setTimeout(() => {
+        if (!document.hasFocus() && !isLocked && !isCompleted) {
+          onViolation("CONTROL_LOST", "Window focus was lost to an external window or overlay.");
+        }
+      }, 2500);
+    };
+
+    const handleFocus = () => {
+      if (blurTimer) {
+        clearTimeout(blurTimer);
+        blurTimer = null;
       }
-    }, 200);
+    };
 
     // 4. Keyboard Shortcuts Interception & Copy/Paste/Screenshot Blocking
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -158,6 +170,7 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
     window.addEventListener("keydown", handleKeyDown, true);
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("copy", handleClipboardEvent, true);
@@ -166,10 +179,11 @@ export const FullscreenLockdown: React.FC<FullscreenLockdownProps> = ({
     document.addEventListener("dragstart", handleDragStart, true);
 
     return () => {
-      clearInterval(focusPoller);
+      if (blurTimer) clearTimeout(blurTimer);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
       window.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("copy", handleClipboardEvent, true);

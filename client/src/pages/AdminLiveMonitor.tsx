@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getSocket } from "../services/socket";
+import { api } from "../services/api";
 import { StudentAttempt, Assessment } from "../types";
 import {
   ArrowLeft,
@@ -13,7 +14,9 @@ import {
   Hash,
   Sparkles,
   Plus,
-  RefreshCw
+  RefreshCw,
+  ShieldAlert,
+  CheckCircle
 } from "lucide-react";
 
 interface AdminLiveMonitorProps {
@@ -31,11 +34,26 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
   const [violationAlerts, setViolationAlerts] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<StudentAttempt | null>(null);
   const [extraMinutes, setExtraMinutes] = useState<number>(0);
+  const [isUnlockingAll, setIsUnlockingAll] = useState<boolean>(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const adminToken = localStorage.getItem("prof_admin_token");
 
-  useEffect(() => {
-    const socket = getSocket({ adminToken });
+  const fetchLiveCandidates = useCallback(async () => {
+    try {
+      const list = await api.getLiveCandidates(assessment.id);
+      if (Array.isArray(list)) {
+        setStudents(list);
+      }
+    } catch (err) {
+      // silently log
+    }
+  }, [assessment.id]);
 
+  useEffect(() => {
+    fetchLiveCandidates();
+    const pollInterval = setInterval(fetchLiveCandidates, 3000);
+
+    const socket = getSocket({ adminToken });
     socket.emit("admin:join", assessment.id);
 
     socket.on("admin:students_list", (list: StudentAttempt[]) => {
@@ -72,19 +90,46 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
     });
 
     return () => {
+      clearInterval(pollInterval);
       socket.off("admin:students_list");
       socket.off("admin:student_updated");
       socket.off("admin:violation_alert");
     };
-  }, [assessment.id, selectedStudent?.id]);
+  }, [assessment.id, selectedStudent?.id, fetchLiveCandidates]);
 
-  const handleResumeStudent = (attemptId: string) => {
-    const socket = getSocket({ adminToken });
-    socket.emit("admin:resume_student", {
-      attemptId,
-      assessmentId: assessment.id,
-      extraMinutes,
-    });
+  const handleResumeStudent = async (attemptId: string) => {
+    try {
+      const socket = getSocket({ adminToken });
+      socket.emit("admin:resume_student", {
+        attemptId,
+        assessmentId: assessment.id,
+        extraMinutes,
+      });
+      await api.resumeStudent(assessment.id, attemptId, extraMinutes);
+      await fetchLiveCandidates();
+      setToastMsg("Student unlocked successfully!");
+      setTimeout(() => setToastMsg(null), 3000);
+    } catch (err: any) {
+      alert(err.message || "Failed to unlock student");
+    }
+  };
+
+  const handleUnlockAll = async () => {
+    try {
+      setIsUnlockingAll(true);
+      const res = await api.unlockAllStudents(assessment.id, extraMinutes);
+      if (res.attempts) {
+        setStudents(res.attempts);
+      } else {
+        await fetchLiveCandidates();
+      }
+      setToastMsg(`Successfully unlocked ${res.unlockedCount ?? 0} students!`);
+      setTimeout(() => setToastMsg(null), 3500);
+    } catch (err: any) {
+      alert(err.message || "Failed to unlock all students");
+    } finally {
+      setIsUnlockingAll(false);
+    }
   };
 
   const formatTimer = (sec: number) => {
@@ -121,8 +166,20 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          {lockedCount > 0 && (
+            <button
+              onClick={handleUnlockAll}
+              disabled={isUnlockingAll}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition shadow-lg shadow-rose-950/50 animate-pulse border border-rose-400"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              <span>{isUnlockingAll ? "Unlocking All..." : `Unlock All (${lockedCount})`}</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
+              fetchLiveCandidates();
               const socket = getSocket({ adminToken });
               socket.emit("admin:join", assessment.id);
             }}
@@ -140,6 +197,14 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
           </button>
         </div>
       </header>
+
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 border border-emerald-400/50 animate-bounce">
+          <CheckCircle className="w-4 h-4 text-emerald-200" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
@@ -165,14 +230,26 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-rose-400 uppercase font-semibold">Locked Out</span>
-              <p className="text-2xl font-bold font-mono text-rose-400">{lockedCount}</p>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between gap-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs text-rose-400 uppercase font-semibold">Locked Out</span>
+                <p className="text-2xl font-bold font-mono text-rose-400">{lockedCount}</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-rose-950/50 text-rose-400 flex items-center justify-center border border-rose-800/40">
+                <Lock className="w-5 h-5" />
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-rose-950/50 text-rose-400 flex items-center justify-center border border-rose-800/40">
-              <Lock className="w-5 h-5" />
-            </div>
+            {lockedCount > 0 && (
+              <button
+                onClick={handleUnlockAll}
+                disabled={isUnlockingAll}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs rounded-lg transition shadow"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+                <span>1-Click Unlock All ({lockedCount})</span>
+              </button>
+            )}
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
@@ -193,7 +270,19 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-sm text-white">Active Student Proctoring Grid</h2>
-                <span className="text-xs text-slate-400 font-mono">{students.length} Candidates</span>
+                <div className="flex items-center gap-2">
+                  {lockedCount > 0 && (
+                    <button
+                      onClick={handleUnlockAll}
+                      disabled={isUnlockingAll}
+                      className="flex items-center gap-1 px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg transition shadow"
+                    >
+                      <Unlock className="w-3 h-3" />
+                      <span>Unlock All Locked</span>
+                    </button>
+                  )}
+                  <span className="text-xs text-slate-400 font-mono">{students.length} Candidates</span>
+                </div>
               </div>
 
               {students.length === 0 ? (

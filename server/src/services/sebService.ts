@@ -11,14 +11,20 @@ export interface SebConfigOptions {
  * Check if the incoming request originates from Safe Exam Browser
  */
 export function isSebRequest(req: any): boolean {
-  const userAgent = req.headers["user-agent"] || "";
-  const sebHeader = req.headers["x-safeexambrowser-requesthash"] || req.headers["x-safeexambrowser-configkeyhash"];
+  if (!req || !req.headers) return false;
+  const userAgent = (req.headers["user-agent"] || "").toLowerCase();
+  const sebHeader =
+    req.headers["x-safeexambrowser-requesthash"] ||
+    req.headers["x-safeexambrowser-configkeyhash"] ||
+    req.headers["x-seb-request-hash"] ||
+    req.headers["x-seb-config-key-hash"];
 
   if (
-    userAgent.includes("SafeExamBrowser") ||
-    userAgent.includes("SEB/") ||
-    userAgent.includes("SEB ") ||
-    sebHeader
+    userAgent.includes("safeexambrowser") ||
+    userAgent.includes("seb/") ||
+    userAgent.includes("seb ") ||
+    userAgent.includes("seb_") ||
+    Boolean(sebHeader)
   ) {
     return true;
   }

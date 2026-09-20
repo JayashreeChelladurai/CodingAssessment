@@ -4,12 +4,11 @@ import { api } from "../../services/api";
 
 interface SebGatekeeperProps {
   assessment: any;
-  onBypassForTesting: () => void;
+  onBypassForTesting?: () => void;
 }
 
 export const SebGatekeeper: React.FC<SebGatekeeperProps> = ({
   assessment,
-  onBypassForTesting,
 }) => {
   const sebDownloadUrl = api.getSebConfigUrl(assessment.id);
 
@@ -120,16 +119,6 @@ export const SebGatekeeper: React.FC<SebGatekeeperProps> = ({
               <span>Download SEB Installer for Windows / Mac</span>
               <ExternalLink className="w-3 h-3" />
             </a>
-          </div>
-
-          {/* Dev/Preview bypass */}
-          <div className="pt-1">
-            <button
-              onClick={onBypassForTesting}
-              className="text-[11px] text-slate-500 hover:text-slate-300 underline transition"
-            >
-              Preview & Test in Standard Browser (Development Mode)
-            </button>
           </div>
         </div>
       </div>

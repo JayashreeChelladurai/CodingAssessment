@@ -96,9 +96,9 @@ studentRouter.post("/start", async (req, res) => {
       return res.status(404).json({ error: "Assessment code not found. Please verify with your professor." });
     }
 
-    // Check SEB requirement if enabled
+    // Check SEB requirement if enabled (strict enforcement)
     const isSeb = isSebRequest(req);
-    if (assessment.requireSeb && !isSeb && process.env.NODE_ENV === "production") {
+    if (assessment.requireSeb && !isSeb) {
       return res.status(403).json({
         error: "This assessment strictly requires Safe Exam Browser (SEB). Please launch via your .seb file.",
         requireSeb: true,
@@ -293,6 +293,45 @@ studentRouter.post("/save-draft", requireAttemptSession, async (req: Authenticat
     });
 
     res.json({ success: true, updated });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3b. Check Attempt Status (Used by LockoutScreen & polling fallback to instantly self-resume)
+studentRouter.get("/attempt-status/:attemptId", requireAttemptSession, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { attemptId } = req.params;
+    if (req.attemptSession?.attemptId !== attemptId) {
+      return res.status(401).json({ error: "Invalid attempt session." });
+    }
+
+    const attempt = await prisma.studentAttempt.findUnique({
+      where: { id: attemptId },
+      select: {
+        id: true,
+        status: true,
+        remainingSeconds: true,
+        violationCount: true,
+        drafts: true,
+        lastHeartbeat: true,
+      },
+    });
+
+    if (!attempt) {
+      return res.status(404).json({ error: "Attempt not found." });
+    }
+
+    res.json({
+      attemptId: attempt.id,
+      status: attempt.status,
+      isLocked: attempt.status === "LOCKED_OUT",
+      isSubmitted: attempt.status === "SUBMITTED",
+      isExpired: attempt.status === "TIME_EXPIRED",
+      remainingSeconds: attempt.remainingSeconds,
+      violationCount: attempt.violationCount,
+      drafts: attempt.drafts,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -616,7 +655,6 @@ export async function autoGradeAndFinalizeAttempt(
     where: { id: attempt.id },
     data: {
       status: markStatus,
-      score: Number(totalScore.toFixed(2)),
       submittedAt: new Date(),
       remainingSeconds: 0,
     },

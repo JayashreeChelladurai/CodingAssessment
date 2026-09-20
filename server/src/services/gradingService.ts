@@ -1,4 +1,11 @@
-import { executeCode, normalizeOutput, TestCaseEvaluationResult } from "./codeRunner.js";
+import {
+  prepareAndCompileCode,
+  runCompiledBinary,
+  cleanupSandbox,
+  executionSemaphore,
+  normalizeOutput,
+  TestCaseEvaluationResult,
+} from "./codeRunner.js";
 
 export interface TestCaseInput {
   id?: string;
@@ -117,21 +124,17 @@ export async function gradeStudentCode(
     };
   }
 
-  const results: TestCaseEvaluationResult[] = [];
-  let totalWeight = 0;
-  let passedWeight = 0;
-  let hasCompileError = false;
-  let compileErrorMsg = "";
-  let hasRuntimeError = false;
-  let hasTLE = false;
-  let passedCount = 0;
+  return executionSemaphore.runExclusive(async () => {
+    // 1. Compile Source Code ONCE
+    const compiled = await prepareAndCompileCode(language, code, question.memoryLimitMb || 256);
 
-  for (const tc of targetTestCases) {
-    const weight = tc.weight ?? 1.0;
-    totalWeight += weight;
+    const totalQuestionWeight = question.testCases.reduce((sum, tc) => sum + (tc.weight ?? 1.0), 0) || 1;
 
-    if (hasCompileError) {
-      results.push({
+    // Handle Compilation Failure immediately across all test cases
+    if (!compiled.success) {
+      await cleanupSandbox(compiled.tempDir);
+      const compileErrorMsg = compiled.compilationError || "Compilation error";
+      const results: TestCaseEvaluationResult[] = targetTestCases.map((tc) => ({
         testCaseId: tc.id,
         isPublic: tc.isPublic,
         input: tc.isPublic ? tc.input : "[Hidden Test Case]",
@@ -142,123 +145,124 @@ export async function gradeStudentCode(
         executionTimeMs: 0,
         passed: false,
         scoreAwarded: 0,
-        weight,
+        weight: tc.weight ?? 1.0,
         compilationError: compileErrorMsg,
-      });
-      continue;
-    }
+      }));
 
-    const execResult = await executeCode(
-      language,
-      code,
-      tc.input,
-      question.timeLimitSeconds,
-      question.memoryLimitMb
-    );
-
-    if (execResult.status === "COMPILE_ERROR") {
-      hasCompileError = true;
-      compileErrorMsg = execResult.compilationError || "Compilation error";
-      results.push({
-        testCaseId: tc.id,
-        isPublic: tc.isPublic,
-        input: tc.isPublic ? tc.input : "[Hidden Test Case]",
-        expectedOutput: tc.isPublic ? tc.expectedOutput : "[Hidden Test Case]",
+      return {
         status: "COMPILE_ERROR",
-        stdout: "",
-        stderr: compileErrorMsg,
-        executionTimeMs: 0,
-        passed: false,
-        scoreAwarded: 0,
-        weight,
+        totalScore: 0,
+        maxScore: question.marks,
+        passedTestCases: 0,
+        totalTestCases: targetTestCases.length,
         compilationError: compileErrorMsg,
-      });
-      continue;
+        results,
+      };
     }
 
-    if (execResult.status === "TIME_LIMIT_EXCEEDED") {
-      hasTLE = true;
-      results.push({
-        testCaseId: tc.id,
-        isPublic: tc.isPublic,
-        input: tc.isPublic ? tc.input : "[Hidden Test Case]",
-        expectedOutput: tc.isPublic ? tc.expectedOutput : "[Hidden Test Case]",
-        status: "TIME_LIMIT_EXCEEDED",
-        stdout: execResult.stdout,
-        stderr: execResult.stderr,
-        executionTimeMs: execResult.executionTimeMs,
-        passed: false,
-        scoreAwarded: 0,
-        weight,
-      });
-      continue;
+    try {
+      const results: TestCaseEvaluationResult[] = [];
+      let passedWeight = 0;
+      let passedCount = 0;
+      let hasRuntimeError = false;
+      let hasTLE = false;
+
+      // 2. Run Pre-Compiled Binary for each test case (sub-second evaluation)
+      for (const tc of targetTestCases) {
+        const weight = tc.weight ?? 1.0;
+
+        const execResult = await runCompiledBinary(
+          compiled.runCmd,
+          compiled.runArgs,
+          compiled.tempDir,
+          tc.input,
+          question.timeLimitSeconds || 3
+        );
+
+        if (execResult.status === "TIME_LIMIT_EXCEEDED") {
+          hasTLE = true;
+          results.push({
+            testCaseId: tc.id,
+            isPublic: tc.isPublic,
+            input: tc.isPublic ? tc.input : "[Hidden Test Case]",
+            expectedOutput: tc.isPublic ? tc.expectedOutput : "[Hidden Test Case]",
+            status: "TIME_LIMIT_EXCEEDED",
+            stdout: execResult.stdout,
+            stderr: execResult.stderr,
+            executionTimeMs: execResult.executionTimeMs,
+            passed: false,
+            scoreAwarded: 0,
+            weight,
+          });
+          continue;
+        }
+
+        if (execResult.status === "RUNTIME_ERROR") {
+          hasRuntimeError = true;
+          results.push({
+            testCaseId: tc.id,
+            isPublic: tc.isPublic,
+            input: tc.isPublic ? tc.input : "[Hidden Test Case]",
+            expectedOutput: tc.isPublic ? tc.expectedOutput : "[Hidden Test Case]",
+            status: "RUNTIME_ERROR",
+            stdout: execResult.stdout,
+            stderr: execResult.stderr,
+            executionTimeMs: execResult.executionTimeMs,
+            passed: false,
+            scoreAwarded: 0,
+            weight,
+          });
+          continue;
+        }
+
+        const actualNorm = normalizeOutput(execResult.stdout);
+        const expectedNorm = normalizeOutput(tc.expectedOutput);
+        const passed = actualNorm === expectedNorm;
+
+        if (passed) {
+          passedCount++;
+          passedWeight += weight;
+        }
+
+        results.push({
+          testCaseId: tc.id,
+          isPublic: tc.isPublic,
+          input: tc.isPublic ? tc.input : "[Hidden Test Case]",
+          expectedOutput: tc.isPublic ? tc.expectedOutput : "[Hidden Test Case]",
+          status: passed ? "ACCEPTED" : "WRONG_ANSWER",
+          stdout: tc.isPublic || passed ? execResult.stdout : "[Output hidden for evaluation test case]",
+          stderr: execResult.stderr,
+          executionTimeMs: execResult.executionTimeMs,
+          passed,
+          scoreAwarded: passed ? Number(((weight / totalQuestionWeight) * question.marks).toFixed(2)) : 0,
+          weight,
+        });
+      }
+
+      const score = Number(((passedWeight / totalQuestionWeight) * question.marks).toFixed(2));
+
+      let finalStatus: CodingGradingResponse["status"] = "ACCEPTED";
+      if (passedCount === targetTestCases.length) {
+        finalStatus = "ACCEPTED";
+      } else if (hasTLE) {
+        finalStatus = "TIME_LIMIT_EXCEEDED";
+      } else if (hasRuntimeError) {
+        finalStatus = "RUNTIME_ERROR";
+      } else {
+        finalStatus = "WRONG_ANSWER";
+      }
+
+      return {
+        status: finalStatus,
+        totalScore: score,
+        maxScore: question.marks,
+        passedTestCases: passedCount,
+        totalTestCases: targetTestCases.length,
+        results,
+      };
+    } finally {
+      // 3. Clean up sandbox folder
+      await cleanupSandbox(compiled.tempDir);
     }
-
-    if (execResult.status === "RUNTIME_ERROR") {
-      hasRuntimeError = true;
-      results.push({
-        testCaseId: tc.id,
-        isPublic: tc.isPublic,
-        input: tc.isPublic ? tc.input : "[Hidden Test Case]",
-        expectedOutput: tc.isPublic ? tc.expectedOutput : "[Hidden Test Case]",
-        status: "RUNTIME_ERROR",
-        stdout: execResult.stdout,
-        stderr: execResult.stderr,
-        executionTimeMs: execResult.executionTimeMs,
-        passed: false,
-        scoreAwarded: 0,
-        weight,
-      });
-      continue;
-    }
-
-    const actualNorm = normalizeOutput(execResult.stdout);
-    const expectedNorm = normalizeOutput(tc.expectedOutput);
-    const passed = actualNorm === expectedNorm;
-
-    if (passed) {
-      passedCount++;
-      passedWeight += weight;
-    }
-
-    results.push({
-      testCaseId: tc.id,
-      isPublic: tc.isPublic,
-      input: tc.isPublic ? tc.input : "[Hidden Test Case]",
-      expectedOutput: tc.isPublic ? tc.expectedOutput : "[Hidden Test Case]",
-      status: passed ? "ACCEPTED" : "WRONG_ANSWER",
-      stdout: tc.isPublic || passed ? execResult.stdout : "[Output hidden for evaluation test case]",
-      stderr: execResult.stderr,
-      executionTimeMs: execResult.executionTimeMs,
-      passed,
-      scoreAwarded: passed ? (weight / (question.testCases.reduce((a, b) => a + (b.weight ?? 1), 0))) * question.marks : 0,
-      weight,
-    });
-  }
-
-  const totalQuestionWeight = question.testCases.reduce((sum, tc) => sum + (tc.weight ?? 1.0), 0) || 1;
-  const score = Number(((passedWeight / totalQuestionWeight) * question.marks).toFixed(2));
-
-  let finalStatus: CodingGradingResponse["status"] = "ACCEPTED";
-  if (hasCompileError) {
-    finalStatus = "COMPILE_ERROR";
-  } else if (passedCount === targetTestCases.length) {
-    finalStatus = "ACCEPTED";
-  } else if (hasTLE) {
-    finalStatus = "TIME_LIMIT_EXCEEDED";
-  } else if (hasRuntimeError) {
-    finalStatus = "RUNTIME_ERROR";
-  } else {
-    finalStatus = "WRONG_ANSWER";
-  }
-
-  return {
-    status: finalStatus,
-    totalScore: score,
-    maxScore: question.marks,
-    passedTestCases: passedCount,
-    totalTestCases: targetTestCases.length,
-    compilationError: hasCompileError ? compileErrorMsg : undefined,
-    results,
-  };
+  });
 }
