@@ -568,7 +568,7 @@ async function main() {
       startTime: new Date(),
       endTime: null,
       shuffleQuestions: false,
-      requireSeb: true,
+      requireSeb: false,
       sebQuitPassword: "exit123",
       isReviewUnlocked: false,
     },
@@ -595,58 +595,42 @@ async function main() {
       sectionId: section.id,
       type: "CODING",
       title: "Longest Palindromic Substring",
-      description: `### Problem Statement
-Given a string \`s\`, return the **longest palindromic substring** in \`s\`.
+      description: `Problem Statement:
+Given a string s, return the longest palindromic substring in s.
 
-A **palindrome** is a string that reads the same backward as forward.
+A palindrome is a string that reads the same backward as forward.
 
----
+Input Format:
+• A single line containing the string s.
 
-### Input Format
-- A single line containing the string \`s\`.
+Output Format:
+• Print the longest palindromic substring in s.
+• Tie-Breaking Rule: If there are multiple palindromic substrings of the same maximum length, print the one that occurs first (with the earliest starting index).
 
-### Output Format
-- Print the longest palindromic substring in \`s\`.
-- **Tie-Breaking Rule:** If there are multiple palindromic substrings of the same maximum length, print the one that occurs **first** (with the earliest starting index).
+Constraints:
+• 1 <= length(s) <= 1000
+• s consists of printable ASCII characters or English letters and digits.
 
-### Constraints
-- $1 \\le \\text{length}(s) \\le 1000$
-- \`s\` consists of printable ASCII characters or English letters and digits.
+Examples:
 
----
+Example 1:
+Input:
+babad
+Output:
+bab
+Explanation: Both "bab" and "aba" are palindromes of length 3. Per the tie-breaking rule, "bab" appears first in "babad", so print "bab".
 
-### Examples
+Example 2:
+Input:
+cbbd
+Output:
+bb
 
-**Example 1:**
-- **Input:**
-  \`\`\`text
-  babad
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  bab
-  \`\`\`
-- **Explanation:** Both \`"bab"\` and \`"aba"\` are palindromes of length 3. Per the tie-breaking rule, \`"bab"\` appears first in \`"babad"\`, so print \`"bab"\`.
-
-**Example 2:**
-- **Input:**
-  \`\`\`text
-  cbbd
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  bb
-  \`\`\`
-
-**Example 3:**
-- **Input:**
-  \`\`\`text
-  racecar
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  racecar
-  \`\`\`
+Example 3:
+Input:
+racecar
+Output:
+racecar
 `,
       marks: 35.0,
       order: 0,
@@ -702,62 +686,47 @@ public class Solution {
       sectionId: section.id,
       type: "CODING",
       title: "Minimum Window Substring",
-      description: `### Problem Statement
-Given two strings \`s\` and \`t\` of lengths \`m\` and \`n\` respectively, return the **minimum window substring** of \`s\` such that every character in \`t\` (**including duplicates**) is included in the window.
+      description: `Problem Statement:
+Given two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t (including duplicates) is included in the window.
 
-If there is no such substring, return an empty string \`""\` (i.e. print nothing / empty line).
+If there is no such substring, return an empty string "" (i.e. print nothing / leave line blank).
 
----
+Input Format:
+• Line 1: String s
+• Line 2: String t
 
-### Input Format
-- **Line 1:** String \`s\`
-- **Line 2:** String \`t\`
+Output Format:
+• Print the minimum window substring. If no such substring exists, leave the output empty.
+• Tie-Breaking Rule: If there are multiple minimal windows of the same minimum length, print the one that occurs first (earliest starting index).
 
-### Output Format
-- Print the minimum window substring. If no such substring exists, leave the output empty.
-- **Tie-Breaking Rule:** If there are multiple minimal windows of the same minimum length, print the one that occurs **first** (earliest starting index).
+Constraints:
+• 1 <= length(s), length(t) <= 100,000
+• s and t consist of uppercase and lowercase English letters or printable characters.
 
-### Constraints
-- $1 \\le \\text{length}(s), \\text{length}(t) \\le 10^5$
-- \`s\` and \`t\` consist of uppercase and lowercase English letters or printable characters.
+Examples:
 
----
+Example 1:
+Input:
+ADOBECODEBANC
+ABC
+Output:
+BANC
+Explanation: The minimum window substring "BANC" includes 'A', 'B', and 'C' from string t.
 
-### Examples
+Example 2:
+Input:
+a
+a
+Output:
+a
 
-**Example 1:**
-- **Input:**
-  \`\`\`text
-  ADOBECODEBANC
-  ABC
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  BANC
-  \`\`\`
-- **Explanation:** The minimum window substring \`"BANC"\` includes \`'A'\`, \`'B'\`, and \`'C'\` from string \`t\`.
+Example 3:
+Input:
+a
+aa
+Output:
 
-**Example 2:**
-- **Input:**
-  \`\`\`text
-  a
-  a
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  a
-  \`\`\`
-
-**Example 3:**
-- **Input:**
-  \`\`\`text
-  a
-  aa
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  \`\`\`
-- **Explanation:** Both \`'a'\` characters from \`t\` must be included in the window. Since \`s\` only has one \`'a'\`, return empty.
+Explanation: Both 'a' characters from t must be included in the window. Since s only has one 'a', return empty.
 `,
       marks: 35.0,
       order: 1,
@@ -817,69 +786,49 @@ public class Solution {
       sectionId: section.id,
       type: "CODING",
       title: "Valid Parentheses",
-      description: `### Problem Statement
-Given a string \`s\` containing just the characters \`'('\`, \`')'\`, \`'{'\`, \`'}'\`, \`'['\` and \`']'\`, determine if the input string is **valid**.
+      description: `Problem Statement:
+Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
 
 An input string is valid if:
 1. Open brackets must be closed by the same type of brackets.
 2. Open brackets must be closed in the correct order.
 3. Every close bracket has a corresponding open bracket of the same type.
 
----
+Input Format:
+• A single line containing the string s.
 
-### Input Format
-- A single line containing the string \`s\`.
+Output Format:
+• Print true if the bracket string is valid and correctly balanced, otherwise print false.
 
-### Output Format
-- Print \`true\` if the bracket string is valid and correctly balanced, otherwise print \`false\`.
+Constraints:
+• 1 <= length(s) <= 10,000
+• s consists of parentheses only: '()[]{}'.
 
-### Constraints
-- $1 \\le \\text{length}(s) \\le 10^4$
-- \`s\` consists of parentheses only: \`'()[]{}'\`.
+Examples:
 
----
+Example 1:
+Input:
+()
+Output:
+true
 
-### Examples
+Example 2:
+Input:
+()[]{}
+Output:
+true
 
-**Example 1:**
-- **Input:**
-  \`\`\`text
-  ()
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  true
-  \`\`\`
+Example 3:
+Input:
+(]
+Output:
+false
 
-**Example 2:**
-- **Input:**
-  \`\`\`text
-  ()[]{}
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  true
-  \`\`\`
-
-**Example 3:**
-- **Input:**
-  \`\`\`text
-  (]
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  false
-  \`\`\`
-
-**Example 4:**
-- **Input:**
-  \`\`\`text
-  ([])
-  \`\`\`
-- **Output:**
-  \`\`\`text
-  true
-  \`\`\`
+Example 4:
+Input:
+([])
+Output:
+true
 `,
       marks: 30.0,
       order: 2,

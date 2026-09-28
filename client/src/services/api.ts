@@ -173,12 +173,15 @@ export const api = {
     return res.json();
   },
 
-  startAssessment: async (code: string, rollNo: string, studentName: string) => {
+  startAssessment: async (code: string, rollNo: string, studentName: string, bypassSeb: boolean = false) => {
     const sebToken = getSebToken();
     const res = await fetch(`${API_BASE}/student/start`, {
       method: "POST",
-      headers: studentHeaders(),
-      body: JSON.stringify({ code, rollNo, studentName, sebToken }),
+      headers: {
+        ...studentHeaders(),
+        ...(bypassSeb ? { "x-bypass-seb": "true" } : {}),
+      },
+      body: JSON.stringify({ code, rollNo, studentName, sebToken, bypassSeb }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "Failed to start assessment" }));

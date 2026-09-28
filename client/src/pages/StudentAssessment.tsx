@@ -8,6 +8,7 @@ import { MonacoCodeEditor } from "../components/editor/MonacoCodeEditor";
 import { TestResultViewer } from "../components/editor/TestResultViewer";
 import { McqView } from "../components/mcq/McqView";
 import { QuestionPalette } from "../components/palette/QuestionPalette";
+import { MarkdownView } from "../components/common/MarkdownView";
 import {
   Clock,
   Play,
@@ -754,9 +755,7 @@ int main() {
                 <div className="flex-1 p-5 overflow-y-auto space-y-4 text-slate-300 text-xs leading-relaxed">
                   {activeQuestion ? (
                     <>
-                      <div className="prose prose-invert max-w-none text-xs leading-relaxed whitespace-pre-wrap font-sans">
-                        {activeQuestion.description}
-                      </div>
+                      <MarkdownView content={activeQuestion.description} />
 
                       <div className="bg-slate-950/70 rounded-xl p-3 border border-slate-800 space-y-1">
                         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">

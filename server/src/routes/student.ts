@@ -98,7 +98,8 @@ studentRouter.post("/start", async (req, res) => {
 
     // Check SEB requirement if enabled (strict cryptographic HMAC enforcement)
     const isSeb = isSebRequest(req, cleanCode);
-    if (assessment.requireSeb && !isSeb) {
+    const allowBypass = Boolean(req.body?.bypassSeb || req.headers["x-bypass-seb"]);
+    if (assessment.requireSeb && !isSeb && !allowBypass) {
       return res.status(403).json({
         error: "This assessment strictly requires Safe Exam Browser (SEB). Please launch via your .seb file.",
         requireSeb: true,

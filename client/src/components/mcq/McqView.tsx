@@ -1,6 +1,7 @@
 import React from "react";
 import { Question, McqOption } from "../../types";
 import { CheckCircle2, Circle, CheckSquare, Square, AlertCircle } from "lucide-react";
+import { MarkdownView } from "../common/MarkdownView";
 
 interface McqViewProps {
   question: Question;
@@ -63,9 +64,7 @@ export const McqView: React.FC<McqViewProps> = ({
 
       {/* Question Description / Code Snippet */}
       <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 text-xs leading-relaxed space-y-3">
-        <div className="prose prose-invert max-w-none text-xs leading-relaxed whitespace-pre-wrap font-sans text-slate-200">
-          {question.description}
-        </div>
+        <MarkdownView content={question.description} />
       </div>
 
       {/* Options List */}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { api } from "../services/api";
 import { Question, TestCaseEvaluationResult } from "../types";
+import { MarkdownView } from "../components/common/MarkdownView";
 import { MonacoCodeEditor } from "../components/editor/MonacoCodeEditor";
 import {
   BookOpen,
@@ -285,8 +286,8 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
                     </span>
                   </div>
 
-                  <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-800 text-xs text-slate-200 whitespace-pre-wrap">
-                    {activeQuestion.description}
+                  <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-800 text-xs text-slate-200">
+                    <MarkdownView content={activeQuestion.description} />
                   </div>
 
                   <div className="space-y-3">
@@ -341,8 +342,8 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
                   <div className="lg:col-span-5 space-y-4">
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
                       <h3 className="font-bold text-base text-white">{activeQuestion.title}</h3>
-                      <div className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
-                        {activeQuestion.description}
+                      <div className="text-xs text-slate-300 leading-relaxed">
+                        <MarkdownView content={activeQuestion.description} />
                       </div>
                     </div>
 

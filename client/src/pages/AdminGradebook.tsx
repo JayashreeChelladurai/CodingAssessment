@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api";
 import { Assessment, Question, Submission } from "../types";
+import { MarkdownView } from "../components/common/MarkdownView";
 import {
   ArrowLeft,
   Download,
@@ -658,8 +659,8 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                       </div>
 
                       {/* Question Description */}
-                      <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 text-slate-200 text-xs whitespace-pre-wrap leading-relaxed font-sans">
-                        {activeQuestion.description}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 text-slate-200 text-xs leading-relaxed font-sans">
+                        <MarkdownView content={activeQuestion.description} />
                       </div>
 
                       {(() => {
