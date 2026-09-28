@@ -602,9 +602,9 @@ int main() {
       return updated;
     });
 
-    setSaveStatus("Saving...");
+    setSaveStatus("Saving locally...");
 
-    // 2. Debounced save to server database (1 second after typing pause)
+    // 2. Debounced save to server database (10 seconds after typing pause)
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
@@ -618,7 +618,7 @@ int main() {
         remainingSecondsRef.current
       ).catch(() => {});
       setSaveStatus("All changes saved");
-    }, 1000);
+    }, 10000);
   };
 
   // Language Change in Coding
