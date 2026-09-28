@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+}
+
+model Assessment {
+  id                   String           @id @default(uuid())
+  title                String
+  description          String           @default("")
+  code                 String           @unique
+  durationMinutes      Int              @default(60)
+  startTime            DateTime?
+  endTime              DateTime?
+  shuffleQuestions     Boolean          @default(true)
+  requireSeb           Boolean          @default(true)
+  sebQuitPassword      String           @default("exit123")
+  isReviewUnlocked     Boolean          @default(false)
+  reviewUnlockTime     DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  sections             Section[]
+  questions            Question[]
+  attempts             StudentAttempt[]
+}
+
+model Section {
+  id           String     @id @default(uuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  title        String     // e.g. "Section A: Multiple Choice Questions" or "Section B: Hands-on Coding"
+  description  String     @default("")
+  order        Int        @default(0)
+  questions    Question[]
+}
+
+model Question {
+  id               String       @id @default(uuid())
+  assessmentId     String
+  assessment       Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  sectionId        String?
+  section          Section?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  type             String       @default("CODING") // "CODING" | "MCQ"
+  title            String
+  description      String       // Markdown problem text or MCQ question with code snippet
+  marks            Float        @default(10.0)
+  negativeMarks    Float        @default(0.0) // Negative penalty for wrong MCQ
+  order            Int          @default(0)
+  
+  // MCQ Specific Fields
+  mcqType          String       @default("SINGLE") // "SINGLE" | "MULTIPLE"
+  options          String       @default("[]") // JSON: [{ id: "opt-1", text: "Option A" }, ...]
+  correctAnswers   String       @default("[]") // JSON: ["opt-1"]
+  explanation      String       @default("") // Solution explanation shown in review mode
+
+  // Coding Specific Fields
+  allowedLanguages String       @default("JAVA,C,CPP") // "JAVA,C,CPP"
+  starterCodes     String       @default("{}") // JSON: { "JAVA": "...", "C": "...", "CPP": "..." }
+  starterCode      String       @default("import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        \n    }\n}\n")
+  timeLimitSeconds Int          @default(3)
+  memoryLimitMb    Int          @default(256)
+  createdAt        DateTime     @default(now())
+  
+  testCases        TestCase[]
+  submissions      Submission[]
+}
+
+model TestCase {
+  id             String   @id @default(uuid())
+  questionId     String
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  input          String   @default("")
+  expectedOutput String
+  isPublic       Boolean  @default(true) // true = Open/Sample, false = Closed/Hidden
+  weight         Float    @default(1.0)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+}
+
+model StudentAttempt {
+  id               String       @id @default(uuid())
+  assessmentId     String
+  assessment       Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  rollNo           String
+  studentName      String
+  status           String       @default("IN_PROGRESS") // IN_PROGRESS, LOCKED_OUT, SUBMITTED, TIME_EXPIRED
+  startedAt        DateTime     @default(now())
+  submittedAt      DateTime?
+  remainingSeconds Int          @default(3600)
+  lastHeartbeat    DateTime     @default(now())
+  questionOrder    String       @default("[]") // JSON array of randomized question IDs for this student
+  optionOrders     String       @default("{}") // JSON map: { questionId: ["opt-3", "opt-1", ...] }
+  flaggedQuestions String       @default("[]") // JSON array of question IDs marked for review
+  mcqResponses     String       @default("{}") // JSON map: { questionId: ["opt-1"] }
+  drafts           String       @default("{}") // JSON map: { questionId: code }
+  violationCount   Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  violations       Violation[]
+  submissions      Submission[]
+
+  @@unique([assessmentId, rollNo])
+}
+
+model Violation {
+  id            String         @id @default(uuid())
+  attemptId     String
+  attempt       StudentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  violationType String         // TAB_SWITCH, FULLSCREEN_EXIT, FOCUS_LOSS, DEVTOOLS_ATTEMPT, SEB_TAMPER
+  details       String?
+  timestamp     DateTime       @default(now())
+  resolved      Boolean        @default(false)
+  resolvedAt    DateTime?
+}
+
+model Submission {
+  id              String         @id @default(uuid())
+  attemptId       String
+  attempt         StudentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  type            String         @default("CODING") // "CODING" | "MCQ"
+  
+  // Coding submission details
+  language        String         @default("JAVA")
+  code            String         @default("")
+  
+  // MCQ submission details
+  selectedOptions String         @default("[]") // JSON array of selected option IDs
+  
+  score           Float          @default(0)
+  maxScore        Float          @default(10)
+  passedTestCases Int            @default(0)
+  totalTestCases  Int            @default(0)
+  status          String         @default("SUBMITTED") // ACCEPTED, WRONG_ANSWER, COMPILE_ERROR, TIME_LIMIT_EXCEEDED, RUNTIME_ERROR, CORRECT, INCORRECT
+  testCaseResults String         @default("[]") // JSON array of result objects
+  submittedAt     DateTime       @default(now())
+}
