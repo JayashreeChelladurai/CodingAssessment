@@ -31,6 +31,26 @@ interface StudentAssessmentProps {
   onFinished: () => void;
 }
 
+// Deeply merge drafts so non-empty code is NEVER wiped out by empty server/poller responses
+function mergeDrafts(base: Record<string, any>, incoming: Record<string, any>): Record<string, any> {
+  const merged: Record<string, any> = { ...base };
+  for (const [key, val] of Object.entries(incoming || {})) {
+    if (val === undefined || val === null) continue;
+    if (typeof val === "string") {
+      const current = merged[key];
+      if (val.trim().length > 0) {
+        if (typeof current !== "string" || val.trim().length >= current.trim().length || current.trim().length === 0) {
+          merged[key] = val;
+        }
+      }
+    } else if (typeof val === "object" && val !== null) {
+      const currentObj = typeof merged[key] === "object" && merged[key] !== null ? merged[key] : {};
+      merged[key] = mergeDrafts(currentObj, val);
+    }
+  }
+  return merged;
+}
+
 export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   initialAssessment,
   initialAttempt,
@@ -80,13 +100,24 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
     }
   });
 
-  // Parse drafts & MCQ responses & flagged review questions
-  const [drafts, setDrafts] = useState<Record<string, string>>(() => {
+  // Parse drafts & MCQ responses & flagged review questions with localStorage fallback
+  const [drafts, setDrafts] = useState<Record<string, any>>(() => {
+    let localSaved: Record<string, any> = {};
     try {
-      return JSON.parse(initialAttempt.drafts || "{}");
-    } catch {
-      return {};
-    }
+      const stored =
+        localStorage.getItem(`drafts_${initialAttempt.id}`) ||
+        localStorage.getItem(`drafts_${initialAssessment.code}_${initialAttempt.rollNo}`);
+      if (stored) {
+        localSaved = JSON.parse(stored);
+      }
+    } catch {}
+
+    let serverDrafts: Record<string, any> = {};
+    try {
+      serverDrafts = JSON.parse(initialAttempt.drafts || "{}");
+    } catch {}
+
+    return mergeDrafts(serverDrafts, localSaved);
   });
 
   const [mcqResponses, setMcqResponses] = useState<Record<string, string[]>>(() => {
@@ -105,6 +136,26 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
     }
   });
 
+  // Active refs to eliminate stale closure bugs and avoid cancelling interval on every keystroke/tick
+  const draftsRef = useRef<Record<string, any>>(drafts);
+  draftsRef.current = drafts;
+
+  const mcqResponsesRef = useRef<Record<string, string[]>>(mcqResponses);
+  mcqResponsesRef.current = mcqResponses;
+
+  const flaggedQuestionsRef = useRef<string[]>(flaggedQuestions);
+  flaggedQuestionsRef.current = flaggedQuestions;
+
+  const remainingSecondsRef = useRef<number>(initialAttempt.remainingSeconds || 3600);
+
+  const saveTimeoutRef = useRef<any>(null);
+
+  // Authoritative client-side timer anchor to prevent sleep/tab-throttling/interval drift
+  const timerAnchorRef = useRef<{ startedAtMs: number; initialRemaining: number }>({
+    startedAtMs: Date.now(),
+    initialRemaining: initialAttempt.remainingSeconds || 3600,
+  });
+
   // Coding language selection per question
   const [selectedLanguages, setSelectedLanguages] = useState<Record<string, string>>({});
 
@@ -116,6 +167,8 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   const [violationCount, setViolationCount] = useState<number>(initialAttempt.violationCount || 0);
 
   const [remainingSeconds, setRemainingSeconds] = useState<number>(initialAttempt.remainingSeconds || 3600);
+  remainingSecondsRef.current = remainingSeconds;
+
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [codingResult, setCodingResult] = useState<CodingGradingResponse | null>(null);
@@ -238,13 +291,26 @@ int main() {
     socket.on("student:unlocked", (data: any) => {
       setIsLocked(false);
       setLockReason("");
-      if (data.remainingSeconds) {
+      if (typeof data.remainingSeconds === "number" && data.remainingSeconds > 0) {
         setRemainingSeconds(data.remainingSeconds);
+        timerAnchorRef.current = {
+          startedAtMs: Date.now(),
+          initialRemaining: data.remainingSeconds,
+        };
       }
       if (data.drafts) {
         try {
           const parsed = typeof data.drafts === "string" ? JSON.parse(data.drafts) : data.drafts;
-          setDrafts(parsed);
+          if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+            setDrafts((prev) => {
+              const merged = mergeDrafts(prev, parsed);
+              try {
+                localStorage.setItem(`drafts_${attempt.id}`, JSON.stringify(merged));
+                localStorage.setItem(`drafts_${assessment.code}_${attempt.rollNo}`, JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          }
         } catch {
           // ignore
         }
@@ -255,7 +321,7 @@ int main() {
       socket.off("student:lockout");
       socket.off("student:unlocked");
     };
-  }, [assessment.id, attempt.id, attempt.rollNo, attempt.studentName]);
+  }, [assessment.id, assessment.code, attempt.id, attempt.rollNo, attempt.studentName]);
 
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
 
@@ -268,11 +334,24 @@ int main() {
         setLockReason("");
         if (typeof res.remainingSeconds === "number" && res.remainingSeconds > 0) {
           setRemainingSeconds(res.remainingSeconds);
+          timerAnchorRef.current = {
+            startedAtMs: Date.now(),
+            initialRemaining: res.remainingSeconds,
+          };
         }
         if (res.drafts) {
           try {
             const parsed = typeof res.drafts === "string" ? JSON.parse(res.drafts) : res.drafts;
-            setDrafts(parsed);
+            if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+              setDrafts((prev) => {
+                const merged = mergeDrafts(prev, parsed);
+                try {
+                  localStorage.setItem(`drafts_${attempt.id}`, JSON.stringify(merged));
+                  localStorage.setItem(`drafts_${assessment.code}_${attempt.rollNo}`, JSON.stringify(merged));
+                } catch {}
+                return merged;
+              });
+            }
           } catch {}
         }
       }
@@ -281,7 +360,7 @@ int main() {
     } finally {
       setIsCheckingStatus(false);
     }
-  }, [attempt.id, attemptToken]);
+  }, [attempt.id, attempt.rollNo, assessment.code, attemptToken]);
 
   // Periodic polling when locked out (auto-resumes candidate within 2 seconds)
   useEffect(() => {
@@ -294,42 +373,59 @@ int main() {
     return () => clearInterval(poller);
   }, [isLocked, isSubmitted, checkUnlockStatus]);
 
-  // 2. Countdown Timer
+  // 2. Countdown Timer (drift-resistant with visibility synchronization)
   useEffect(() => {
     if (isLocked || isSubmitted) return;
 
-    const interval = setInterval(() => {
-      setRemainingSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - timerAnchorRef.current.startedAtMs) / 1000);
+      const remaining = Math.max(0, timerAnchorRef.current.initialRemaining - elapsed);
+      setRemainingSeconds(remaining);
+      if (remaining <= 0) {
+        handleAutoSubmit();
+      }
+    };
 
-    return () => clearInterval(interval);
+    const interval = setInterval(tick, 1000);
+    const handleVisibility = () => {
+      if (!document.hidden) tick();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [isLocked, isSubmitted]);
 
-  // 3. Periodic Auto-Save Sync (every 15s)
+  // 3. Periodic Auto-Save Sync (every 15s) - stable refs so interval is NEVER cancelled prematurely
   useEffect(() => {
     if (isLocked || isSubmitted) return;
 
     const interval = setInterval(() => {
+      const curDrafts = draftsRef.current;
+      const curSec = remainingSecondsRef.current;
+
       if (socketRef.current) {
         socketRef.current.emit("student:heartbeat", {
           attemptId: attempt.id,
           assessmentId: assessment.id,
-          remainingSeconds,
-          drafts,
+          remainingSeconds: curSec,
+          drafts: curDrafts,
         });
       }
-      api.saveDraft(attempt.id, undefined, drafts, mcqResponses, flaggedQuestions, remainingSeconds).catch(() => {});
+      api.saveDraft(
+        attempt.id,
+        undefined,
+        curDrafts,
+        mcqResponsesRef.current,
+        flaggedQuestionsRef.current,
+        curSec
+      ).catch(() => {});
     }, 15000);
 
     return () => clearInterval(interval);
-  }, [attempt.id, assessment.id, drafts, mcqResponses, flaggedQuestions, remainingSeconds, isLocked, isSubmitted]);
+  }, [attempt.id, assessment.id, isLocked, isSubmitted]);
 
   // 4. Reset Console / Terminal Output on Question Change
   useEffect(() => {
@@ -356,16 +452,35 @@ int main() {
     setLockReason(type);
     setViolationCount((c) => c + 1);
 
+    const curDrafts = draftsRef.current;
+    const curSec = remainingSecondsRef.current;
+
+    // Immediately persist to localStorage
+    try {
+      localStorage.setItem(`drafts_${attempt.id}`, JSON.stringify(curDrafts));
+      localStorage.setItem(`drafts_${assessment.code}_${attempt.rollNo}`, JSON.stringify(curDrafts));
+    } catch {}
+
+    // Flush to server database immediately
+    api.saveDraft(
+      attempt.id,
+      undefined,
+      curDrafts,
+      mcqResponsesRef.current,
+      flaggedQuestionsRef.current,
+      curSec
+    ).catch(() => {});
+
     if (socketRef.current) {
       socketRef.current.emit("student:violation", {
         attemptId: attempt.id,
         assessmentId: assessment.id,
         violationType: type,
         details,
-        currentDrafts: drafts,
+        currentDrafts: curDrafts,
       });
     }
-  }, [attempt.id, assessment.id, drafts, isLocked, isSubmitted]);
+  }, [attempt.id, attempt.rollNo, assessment.id, assessment.code, isLocked, isSubmitted]);
 
   // Hook beforeunload / pagehide to lock exam if candidate exits or closes SEB without submitting
   useEffect(() => {
@@ -404,10 +519,14 @@ int main() {
       nextSelected = [optionId];
     }
 
-    setMcqResponses((prev) => ({
-      ...prev,
-      [activeQuestion.id]: nextSelected,
-    }));
+    setMcqResponses((prev) => {
+      const updated = {
+        ...prev,
+        [activeQuestion.id]: nextSelected,
+      };
+      mcqResponsesRef.current = updated;
+      return updated;
+    });
 
     // Auto submit MCQ answer to backend
     api.submitMcq(attempt.id, activeQuestion.id, nextSelected, attemptToken || undefined).catch(() => {});
@@ -417,10 +536,14 @@ int main() {
 
   // Clear MCQ Response
   const handleClearMcqResponse = (questionId: string) => {
-    setMcqResponses((prev) => ({
-      ...prev,
-      [questionId]: [],
-    }));
+    setMcqResponses((prev) => {
+      const updated = {
+        ...prev,
+        [questionId]: [],
+      };
+      mcqResponsesRef.current = updated;
+      return updated;
+    });
     api.submitMcq(attempt.id, questionId, [], attemptToken || undefined).catch(() => {});
     setSaveStatus("Choice cleared");
     setTimeout(() => setSaveStatus("All changes saved"), 800);
@@ -432,28 +555,57 @@ int main() {
       const next = prev.includes(questionId)
         ? prev.filter((id) => id !== questionId)
         : [...prev, questionId];
-      api.saveDraft(attempt.id, undefined, drafts, mcqResponses, next, remainingSeconds).catch(() => {});
+      flaggedQuestionsRef.current = next;
+      api.saveDraft(attempt.id, undefined, draftsRef.current, mcqResponsesRef.current, next, remainingSecondsRef.current).catch(() => {});
       return next;
     });
   };
 
-  // Handle Coding changes
+  // Handle Coding changes with instant localStorage backup and debounced server sync
   const handleCodeChange = (newCode: string) => {
     if (!activeQuestion) return;
+    const qId = activeQuestion.id;
+    const langKey = `${qId}_${currentLanguage}`;
+
     setDrafts((prev: Record<string, any>) => {
-      const prevQ = prev[activeQuestion.id];
+      const prevQ = prev[qId];
       const prevObj = typeof prevQ === "object" && prevQ !== null ? (prevQ as Record<string, string>) : {};
-      return {
+      const updated = {
         ...prev,
-        [`${activeQuestion.id}_${currentLanguage}`]: newCode,
-        [activeQuestion.id]: {
+        [langKey]: newCode,
+        [qId]: {
           ...prevObj,
           [currentLanguage]: newCode,
         },
       };
+
+      // 1. Instant local persistence to localStorage (ZERO data loss on crash/refresh)
+      try {
+        localStorage.setItem(`drafts_${attempt.id}`, JSON.stringify(updated));
+        localStorage.setItem(`drafts_${assessment.code}_${attempt.rollNo}`, JSON.stringify(updated));
+      } catch {}
+
+      draftsRef.current = updated;
+      return updated;
     });
+
     setSaveStatus("Saving...");
-    setTimeout(() => setSaveStatus("All changes saved"), 800);
+
+    // 2. Debounced save to server database (1 second after typing pause)
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      api.saveDraft(
+        attempt.id,
+        undefined,
+        draftsRef.current,
+        mcqResponsesRef.current,
+        flaggedQuestionsRef.current,
+        remainingSecondsRef.current
+      ).catch(() => {});
+      setSaveStatus("All changes saved");
+    }, 1000);
   };
 
   // Language Change in Coding
@@ -540,7 +692,7 @@ int main() {
 
   const handleAutoSubmit = async () => {
     try {
-      await api.saveDraft(attempt.id, undefined, drafts, mcqResponses, flaggedQuestions, 0);
+      await api.saveDraft(attempt.id, undefined, draftsRef.current, mcqResponsesRef.current, flaggedQuestionsRef.current, 0);
       await api.finishAssessment(attempt.id, attemptToken || undefined);
       setIsSubmitted(true);
     } catch (err) {
@@ -550,7 +702,7 @@ int main() {
 
   const handleFinalSubmit = async () => {
     try {
-      await api.saveDraft(attempt.id, undefined, drafts, mcqResponses, flaggedQuestions, remainingSeconds);
+      await api.saveDraft(attempt.id, undefined, draftsRef.current, mcqResponsesRef.current, flaggedQuestionsRef.current, remainingSecondsRef.current);
       await api.finishAssessment(attempt.id, attemptToken || undefined);
       setIsSubmitted(true);
       setShowSubmitModal(false);
@@ -574,7 +726,7 @@ int main() {
           assessmentId: assessment.id,
           violationType: "SEB_EXIT",
           details: "Student turned off or exited Safe Exam Browser without submitting.",
-          currentDrafts: drafts,
+          currentDrafts: draftsRef.current,
         });
       }
       try {

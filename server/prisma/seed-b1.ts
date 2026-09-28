@@ -548,13 +548,27 @@ async function main() {
   console.log("   🚀 GENERATING ASSESSMENT 'B1' (3 PROBLEMS × 100 TESTCASES = 300 CASES)       ");
   console.log("================================================================================");
 
-  // Clean up any existing assessment with code B1
+  // Clean up any existing assessment with code B1 ONLY IF no active attempts exist!
   const existing = await prisma.assessment.findUnique({
     where: { code: "B1" },
+    include: { attempts: true },
   });
 
   if (existing) {
-    console.log("⚠️ Assessment 'B1' already exists. Purging and recreating fresh...");
+    if (existing.attempts && existing.attempts.length > 0) {
+      console.log(`⚠️ Assessment 'B1' has ${existing.attempts.length} active student attempts. PRESERVING assessment and student attempts!`);
+      // Update assessment metadata without deleting anything
+      await prisma.assessment.update({
+        where: { code: "B1" },
+        data: {
+          requireSeb: false,
+          isReviewUnlocked: false,
+        },
+      });
+      console.log("✅ Successfully updated assessment B1 configuration without touching student attempts.");
+      return;
+    }
+    console.log("⚠️ Assessment 'B1' already exists with 0 attempts. Purging and recreating fresh...");
     await prisma.assessment.delete({ where: { code: "B1" } });
   }
 

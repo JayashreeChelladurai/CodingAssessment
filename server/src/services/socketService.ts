@@ -247,7 +247,10 @@ export function setupSocketService(io: SocketIOServer) {
           remainingSeconds: safeRemainingSeconds,
         };
         if (rawDrafts) {
-          updateData.drafts = typeof rawDrafts === "string" ? rawDrafts : JSON.stringify(rawDrafts);
+          const draftsStr = typeof rawDrafts === "string" ? rawDrafts : JSON.stringify(rawDrafts);
+          if (draftsStr !== "{}" && draftsStr !== "" && draftsStr !== "null") {
+            updateData.drafts = draftsStr;
+          }
         }
 
         const updated = await prisma.studentAttempt.update({
@@ -290,8 +293,14 @@ export function setupSocketService(io: SocketIOServer) {
       try {
         console.log(`[VIOLATION] Attempt ${attemptId} triggered ${violationType}`);
 
-        // Save current code draft first so student loses zero progress
-        const draftsStr = currentDrafts ? (typeof currentDrafts === "string" ? currentDrafts : JSON.stringify(currentDrafts)) : undefined;
+        // Save current code draft first so student loses zero progress (only if non-empty)
+        let draftsStr: string | undefined = undefined;
+        if (currentDrafts) {
+          const str = typeof currentDrafts === "string" ? currentDrafts : JSON.stringify(currentDrafts);
+          if (str !== "{}" && str !== "" && str !== "null") {
+            draftsStr = str;
+          }
+        }
 
         // Create violation record & lock attempt
         const violation = await prisma.violation.create({
@@ -353,11 +362,18 @@ export function setupSocketService(io: SocketIOServer) {
 
         const attempt = await prisma.studentAttempt.findUnique({
           where: { id: attemptId },
+          include: { assessment: true },
         });
 
         if (!attempt) return;
 
-        const newRemaining = Math.max(30, attempt.remainingSeconds + (extraMinutes * 60));
+        // Authoritative elapsed time calculation based on attempt.startedAt so timer NEVER resets to 60m
+        const now = new Date();
+        const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000));
+        const totalAllowed = (attempt.assessment?.durationMinutes || 60) * 60;
+        const accurateRemaining = Math.max(0, totalAllowed - elapsedSeconds);
+        // Grant extraMinutes if provided, but NEVER reset elapsed time back to 60m
+        const newRemaining = Math.max(30, accurateRemaining + (extraMinutes * 60));
 
         // Mark latest violations as resolved
         await prisma.violation.updateMany({
@@ -377,10 +393,10 @@ export function setupSocketService(io: SocketIOServer) {
           },
         });
 
-        // 1. Send unlock signal to student
+        // 1. Send unlock signal to student (only send drafts if DB has non-empty drafts!)
         io.to(`student:${attemptId}`).emit("student:unlocked", {
           remainingSeconds: newRemaining,
-          drafts: updatedAttempt.drafts,
+          drafts: updatedAttempt.drafts && updatedAttempt.drafts !== "{}" ? updatedAttempt.drafts : undefined,
           message: "Your exam has been resumed by the instructor.",
         });
 

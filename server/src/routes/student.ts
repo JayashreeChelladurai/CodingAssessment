@@ -376,7 +376,10 @@ studentRouter.post("/save-draft", requireAttemptSession, async (req: Authenticat
     };
 
     if (drafts !== undefined) {
-      updateData.drafts = typeof drafts === "string" ? drafts : JSON.stringify(drafts);
+      const draftsStr = typeof drafts === "string" ? drafts : JSON.stringify(drafts);
+      if (draftsStr !== "{}" && draftsStr !== "" && draftsStr !== "null") {
+        updateData.drafts = draftsStr;
+      }
     }
     if (mcqResponses !== undefined) {
       updateData.mcqResponses = typeof mcqResponses === "string" ? mcqResponses : JSON.stringify(mcqResponses);
@@ -474,7 +477,7 @@ studentRouter.get("/attempt-status/:attemptId", requireAttemptSession, async (re
       isExpired: attempt.status === "TIME_EXPIRED",
       remainingSeconds: accurateRemaining,
       violationCount: attempt.violationCount,
-      drafts: attempt.drafts,
+      drafts: attempt.drafts && attempt.drafts !== "{}" ? attempt.drafts : undefined,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

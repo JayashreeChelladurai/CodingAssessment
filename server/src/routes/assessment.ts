@@ -494,9 +494,20 @@ assessmentRouter.post("/:id/unlock-all", async (req, res) => {
       data: { resolved: true, resolvedAt: new Date() },
     });
 
+    // Fetch assessment duration
+    const assessmentRec = await prisma.assessment.findUnique({
+      where: { id },
+      select: { durationMinutes: true },
+    });
+    const totalAllowed = (assessmentRec?.durationMinutes || 60) * 60;
+    const now = new Date();
+
     // Update each attempt to IN_PROGRESS and add any bonus seconds
     for (const attempt of lockedAttempts) {
-      const newRemaining = Math.max(60, attempt.remainingSeconds + bonusSec);
+      const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000));
+      const accurateRemaining = Math.max(0, totalAllowed - elapsedSeconds);
+      const newRemaining = Math.max(30, accurateRemaining + bonusSec);
+
       const updated = await prisma.studentAttempt.update({
         where: { id: attempt.id },
         data: {
@@ -508,7 +519,7 @@ assessmentRouter.post("/:id/unlock-all", async (req, res) => {
       // Broadcast unlock to the individual student
       broadcastStudentUnlocked(attempt.id, id, {
         remainingSeconds: newRemaining,
-        drafts: updated.drafts,
+        drafts: updated.drafts && updated.drafts !== "{}" ? updated.drafts : undefined,
         message: "Your exam has been unlocked by the instructor.",
       });
     }
@@ -539,13 +550,19 @@ assessmentRouter.post("/:id/resume/:attemptId", async (req, res) => {
 
     const attempt = await prisma.studentAttempt.findUnique({
       where: { id: attemptId },
+      include: { assessment: true },
     });
 
     if (!attempt || attempt.assessmentId !== id) {
       return res.status(404).json({ error: "Student attempt not found for this assessment." });
     }
 
-    const newRemaining = Math.max(60, attempt.remainingSeconds + bonusSec);
+    // Authoritative elapsed time calculation based on startedAt
+    const now = new Date();
+    const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000));
+    const totalAllowed = (attempt.assessment?.durationMinutes || 60) * 60;
+    const accurateRemaining = Math.max(0, totalAllowed - elapsedSeconds);
+    const newRemaining = Math.max(30, accurateRemaining + bonusSec);
 
     // Mark violations as resolved
     await prisma.violation.updateMany({
@@ -568,7 +585,7 @@ assessmentRouter.post("/:id/resume/:attemptId", async (req, res) => {
     // Broadcast unlock to student and admin
     broadcastStudentUnlocked(attemptId, id, {
       remainingSeconds: newRemaining,
-      drafts: updated.drafts,
+      drafts: updated.drafts && updated.drafts !== "{}" ? updated.drafts : undefined,
       message: "Your exam has been resumed by the instructor.",
     });
     broadcastStudentUpdated(id, updated);
