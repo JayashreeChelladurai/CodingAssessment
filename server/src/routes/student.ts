@@ -142,6 +142,33 @@ studentRouter.post("/start", async (req, res) => {
           isExpired: true,
         });
       }
+
+      // Calculate strictly elapsed server time so the timer can NEVER restart or reset
+      const elapsedSeconds = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000);
+      const totalAllowedSeconds = assessment.durationMinutes * 60;
+      let accurateRemaining = Math.max(0, totalAllowedSeconds - elapsedSeconds);
+      if (assessment.endTime) {
+        const secondsUntilEnd = Math.floor((assessment.endTime.getTime() - now.getTime()) / 1000);
+        accurateRemaining = Math.min(accurateRemaining, Math.max(0, secondsUntilEnd));
+      }
+
+      if (accurateRemaining <= 0) {
+        attempt = await autoGradeAndFinalizeAttempt(attempt.id, "TIME_EXPIRED");
+        return res.status(403).json({
+          error: "Your assessment time has expired.",
+          isExpired: true,
+        });
+      }
+
+      // Sync the accurate countdown in DB
+      attempt = await prisma.studentAttempt.update({
+        where: { id: attempt.id },
+        data: {
+          remainingSeconds: accurateRemaining,
+          lastHeartbeat: now,
+        },
+        include: { violations: true, submissions: true },
+      });
     } else {
       let remaining = assessment.durationMinutes * 60;
       if (assessment.endTime) {
@@ -399,11 +426,43 @@ studentRouter.get("/attempt-status/:attemptId", requireAttemptSession, async (re
         violationCount: true,
         drafts: true,
         lastHeartbeat: true,
+        startedAt: true,
+        assessment: {
+          select: {
+            durationMinutes: true,
+            endTime: true,
+          },
+        },
       },
     });
 
     if (!attempt) {
       return res.status(404).json({ error: "Attempt not found." });
+    }
+
+    let accurateRemaining = attempt.remainingSeconds;
+    if (attempt.status === "IN_PROGRESS") {
+      const now = new Date();
+      const elapsedSeconds = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000);
+      const totalAllowed = (attempt.assessment?.durationMinutes || 60) * 60;
+      accurateRemaining = Math.max(0, totalAllowed - elapsedSeconds);
+      if (attempt.assessment?.endTime) {
+        const untilEnd = Math.floor((attempt.assessment.endTime.getTime() - now.getTime()) / 1000);
+        accurateRemaining = Math.min(accurateRemaining, Math.max(0, untilEnd));
+      }
+      if (accurateRemaining <= 0) {
+        await autoGradeAndFinalizeAttempt(attempt.id, "TIME_EXPIRED");
+        return res.json({
+          attemptId: attempt.id,
+          status: "TIME_EXPIRED",
+          isLocked: false,
+          isSubmitted: false,
+          isExpired: true,
+          remainingSeconds: 0,
+          violationCount: attempt.violationCount,
+          drafts: attempt.drafts,
+        });
+      }
     }
 
     res.json({
@@ -412,10 +471,70 @@ studentRouter.get("/attempt-status/:attemptId", requireAttemptSession, async (re
       isLocked: attempt.status === "LOCKED_OUT",
       isSubmitted: attempt.status === "SUBMITTED",
       isExpired: attempt.status === "TIME_EXPIRED",
-      remainingSeconds: attempt.remainingSeconds,
+      remainingSeconds: accurateRemaining,
       violationCount: attempt.violationCount,
       drafts: attempt.drafts,
     });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3b. SEB Exit / Turn-off Lockout
+studentRouter.post("/seb-exit", async (req, res) => {
+  try {
+    let attemptId = req.body?.attemptId;
+    if (!attemptId && typeof req.body === "string") {
+      try {
+        const parsed = JSON.parse(req.body);
+        attemptId = parsed.attemptId;
+      } catch {}
+    }
+
+    if (!attemptId) {
+      return res.status(400).json({ error: "attemptId is required." });
+    }
+
+    const attempt = await prisma.studentAttempt.findUnique({
+      where: { id: attemptId },
+      include: { assessment: true },
+    });
+
+    if (!attempt || attempt.status === "SUBMITTED" || attempt.status === "TIME_EXPIRED") {
+      return res.json({ success: true, message: "No action needed" });
+    }
+
+    const violation = await prisma.violation.create({
+      data: {
+        attemptId: attempt.id,
+        violationType: "SEB_EXIT",
+        details: "Student turned off or exited Safe Exam Browser without submitting.",
+      },
+    });
+
+    const updated = await prisma.studentAttempt.update({
+      where: { id: attempt.id },
+      data: {
+        status: "LOCKED_OUT",
+        violationCount: { increment: 1 },
+      },
+      include: {
+        violations: { orderBy: { timestamp: "desc" } },
+        submissions: true,
+      },
+    });
+
+    // Alert instructor in real-time if io is available
+    const io = (global as any).io;
+    if (io) {
+      io.to(`admin:${attempt.assessmentId}`).emit("admin:violation_alert", {
+        attempt: updated,
+        violation,
+      });
+      io.to(`admin:${attempt.assessmentId}`).emit("admin:student_updated", updated);
+    }
+
+    res.json({ success: true, status: "LOCKED_OUT" });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

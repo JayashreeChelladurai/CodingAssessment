@@ -366,6 +366,26 @@ int main() {
     }
   }, [attempt.id, assessment.id, drafts, isLocked, isSubmitted]);
 
+  // Hook beforeunload / pagehide to lock exam if candidate exits or closes SEB without submitting
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!isSubmitted && !isLocked) {
+        try {
+          const payload = JSON.stringify({ attemptId: attempt.id });
+          const blob = new Blob([payload], { type: "application/json" });
+          navigator.sendBeacon("/api/student/seb-exit", blob);
+        } catch {}
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handleBeforeUnload);
+    };
+  }, [attempt.id, isSubmitted, isLocked]);
+
   // Handle MCQ Option Choice
   const handleSelectMcqOption = (optionId: string) => {
     if (!activeQuestion) return;
@@ -546,6 +566,22 @@ int main() {
   };
 
   const handleExitSeb = () => {
+    if (!isSubmitted) {
+      if (socketRef.current) {
+        socketRef.current.emit("student:violation", {
+          attemptId: attempt.id,
+          assessmentId: assessment.id,
+          violationType: "SEB_EXIT",
+          details: "Student turned off or exited Safe Exam Browser without submitting.",
+          currentDrafts: drafts,
+        });
+      }
+      try {
+        const payload = JSON.stringify({ attemptId: attempt.id });
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon("/api/student/seb-exit", blob);
+      } catch {}
+    }
     try {
       window.close();
     } catch {}

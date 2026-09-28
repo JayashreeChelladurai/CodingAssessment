@@ -439,6 +439,29 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
 
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Proctoring Violations Banner */}
+              {inspectStudent.violations && inspectStudent.violations.length > 0 && (
+                <div className="bg-rose-950/40 border border-rose-900/60 rounded-2xl p-4 text-xs text-rose-300 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-rose-400 mt-0.5 shrink-0" />
+                  <div className="space-y-1">
+                    <span className="font-bold text-rose-400 text-sm">
+                      Proctoring Violations Logged ({inspectStudent.violations.length}):
+                    </span>
+                    <ul className="list-disc list-inside space-y-1 mt-1 text-slate-200">
+                      {inspectStudent.violations.map((v: any, vIdx: number) => (
+                        <li key={vIdx}>
+                          <strong className="text-rose-300 font-mono">{v.violationType}:</strong>{" "}
+                          <span>{v.details || "Security policy violation"}</span>{" "}
+                          <span className="text-slate-400 text-[10px]">
+                            ({new Date(v.timestamp).toLocaleTimeString()})
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               {activeQuestion ? (
                 <>
                   {/* Active Question Info Card */}

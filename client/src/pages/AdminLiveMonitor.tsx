@@ -83,6 +83,7 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
           studentName: attempt.studentName,
           rollNo: attempt.rollNo,
           violationType: violation.violationType,
+          details: violation.details,
           timestamp: new Date().toLocaleTimeString(),
         },
         ...prev.slice(0, 10),
@@ -386,9 +387,14 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
                         <span>{alert.studentName} ({alert.rollNo})</span>
                         <span className="text-[10px] text-rose-400/80">{alert.timestamp}</span>
                       </div>
-                      <p className="text-[11px] text-rose-400 font-mono">
+                      <p className="text-[11px] text-rose-400 font-mono font-medium">
                         Violation: {alert.violationType}
                       </p>
+                      {alert.details && (
+                        <p className="text-[11px] text-slate-300">
+                          {alert.details}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
