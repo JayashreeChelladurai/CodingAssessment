@@ -21,14 +21,52 @@ type ViewMode =
   | "admin-editor";
 
 export function App() {
-  const [view, setView] = useState<ViewMode>("student-login");
-  const [activeAssessment, setActiveAssessment] = useState<Assessment | null>(null);
-  const [activeAttempt, setActiveAttempt] = useState<StudentAttempt | null>(null);
+  const [activeAssessment, setActiveAssessment] = useState<Assessment | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("active_assessment") || localStorage.getItem("active_assessment");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [activeAttempt, setActiveAttempt] = useState<StudentAttempt | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("active_attempt") || localStorage.getItem("active_attempt");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [view, setView] = useState<ViewMode>(() => {
+    try {
+      const savedView = sessionStorage.getItem("active_view") || localStorage.getItem("active_view");
+      const savedAttempt = sessionStorage.getItem("active_attempt") || localStorage.getItem("active_attempt");
+      const savedAssessment = sessionStorage.getItem("active_assessment") || localStorage.getItem("active_assessment");
+      if (savedView === "student-assessment" && savedAttempt && savedAssessment) {
+        const parsed = JSON.parse(savedAttempt);
+        if (parsed.status !== "SUBMITTED" && parsed.status !== "TIME_EXPIRED") {
+          return "student-assessment";
+        }
+      }
+    } catch {}
+    return "student-login";
+  });
+
   const [editorAssessment, setEditorAssessment] = useState<Assessment | null>(null);
   const [adminToken, setAdminToken] = useState<string | null>(() => localStorage.getItem("prof_admin_token"));
 
   // Student Starts Exam
   const handleStartExam = (data: { attempt: StudentAttempt; assessment: Assessment }) => {
+    try {
+      sessionStorage.setItem("active_attempt", JSON.stringify(data.attempt));
+      sessionStorage.setItem("active_assessment", JSON.stringify(data.assessment));
+      sessionStorage.setItem("active_view", "student-assessment");
+      localStorage.setItem("active_attempt", JSON.stringify(data.attempt));
+      localStorage.setItem("active_assessment", JSON.stringify(data.assessment));
+      localStorage.setItem("active_view", "student-assessment");
+    } catch {}
     setActiveAttempt(data.attempt);
     setActiveAssessment(data.assessment);
     setView("student-assessment");
@@ -57,6 +95,14 @@ export function App() {
           initialAssessment={activeAssessment}
           initialAttempt={activeAttempt}
           onFinished={() => {
+            try {
+              sessionStorage.removeItem("active_attempt");
+              sessionStorage.removeItem("active_assessment");
+              sessionStorage.removeItem("active_view");
+              localStorage.removeItem("active_attempt");
+              localStorage.removeItem("active_assessment");
+              localStorage.removeItem("active_view");
+            } catch {}
             api.setAttemptToken(null);
             setActiveAttempt(null);
             setActiveAssessment(null);

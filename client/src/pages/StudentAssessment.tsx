@@ -283,12 +283,20 @@ int main() {
     });
 
     socket.on("student:lockout", (data: any) => {
+      // Guard: strictly ignore lockout events not intended for this student
+      if (data && data.attemptId && data.attemptId !== attempt.id) {
+        return;
+      }
       setIsLocked(true);
       setLockReason(data.reason || "Exam violation detected");
       setViolationCount((prev) => prev + 1);
     });
 
     socket.on("student:unlocked", (data: any) => {
+      // Guard: strictly ignore unlock events not intended for this student
+      if (data && data.attemptId && data.attemptId !== attempt.id) {
+        return;
+      }
       setIsLocked(false);
       setLockReason("");
       if (typeof data.remainingSeconds === "number" && data.remainingSeconds > 0) {
@@ -361,6 +369,11 @@ int main() {
       setIsCheckingStatus(false);
     }
   }, [attempt.id, attempt.rollNo, assessment.code, attemptToken]);
+
+  // Synchronize individual timer and status immediately on mount
+  useEffect(() => {
+    checkUnlockStatus();
+  }, [checkUnlockStatus]);
 
   // Periodic polling when locked out (auto-resumes candidate within 2 seconds)
   useEffect(() => {

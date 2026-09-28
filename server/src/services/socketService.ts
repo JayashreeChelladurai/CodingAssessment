@@ -92,10 +92,12 @@ export function getIO(): SocketIOServer | null {
 
 export function broadcastStudentUnlocked(attemptId: string, assessmentId: string, data: any) {
   if (!ioInstance) return;
-  ioInstance.to(`student:${attemptId}`).emit("student:unlocked", data);
-  if (assessmentId) {
-    ioInstance.to(`assessment:${assessmentId}`).emit("student:unlocked", data);
-  }
+  // Strictly emit ONLY to the specific individual student room!
+  // NEVER broadcast individual unlock events, drafts, or timers to the shared assessment room!
+  ioInstance.to(`student:${attemptId}`).emit("student:unlocked", {
+    ...data,
+    attemptId,
+  });
 }
 
 export function broadcastStudentUpdated(assessmentId: string, updatedAttempt: any) {
@@ -326,6 +328,7 @@ export function setupSocketService(io: SocketIOServer) {
 
         // 1. Tell student they are locked
         io.to(`student:${attemptId}`).emit("student:lockout", {
+          attemptId,
           reason: violationType,
           message: "Assessment locked due to tab-switch or window focus loss. Contact professor to resume.",
           violationId: violation.id,
@@ -395,6 +398,7 @@ export function setupSocketService(io: SocketIOServer) {
 
         // 1. Send unlock signal to student (only send drafts if DB has non-empty drafts!)
         io.to(`student:${attemptId}`).emit("student:unlocked", {
+          attemptId,
           remainingSeconds: newRemaining,
           drafts: updatedAttempt.drafts && updatedAttempt.drafts !== "{}" ? updatedAttempt.drafts : undefined,
           message: "Your exam has been resumed by the instructor.",
