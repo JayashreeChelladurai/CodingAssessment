@@ -192,6 +192,15 @@ export function setupSocketService(io: SocketIOServer) {
 
       console.log(`[Socket] Student ${rollNo} (${studentName}) joined ${studentRoom}`);
 
+      const rawSocketIp = (socket.handshake.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || socket.handshake.address || "";
+      const clientIp = rawSocketIp.replace(/^::ffff:/, "");
+      if (clientIp && !attempt.ipAddress) {
+        await prisma.studentAttempt.update({
+          where: { id: attemptId },
+          data: { ipAddress: clientIp },
+        }).catch(() => {});
+      }
+
       // Notify admin of student entry / presence
       try {
         const attemptWithContext = await prisma.studentAttempt.findUnique({
@@ -304,12 +313,16 @@ export function setupSocketService(io: SocketIOServer) {
           }
         }
 
+        const rawSocketIp = (socket.handshake.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || socket.handshake.address || "";
+        const clientIp = rawSocketIp.replace(/^::ffff:/, "");
+
         // Create violation record & lock attempt
         const violation = await prisma.violation.create({
           data: {
             attemptId,
             violationType,
             details: details || "Window focus lost or tab switched",
+            ipAddress: clientIp || null,
           },
         });
 

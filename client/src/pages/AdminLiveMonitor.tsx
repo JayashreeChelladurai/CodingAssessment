@@ -312,7 +312,14 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
                             <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
                               <span>{st.studentName}</span>
                             </h3>
-                            <span className="font-mono text-xs text-slate-400">{st.rollNo}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="font-mono text-xs text-slate-400">{st.rollNo}</span>
+                              {st.ipAddress && (
+                                <span className="font-mono text-[10px] text-cyan-400/90 bg-slate-900 border border-slate-800 px-1 rounded">
+                                  {st.ipAddress}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <span
@@ -425,6 +432,20 @@ export const AdminLiveMonitor: React.FC<AdminLiveMonitorProps> = ({
                     <span className="text-slate-400">Violations:</span>
                     <span className="text-rose-400 font-bold">{selectedStudent.violationCount}</span>
                   </div>
+                  {selectedStudent.ipAddress && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">IP Address:</span>
+                      <span className="font-mono text-cyan-400 font-semibold">{selectedStudent.ipAddress}</span>
+                    </div>
+                  )}
+                  {selectedStudent.deviceInfo && (
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-slate-400 shrink-0">System/Device:</span>
+                      <span className="font-mono text-[11px] text-slate-300 text-right leading-tight break-all">
+                        {selectedStudent.deviceInfo}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-slate-800 space-y-2">

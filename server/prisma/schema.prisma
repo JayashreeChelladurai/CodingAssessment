@@ -105,6 +105,8 @@ model StudentAttempt {
   mcqResponses     String       @default("{}") // JSON map: { questionId: ["opt-1"] }
   drafts           String       @default("{}") // JSON map: { questionId: code }
   violationCount   Int          @default(0)
+  ipAddress        String?
+  deviceInfo       String?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   violations       Violation[]
@@ -119,6 +121,7 @@ model Violation {
   attempt       StudentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   violationType String         // TAB_SWITCH, FULLSCREEN_EXIT, FOCUS_LOSS, DEVTOOLS_ATTEMPT, SEB_TAMPER
   details       String?
+  ipAddress     String?
   timestamp     DateTime       @default(now())
   resolved      Boolean        @default(false)
   resolvedAt    DateTime?

@@ -7,6 +7,7 @@ import {
   requireAttemptSession,
   AuthenticatedRequest,
 } from "../services/auth.js";
+import { getIO } from "../services/socketService.js";
 
 export const studentRouter = Router();
 
@@ -65,7 +66,7 @@ studentRouter.get("/info/:code", async (req, res) => {
 // 2. Start / Resume Assessment Attempt
 studentRouter.post("/start", async (req, res) => {
   try {
-    const { code, rollNo, studentName } = req.body;
+    const { code, rollNo, studentName, deviceInfo } = req.body;
 
     if (!code || !rollNo || !studentName) {
       return res.status(400).json({ error: "Assessment code, Roll Number, and Name are required" });
@@ -73,6 +74,9 @@ studentRouter.post("/start", async (req, res) => {
 
     const cleanCode = code.trim().toUpperCase();
     const cleanRollNo = rollNo.trim().toUpperCase();
+
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
+    const cleanIp = rawIp.replace(/^::ffff:/, "");
 
     const assessment = await prisma.assessment.findUnique({
       where: { code: cleanCode },
@@ -162,12 +166,16 @@ studentRouter.post("/start", async (req, res) => {
       }
 
       // Sync the accurate countdown in DB
+      const updateData: any = {
+        remainingSeconds: accurateRemaining,
+        lastHeartbeat: now,
+      };
+      if (cleanIp) updateData.ipAddress = cleanIp;
+      if (deviceInfo) updateData.deviceInfo = String(deviceInfo);
+
       attempt = await prisma.studentAttempt.update({
         where: { id: attempt.id },
-        data: {
-          remainingSeconds: accurateRemaining,
-          lastHeartbeat: now,
-        },
+        data: updateData,
         include: { violations: true, submissions: true },
       });
     } else {
@@ -235,6 +243,8 @@ studentRouter.post("/start", async (req, res) => {
           status: "IN_PROGRESS",
           questionOrder: JSON.stringify(questionOrder),
           optionOrders: JSON.stringify(optionOrders),
+          ipAddress: cleanIp || null,
+          deviceInfo: deviceInfo ? String(deviceInfo) : null,
         },
         include: { violations: true, submissions: true },
       });
@@ -508,11 +518,15 @@ studentRouter.post("/seb-exit", async (req, res) => {
       return res.json({ success: true, message: "No action needed" });
     }
 
+    const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
+    const cleanIp = rawIp.replace(/^::ffff:/, "");
+
     const violation = await prisma.violation.create({
       data: {
         attemptId: attempt.id,
         violationType: "SEB_EXIT",
         details: "Student turned off or exited Safe Exam Browser without submitting.",
+        ipAddress: cleanIp || null,
       },
     });
 
@@ -528,8 +542,8 @@ studentRouter.post("/seb-exit", async (req, res) => {
       },
     });
 
-    // Alert instructor in real-time if io is available
-    const io = (global as any).io;
+    // Alert instructor in real-time
+    const io = getIO() || (global as any).io;
     if (io) {
       io.to(`admin:${attempt.assessmentId}`).emit("admin:violation_alert", {
         attempt: updated,

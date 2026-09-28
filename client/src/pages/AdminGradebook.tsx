@@ -288,7 +288,14 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                 <tbody className="divide-y divide-slate-800/60">
                   {filteredStudents.map((st: any) => (
                     <tr key={st.id} className="hover:bg-slate-800/40 transition group">
-                      <td className="p-3 font-mono font-bold text-emerald-400">{st.rollNo}</td>
+                      <td className="p-3">
+                        <div className="font-mono font-bold text-emerald-400">{st.rollNo}</div>
+                        {st.ipAddress && (
+                          <div className="font-mono text-[10px] text-cyan-400/90 mt-0.5" title={st.deviceInfo || ""}>
+                            {st.ipAddress}
+                          </div>
+                        )}
+                      </td>
                       <td className="p-3 font-semibold text-white">{st.studentName}</td>
                       <td className="p-3">
                         <span
@@ -388,6 +395,12 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Total Earned Score: <strong className="text-emerald-400">{inspectStudent.totalScore} / {inspectStudent.maxScore}</strong> ({inspectStudent.percentage}%) • Violations: {inspectStudent.violationCount}
+                    {inspectStudent.ipAddress && (
+                      <span> • IP: <strong className="text-cyan-400 font-mono">{inspectStudent.ipAddress}</strong></span>
+                    )}
+                    {inspectStudent.deviceInfo && (
+                      <span> • Device: <strong className="text-slate-300 font-mono text-[11px]">{inspectStudent.deviceInfo}</strong></span>
+                    )}
                   </p>
                 </div>
               </div>

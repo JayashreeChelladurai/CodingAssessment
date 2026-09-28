@@ -37,6 +37,35 @@ function safeStorageGet(key: string): string | null {
   }
 }
 
+export function getClientDeviceInfo(): string {
+  try {
+    if (typeof window === "undefined" || !navigator) return "Browser Client";
+    const ua = navigator.userAgent;
+    let platform = "Unknown";
+    if (navigator.platform) platform = navigator.platform;
+    if ((navigator as any).userAgentData?.platform) platform = (navigator as any).userAgentData.platform;
+
+    let os = "Desktop";
+    if (/Windows/i.test(ua)) os = "Windows";
+    else if (/Macintosh|Mac OS X/i.test(ua)) os = "macOS";
+    else if (/Linux/i.test(ua)) os = "Linux";
+    else if (/Android/i.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+
+    let browser = "Browser";
+    if (/SEB/i.test(ua)) browser = "SafeExamBrowser";
+    else if (/Edg/i.test(ua)) browser = "Edge";
+    else if (/Chrome/i.test(ua)) browser = "Chrome";
+    else if (/Firefox/i.test(ua)) browser = "Firefox";
+    else if (/Safari/i.test(ua)) browser = "Safari";
+
+    const screenRes = `${window.screen?.width || 0}x${window.screen?.height || 0}`;
+    return `${os} (${platform}) • ${browser} • ${screenRes}`;
+  } catch {
+    return "Browser Client";
+  }
+}
+
 function adminHeaders(extra: Record<string, string> = {}): HeadersInit {
   const headers: Record<string, string> = {
     ...extra,
@@ -175,13 +204,14 @@ export const api = {
 
   startAssessment: async (code: string, rollNo: string, studentName: string, bypassSeb: boolean = false) => {
     const sebToken = getSebToken();
+    const deviceInfo = getClientDeviceInfo();
     const res = await fetch(`${API_BASE}/student/start`, {
       method: "POST",
       headers: {
         ...studentHeaders(),
         ...(bypassSeb ? { "x-bypass-seb": "true" } : {}),
       },
-      body: JSON.stringify({ code, rollNo, studentName, sebToken, bypassSeb }),
+      body: JSON.stringify({ code, rollNo, studentName, sebToken, bypassSeb, deviceInfo }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "Failed to start assessment" }));

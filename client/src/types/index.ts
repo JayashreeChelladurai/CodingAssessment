@@ -71,6 +71,7 @@ export interface Violation {
   attemptId: string;
   violationType: string;
   details?: string;
+  ipAddress?: string | null;
   timestamp: string;
   resolved: boolean;
   resolvedAt?: string | null;
@@ -109,6 +110,8 @@ export interface StudentAttempt {
   mcqResponses?: string; // JSON: { [questionId: string]: string[] }
   drafts?: string; // JSON map { questionId: code }
   violationCount: number;
+  ipAddress?: string | null;
+  deviceInfo?: string | null;
   violations?: Violation[];
   submissions?: Submission[];
 }

@@ -24,8 +24,22 @@ export const TestResultViewer: React.FC<TestResultViewerProps> = ({
   publicTestCases = [],
 }) => {
   const [selectedCaseIdx, setSelectedCaseIdx] = useState<number>(0);
+  const [filter, setFilter] = useState<"ALL" | "FAILED" | "PASSED">("ALL");
 
   const results: TestCaseEvaluationResult[] = gradingResult?.results || [];
+  const allCases = results.length > 0 ? results : publicTestCases;
+  const failedCount = results.filter((r) => !r.passed).length;
+  const passedCount = results.filter((r) => r.passed).length;
+
+  const filteredCases = allCases
+    .map((tc, originalIdx) => ({ tc, originalIdx }))
+    .filter(({ tc }) => {
+      const anyTc = tc as any;
+      if (filter === "FAILED") return anyTc.passed === false;
+      if (filter === "PASSED") return anyTc.passed === true;
+      return true;
+    });
+
   const activeTestCase = results[selectedCaseIdx] || (publicTestCases[selectedCaseIdx] ? {
     input: publicTestCases[selectedCaseIdx].input,
     expectedOutput: publicTestCases[selectedCaseIdx].expectedOutput,
@@ -154,26 +168,72 @@ export const TestResultViewer: React.FC<TestResultViewerProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
+            {/* Filter Tabs & Test Case Counter */}
+            <div className="flex items-center justify-between gap-2 pb-1">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Test Cases ({allCases.length} Total)
+              </span>
+              {results.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+                  <button
+                    onClick={() => setFilter("ALL")}
+                    className={`px-2 py-0.5 rounded font-semibold transition ${
+                      filter === "ALL" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    All ({results.length})
+                  </button>
+                  {failedCount > 0 && (
+                    <button
+                      onClick={() => {
+                        setFilter("FAILED");
+                        const firstFailed = results.findIndex((r) => !r.passed);
+                        if (firstFailed >= 0) setSelectedCaseIdx(firstFailed);
+                      }}
+                      className={`px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 ${
+                        filter === "FAILED" ? "bg-rose-950 text-rose-300 border border-rose-800" : "text-rose-400 hover:bg-rose-950/40"
+                      }`}
+                    >
+                      <XCircle className="w-3 h-3 text-rose-400" />
+                      <span>Failed ({failedCount})</span>
+                    </button>
+                  )}
+                  {passedCount > 0 && (
+                    <button
+                      onClick={() => setFilter("PASSED")}
+                      className={`px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 ${
+                        filter === "PASSED" ? "bg-emerald-950 text-emerald-300 border border-emerald-800" : "text-emerald-400 hover:bg-emerald-950/40"
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <span>Passed ({passedCount})</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Test Case Selection Pills */}
-            <div className="flex flex-wrap gap-2">
-              {(results.length > 0 ? results : publicTestCases).map((tc: any, idx: number) => {
-                const isPassed = tc.passed;
-                const isTested = tc.status && tc.status !== "UNTESTED";
+            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
+              {filteredCases.map(({ tc, originalIdx }) => {
+                const anyTc = tc as any;
+                const isPassed = anyTc.passed;
+                const isTested = anyTc.status && anyTc.status !== "UNTESTED";
                 return (
                   <button
-                    key={idx}
-                    onClick={() => setSelectedCaseIdx(idx)}
+                    key={originalIdx}
+                    onClick={() => setSelectedCaseIdx(originalIdx)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
-                      selectedCaseIdx === idx
-                        ? "bg-slate-800 text-white border-slate-600"
+                      selectedCaseIdx === originalIdx
+                        ? "bg-slate-800 text-white border-slate-600 shadow-sm"
                         : "bg-slate-950/60 text-slate-400 border-slate-800/80 hover:bg-slate-800/50"
                     }`}
                   >
                     {isTested && (
                       <span className={`w-2 h-2 rounded-full ${isPassed ? "bg-emerald-400" : "bg-rose-400"}`}></span>
                     )}
-                    <span>Case {idx + 1}</span>
+                    <span>Case {originalIdx + 1}</span>
                     {!tc.isPublic && <span className="text-[10px] text-slate-500">(Hidden)</span>}
                   </button>
                 );
