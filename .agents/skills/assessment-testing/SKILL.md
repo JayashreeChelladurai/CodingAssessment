@@ -411,12 +411,79 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
 
 ### 14.8 Instructor Submitted Code & Telemetry Inspector
 - [x] **1-Click Code Inspection**: Clicking 'View Code' or clicking any question mark pill in the Gradebook opens the interactive Code Inspector Modal.
-- [x] **Syntax & Test Matrix Telemetry**: Displays student's complete source code (with Copy Code button), execution status, compile error logs, and detailed breakdown for all 10 test cases (input, expected, actual stdout, stderr, execution ms).
+- [x] **Syntax & Test Matrix Telemetry**: Displays student's complete source code (with Copy Code button), execution status, compile error logs, and detailed breakdown for all test cases (input, expected, actual stdout, stderr, execution ms).
 - **Verification Procedure**:
-  1. Open Gradebook for `Test2`.
+  1. Open Gradebook for assessment.
   2. Click 'View Code' for a student.
-  3. Inspect question tabs (Q1 to Q5) -> Verify code, syntax layout, copy button, and test case telemetry cards.
+  3. Inspect question tabs -> Verify code, syntax layout, copy button, and test case telemetry cards.
 
+---
 
+# 15. Assessment Conduction & Hardening Standards (100-Testcase Rule & SEB Exclusivity)
 
+### 15.1 100-Testcase Rule & Corner Condition Matrix
+- [x] **100 Automated Test Cases per Problem**: Every coding question includes exactly 100 test cases verified against canonical reference solutions.
+- [x] **Corner Condition Coverage**:
+  - Sample / standard cases (1-10)
+  - Single elements and boundary extremes (11-20)
+  - Zeros, ones, negative numbers, all-negative values (21-40)
+  - Alternating signs, duplicates, sorted, reverse-sorted sequences (41-60)
+  - Scale limits & stress test cases (61-100) verifying algorithmic time complexity.
+- [x] **Test Case Transparency**: All test cases have `isPublic: true` so students can see which test case failed even when several pass.
+- **Verification Procedure**:
+  1. Submit partially correct code (e.g., handles positive numbers but fails on negative or zero values).
+  2. In `TestResultViewer`, filter by "Failed".
+  3. Click on the failed test case pills -> Verify the student sees the exact input, expected output, and stdout/stderr failure logs.
 
+### 15.2 Clean Content Formatting (Zero Stray Symbols)
+- [x] **No Raw Asterisks (`*`)**: Mathematical multiplications use `x` (e.g., `(-2) x 3 x (-4) = 24`). No raw markdown formatting asterisks in question text.
+- [x] **No Dollar Signs (`$`)**: No LaTeX math delimiters (e.g., `$N \le 100$`). Written in clean plain text: `N <= 100`.
+- [x] **No Markdown Header Hashes (`#`)**: Section titles use plain-text headers without `#` or `##`.
+- [x] **Backend Sanitizer**: `sanitizeQuestionContent()` automatically cleans question text on create and update.
+- **Verification Procedure**:
+  1. Inspect the student view for any question.
+  2. Verify zero occurrences of `*`, `$`, or `#` in titles, descriptions, and examples.
+
+### 15.3 Safe Exam Browser (SEB) Exclusivity & Violation Guardrails
+- [x] **SEB Mandatory**: `requireSeb: true`, `sebQuitPassword: "exit123"`.
+- [x] **No In-Browser Lockdown Shields**: `<FullscreenLockdown />` and `select-none` text blocking unmounted.
+- [x] **Strict Violation Filter**: Violations are triggered **ONLY** if SEB is closed (`SEB_EXIT`) or bypassed (`SEB_TAMPER`).
+- [x] **Zero False Lockouts**: Window blur, dual-screen focus shifts, and devtools checks are completely ignored.
+- [x] **No Mid-Test Restarts**: Exam sessions, draft code, and countdowns never reload or clear mid-exam.
+- **Verification Procedure**:
+  1. Click outside the browser window or switch displays inside SEB.
+  2. Verify that no violation warning or lockout overlay appears and the test does not reload.
+
+### 15.4 Anti-Reset Timer Architecture
+- [x] **Individual Timer**: Starts from each student's authoritative `attempt.startedAt`.
+- [x] **Elapsed Time Calculation**: Remaining seconds computed as `(durationMinutes * 60) - floor((Date.now() - startedAt) / 1000)`.
+- [x] **Immutability on Refresh**: Refreshing the browser or reconnecting never resets the timer to 60:00.
+- **Verification Procedure**:
+  1. Start an assessment and wait 2 minutes (timer shows 58:00).
+  2. Refresh the browser page (`F5` or `Ctrl+R`).
+  3. Verify the timer resumes from ~57:58 and does NOT reset to 60:00.
+
+### 15.5 Student Socket & Draft Isolation
+- [x] **Private Room Join**: Students join ONLY `student:${attemptId}`, never shared exam broadcast rooms.
+- [x] **Zero Cross-Student Code Leaks**: Code drafts and broadcasts remain strictly point-to-point.
+- **Verification Procedure**:
+  1. Open two concurrent student sessions (Student A and Student B).
+  2. Type code in Student A's editor.
+  3. Verify that Student B's editor remains completely unaffected.
+
+### 15.6 Auto-Submit & Automatic SEB Termination
+- [x] **Auto-Save on Expiry**: When timer reaches 00:00, all unsaved drafts are flushed to SQLite via `api.saveDraft`.
+- [x] **Finalization**: Calls `api.finishAssessment` to mark attempt completed.
+- [x] **SEB Auto-Quit**: Redirects to `${origin}/quit` and executes `window.close()` to cleanly terminate SEB without student confirmation.
+- **Verification Procedure**:
+  1. Let the countdown timer reach 00:00.
+  2. Verify drafts are saved and the browser navigates to `/quit`, closing SEB.
+
+### 15.7 Student IP Address & Device Audit Logging
+- [x] **Client Metadata Detection**: `getClientDeviceInfo()` captures OS, platform, browser, and screen resolution.
+- [x] **IPv4 Extraction**: Server captures client IPv4 address from connection headers.
+- [x] **Gradebook Display**: IP address and device details are displayed in the Code Inspector and exported to CSV.
+- **Verification Procedure**:
+  1. Submit an attempt.
+  2. Open Professor Gradebook -> Click 'View Code'.
+  3. Verify the student's IP address and device specifications are visible in the inspector header.
