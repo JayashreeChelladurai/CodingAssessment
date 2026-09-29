@@ -597,6 +597,30 @@ assessmentRouter.post("/:id/resume/:attemptId", async (req, res) => {
   }
 });
 
+/**
+ * Automatically sanitizes question content across titles, descriptions, and explanations:
+ * 1. Strips markdown header tags (#)
+ * 2. Strips LaTeX math delimiters ($)
+ * 3. Replaces mathematical multiplication asterisks (*) with 'x' and strips markdown formatting asterisks
+ * This guarantees questions contain zero *, $, or # symbols in student views.
+ */
+export function sanitizeQuestionContent(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    // Replace markdown bold/italic markers: **word** -> word, *word* -> word
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    // Replace mathematical multiplication: e.g. "2 * 3" -> "2 x 3", "(-2) * 3" -> "(-2) x 3"
+    .replace(/(\S)\s*\*\s*(\S)/g, "$1 x $2")
+    // Remove any remaining asterisks
+    .replace(/\*/g, "x")
+    // Remove LaTeX math delimiters ($)
+    .replace(/\$/g, "")
+    // Remove markdown headers (#)
+    .replace(/^#+\s*/gm, "")
+    .replace(/#/g, "");
+}
+
 async function createQuestionRecord(
   assessmentId: string,
   sectionId: string | null,
@@ -614,15 +638,15 @@ async function createQuestionRecord(
       assessmentId,
       sectionId,
       type: isMcq ? "MCQ" : "CODING",
-      title: q.title || `Question ${qIdx + 1}`,
-      description: q.description || "",
+      title: sanitizeQuestionContent(q.title || `Question ${qIdx + 1}`),
+      description: sanitizeQuestionContent(q.description || ""),
       marks: Number(q.marks) || (isMcq ? 2 : 50),
       negativeMarks: Number(q.negativeMarks) || 0,
       order: qIdx,
       mcqType: q.mcqType || "SINGLE",
       options: optionsStr,
       correctAnswers: correctAnswersStr,
-      explanation: q.explanation || "",
+      explanation: sanitizeQuestionContent(q.explanation || ""),
       allowedLanguages: q.allowedLanguages || "JAVA,C,CPP",
       starterCodes: starterCodesStr,
       starterCode: q.starterCode || "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        \n    }\n}\n",
@@ -658,15 +682,15 @@ async function upsertQuestionRecord(
     assessmentId,
     sectionId,
     type: isMcq ? "MCQ" : "CODING",
-    title: q.title || `Question ${qIdx + 1}`,
-    description: q.description || "",
+    title: sanitizeQuestionContent(q.title || `Question ${qIdx + 1}`),
+    description: sanitizeQuestionContent(q.description || ""),
     marks: Number(q.marks) || (isMcq ? 2 : 50),
     negativeMarks: Number(q.negativeMarks) || 0,
     order: qIdx,
     mcqType: q.mcqType || "SINGLE",
     options: optionsStr,
     correctAnswers: correctAnswersStr,
-    explanation: q.explanation || "",
+    explanation: sanitizeQuestionContent(q.explanation || ""),
     allowedLanguages: q.allowedLanguages || "JAVA,C,CPP",
     starterCodes: starterCodesStr,
     starterCode: q.starterCode || "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        \n    }\n}\n",
