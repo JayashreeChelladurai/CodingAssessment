@@ -410,7 +410,7 @@ Input:
 -2 3 -4
 Output:
 24
-Explanation: The contiguous subarray [-2, 3, -4] has product (-2) * 3 * (-4) = 24.
+Explanation: The contiguous subarray [-2, 3, -4] has product (-2) x 3 x (-4) = 24.
 `,
       marks: 35.0,
       order: 0,

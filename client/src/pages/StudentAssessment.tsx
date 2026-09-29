@@ -146,14 +146,32 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   const flaggedQuestionsRef = useRef<string[]>(flaggedQuestions);
   flaggedQuestionsRef.current = flaggedQuestions;
 
-  const remainingSecondsRef = useRef<number>(initialAttempt.remainingSeconds || 3600);
+  // Calculate authoritative remaining seconds directly from student's individual startedAt timestamp
+  const computeInitialRemaining = () => {
+    if (initialAttempt.startedAt) {
+      const startedMs = new Date(initialAttempt.startedAt).getTime();
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
+      const totalSec = (initialAssessment.durationMinutes || 60) * 60;
+      let rem = Math.max(0, totalSec - elapsedSec);
+      if (initialAssessment.endTime) {
+        const untilEnd = Math.max(0, Math.floor((new Date(initialAssessment.endTime).getTime() - Date.now()) / 1000));
+        rem = Math.min(rem, untilEnd);
+      }
+      return rem;
+    }
+    return initialAttempt.remainingSeconds || (initialAssessment.durationMinutes || 60) * 60;
+  };
+
+  const initialRemaining = computeInitialRemaining();
+  const remainingSecondsRef = useRef<number>(initialRemaining);
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(initialRemaining);
 
   const saveTimeoutRef = useRef<any>(null);
 
   // Authoritative client-side timer anchor to prevent sleep/tab-throttling/interval drift
   const timerAnchorRef = useRef<{ startedAtMs: number; initialRemaining: number }>({
     startedAtMs: Date.now(),
-    initialRemaining: initialAttempt.remainingSeconds || 3600,
+    initialRemaining: initialRemaining,
   });
 
   // Coding language selection per question
@@ -165,9 +183,6 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   const [isLocked, setIsLocked] = useState<boolean>(initialAttempt.status === "LOCKED_OUT");
   const [lockReason, setLockReason] = useState<string>("");
   const [violationCount, setViolationCount] = useState<number>(initialAttempt.violationCount || 0);
-
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(initialAttempt.remainingSeconds || 3600);
-  remainingSecondsRef.current = remainingSeconds;
 
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -391,9 +406,16 @@ int main() {
     if (isLocked || isSubmitted) return;
 
     const tick = () => {
-      const elapsed = Math.floor((Date.now() - timerAnchorRef.current.startedAtMs) / 1000);
-      const remaining = Math.max(0, timerAnchorRef.current.initialRemaining - elapsed);
+      const startedMs = new Date(attempt.startedAt || initialAttempt.startedAt).getTime();
+      const elapsed = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
+      const totalAllowed = (assessment.durationMinutes || 60) * 60;
+      let remaining = Math.max(0, totalAllowed - elapsed);
+      if (assessment.endTime) {
+        const untilEnd = Math.max(0, Math.floor((new Date(assessment.endTime).getTime() - Date.now()) / 1000));
+        remaining = Math.min(remaining, untilEnd);
+      }
       setRemainingSeconds(remaining);
+      remainingSecondsRef.current = remaining;
       if (remaining <= 0) {
         handleAutoSubmit();
       }
@@ -460,6 +482,11 @@ int main() {
 
   const handleViolation = useCallback((type: string, details?: string) => {
     if (isLocked || isSubmitted) return;
+
+    // Strict Rule 4 & 5: Raise violation ONLY if SEB is bypassed / closed, do not show violation for other cases.
+    if (type !== "SEB_EXIT" && type !== "SEB_TAMPER") {
+      return;
+    }
 
     setIsLocked(true);
     setLockReason(type);
@@ -704,12 +731,26 @@ int main() {
   };
 
   const handleAutoSubmit = async () => {
+    if (isSubmitted) return;
+    setIsSubmitted(true);
     try {
-      await api.saveDraft(attempt.id, undefined, draftsRef.current, mcqResponsesRef.current, flaggedQuestionsRef.current, 0);
-      await api.finishAssessment(attempt.id, attemptToken || undefined);
-      setIsSubmitted(true);
+      // 1. Auto submit all updates before closing the test
+      await api.saveDraft(attempt.id, undefined, draftsRef.current, mcqResponsesRef.current, flaggedQuestionsRef.current, 0).catch(() => {});
+      await api.finishAssessment(attempt.id, attemptToken || undefined).catch(() => {});
+
+      // 2. Close test and SEB automatically
+      setTimeout(() => {
+        try { window.close(); } catch {}
+        try {
+          window.location.href = `${window.location.origin}/quit`;
+        } catch {}
+      }, 1500);
     } catch (err) {
       console.error("Auto submit failed:", err);
+      try { window.close(); } catch {}
+      try {
+        window.location.href = `${window.location.origin}/quit`;
+      } catch {}
     }
   };
 
@@ -801,15 +842,7 @@ int main() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden text-slate-100 select-none">
-      {/* Fullscreen Lockdown Shield */}
-      <FullscreenLockdown
-        isFullscreen={isFullscreen}
-        onEnterFullscreen={handleEnterFullscreen}
-        onViolation={handleViolation}
-        isLocked={isLocked}
-        isCompleted={isSubmitted}
-      />
+    <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden text-slate-100">
 
       {/* Lockout Overlay */}
       {isLocked && (

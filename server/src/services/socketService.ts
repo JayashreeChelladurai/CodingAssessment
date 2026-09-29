@@ -187,8 +187,8 @@ export function setupSocketService(io: SocketIOServer) {
         return;
       }
 
+      // Strictly join ONLY the private student room! Students must NEVER join shared rooms.
       socket.join(studentRoom);
-      socket.join(examRoom);
 
       console.log(`[Socket] Student ${rollNo} (${studentName}) joined ${studentRoom}`);
 
@@ -300,6 +300,12 @@ export function setupSocketService(io: SocketIOServer) {
         return;
       }
       if (!attemptId || !assessmentId) return;
+
+      // RULE 4 & 5: Raise violation ONLY if SEB is bypassed / closed, do not show violation for other cases.
+      if (violationType !== "SEB_EXIT" && violationType !== "SEB_TAMPER") {
+        console.log(`[VIOLATION IGNORED] Non-SEB event '${violationType}' ignored for attempt ${attemptId}.`);
+        return;
+      }
 
       try {
         console.log(`[VIOLATION] Attempt ${attemptId} triggered ${violationType}`);
