@@ -4,12 +4,10 @@ import { api } from "../../services/api";
 
 interface SebGatekeeperProps {
   assessment: any;
-  onBypassForTesting?: () => void;
 }
 
 export const SebGatekeeper: React.FC<SebGatekeeperProps> = ({
   assessment,
-  onBypassForTesting,
 }) => {
   const sebDownloadUrl = api.getSebConfigUrl(assessment.id);
 
@@ -121,18 +119,6 @@ export const SebGatekeeper: React.FC<SebGatekeeperProps> = ({
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
-
-          {onBypassForTesting && (
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={onBypassForTesting}
-                className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-4 rounded-xl transition text-xs border border-slate-700"
-              >
-                <span>Enter Assessment in Browser (Direct / Proctor Override)</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

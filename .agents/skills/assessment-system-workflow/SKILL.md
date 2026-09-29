@@ -194,13 +194,14 @@ All question content (titles, descriptions, explanations) must be clean plain te
 * Displays exam rules, question count, and duration.
 * Countdown timer is initialized when candidate enters the assessment.
 
-### 4.3 Safe Exam Browser (SEB) Security & Violation Policy
-* **SEB Exclusivity**:
-  - The exam runs strictly inside Safe Exam Browser (`requireSeb: true`).
-  - **NO intrusive in-browser locks**: Fullscreen lockdown overlays, text selection blocking, and blur locks are removed.
+### 4.3 Safe Exam Browser (SEB) Exclusivity & Zero Proctor Override
+* **Mandatory SEB Access**:
+  - The assessment strictly mandates Safe Exam Browser (`requireSeb: true`).
+  - **Zero Proctor Override**: Bypassing, overriding, or testing without SEB is strictly prohibited and disabled in both the client UI and server API. Non-SEB requests receive HTTP 403.
+  - **NO Intrusive Browser Overlay Hacks**: Intrusive in-browser lockdown shields, fullscreen traps, and selection blocking are removed in favor of native SEB operating system level isolation.
 * **Strict Violation Policy**:
-  - Violations are raised **ONLY** if SEB is closed (`SEB_EXIT`) or bypassed (`SEB_TAMPER`).
-  - Window blur, dual-monitor focus shift, or internal SEB re-renders are completely ignored and do not lock the student.
+  - Violations and lockouts are raised **ONLY** if SEB is closed (`SEB_EXIT`) or tampered with (`SEB_TAMPER`).
+  - Window blur, display focus adjustments, or internal SEB re-renders are completely ignored and do not trigger violations.
 * **No Mid-Test Restarts**:
   - The exam session, student draft code, and countdown timer are never cleared or restarted for any reason.
 
@@ -216,11 +217,18 @@ All question content (titles, descriptions, explanations) must be clean plain te
 * Monaco Editor loads locally with instant fallback to styled textarea if offline.
 * Code changes debounced and flushed to backend SQLite drafts.
 
-### 4.7 Compiling, Running & Test Case Transparency
-* **Run Sample / All Cases**:
-  - Student code is compiled and run against all 100 test cases.
-  - `TestResultViewer` provides interactive filtering: **All (100)**, **Failed**, and **Passed**.
-  - Clicking any test case pill displays exact input, expected output, and stdout/stderr failure logs.
+### 4.7 Compiling, Running, Compiler Error Briefing & Test Case Inspection
+* **Compiler Error Briefing**:
+  - When a compilation error occurs (`COMPILE_ERROR`), the system parses the compiler output and presents a clear, human-readable **Error Brief** highlighting the exact line number, column, and error classification (e.g., `Missing Semicolon`, `Undefined Variable`, `Type Mismatch`, `Missing Return Statement`, `Syntax Expression Error`, `Unclosed Bracket`).
+  - Students can review the formatted brief, inspect code pointers (`^`), and optionally expand the raw compiler log.
+* **Test Case Transparency & Failing Case Inspection**:
+  - Student code is compiled and evaluated against all 100 test cases with full visibility (`isPublic: true`).
+  - **Interactive Failing Case Inspector**: When any test case fails, the system automatically flags the failure, focuses the first failing case, and provides an **"Open Failing Case Details"** modal/drawer.
+  - Inside the inspector, students can examine:
+    - Exact Input (with a 1-click "Copy Input" and "Debug in Custom Input" action to immediately test in the custom console).
+    - Expected Output vs. Actual Output (side-by-side with color-coded mismatch indicators).
+    - Execution error logs / exception stack traces (e.g. `ArrayIndexOutOfBoundsException`).
+    - Direct Previous/Next navigation to cycle through all failing test cases.
 
 ### 4.8 Timer Stages & Immutability Guarantee
 * **Authoritative Server Timer**: Countdown begins individually for each student upon clicking start. The server calculates authoritative `remainingSeconds` using its own database clock, accounting for assessment duration and cutoff end times.

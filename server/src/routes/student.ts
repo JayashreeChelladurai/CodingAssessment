@@ -100,10 +100,9 @@ studentRouter.post("/start", async (req, res) => {
       return res.status(404).json({ error: "Assessment code not found. Please verify with your professor." });
     }
 
-    // Check SEB requirement if enabled (strict cryptographic HMAC enforcement)
+    // Check SEB requirement if enabled (strict cryptographic HMAC enforcement - zero override allowed)
     const isSeb = isSebRequest(req, cleanCode);
-    const allowBypass = Boolean(req.body?.bypassSeb || req.headers["x-bypass-seb"]);
-    if (assessment.requireSeb && !isSeb && !allowBypass) {
+    if (assessment.requireSeb && !isSeb) {
       return res.status(403).json({
         error: "This assessment strictly requires Safe Exam Browser (SEB). Please launch via your .seb file.",
         requireSeb: true,

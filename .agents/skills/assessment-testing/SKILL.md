@@ -429,11 +429,16 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
   - Zeros, ones, negative numbers, all-negative values (21-40)
   - Alternating signs, duplicates, sorted, reverse-sorted sequences (41-60)
   - Scale limits & stress test cases (61-100) verifying algorithmic time complexity.
-- [x] **Test Case Transparency**: All test cases have `isPublic: true` so students can see which test case failed even when several pass.
+- [x] **Test Case Transparency & Failing Case Inspector**:
+  - All test cases have `isPublic: true` so students can see which test case failed even when several pass.
+  - Candidates can click **"Open Failing Case Details"** to launch an interactive inspection modal displaying exact Input, Expected Output, Actual Output, and stderr/exception logs, with 1-click **"Copy to Custom Input & Debug"** and failing case flip controls.
+- [x] **Compiler Error Briefing**:
+  - Compiler errors are automatically parsed and displayed with a human-readable **Error Brief** highlighting line numbers, column, and error classification (`Missing Semicolon`, `Undefined Variable`, `Type Mismatch`, `Missing Return`, `Bracket Mismatch`), with an option to expand raw logs.
 - **Verification Procedure**:
-  1. Submit partially correct code (e.g., handles positive numbers but fails on negative or zero values).
-  2. In `TestResultViewer`, filter by "Failed".
-  3. Click on the failed test case pills -> Verify the student sees the exact input, expected output, and stdout/stderr failure logs.
+  1. Submit code with a syntax error (e.g. missing semicolon on line 5). Verify the crimson **Compiler Error Brief** card identifies "Line 5: Missing semicolon ';'" before any raw trace.
+  2. Submit partially correct code (e.g., fails on negative or edge cases).
+  3. In `TestResultViewer`, verify the first failing case is automatically selected and the red failing alert banner appears.
+  4. Click **"Open Failing Case Details"** -> Verify the modal opens displaying input, expected, actual stdout, and stderr with the "Copy to Custom Input & Debug" action button.
 
 ### 15.2 Clean Content Formatting (Zero Stray Symbols)
 - [x] **No Raw Asterisks (`*`)**: Mathematical multiplications use `x` (e.g., `(-2) x 3 x (-4) = 24`). No raw markdown formatting asterisks in question text.
@@ -444,15 +449,16 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
   1. Inspect the student view for any question.
   2. Verify zero occurrences of `*`, `$`, or `#` in titles, descriptions, and examples.
 
-### 15.3 Safe Exam Browser (SEB) Exclusivity & Violation Guardrails
-- [x] **SEB Mandatory**: `requireSeb: true`, `sebQuitPassword: "exit123"`.
+### 15.3 Safe Exam Browser (SEB) Exclusivity & Zero Proctor Override
+- [x] **SEB Mandatory**: `requireSeb: true`, `sebQuitPassword: "exit123"`. Students must enter the assessment **ONLY** via Safe Exam Browser.
+- [x] **Zero Proctor Override**: Bypassing or overriding proctoring is strictly forbidden. The test-override button is removed from `SebGatekeeper`, and non-SEB requests to `/student/start` are rejected with HTTP 403.
 - [x] **No In-Browser Lockdown Shields**: `<FullscreenLockdown />` and `select-none` text blocking unmounted.
 - [x] **Strict Violation Filter**: Violations are triggered **ONLY** if SEB is closed (`SEB_EXIT`) or bypassed (`SEB_TAMPER`).
 - [x] **Zero False Lockouts**: Window blur, dual-screen focus shifts, and devtools checks are completely ignored.
 - [x] **No Mid-Test Restarts**: Exam sessions, draft code, and countdowns never reload or clear mid-exam.
 - **Verification Procedure**:
-  1. Click outside the browser window or switch displays inside SEB.
-  2. Verify that no violation warning or lockout overlay appears and the test does not reload.
+  1. Attempt to log in from a standard Chrome/Edge browser. Verify that `SebGatekeeper` displays download and launch instructions with zero override/bypass options.
+  2. Attempt a direct API call without SEB headers. Verify the server responds with 403 Forbidden (`requireSeb: true`).
 
 ### 15.4 Anti-Reset Timer Architecture
 - [x] **Authoritative Server Timer**: Starts from server's calculated `attempt.remainingSeconds`.
