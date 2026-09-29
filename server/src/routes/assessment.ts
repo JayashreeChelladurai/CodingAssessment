@@ -10,72 +10,8 @@ import {
 
 export const assessmentRouter = Router();
 
-assessmentRouter.use(requireAdminSession);
-
-// 1. Get all assessments (Admin)
-assessmentRouter.get("/", async (_req, res) => {
-  try {
-    const assessments = await prisma.assessment.findMany({
-      include: {
-        sections: {
-          include: {
-            questions: {
-              include: { testCases: true },
-            },
-          },
-          orderBy: { order: "asc" },
-        },
-        questions: {
-          include: { testCases: true },
-          orderBy: { order: "asc" },
-        },
-        attempts: {
-          select: { id: true, rollNo: true, status: true, violationCount: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    res.json(assessments);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 2. Get single assessment by ID (Admin)
-assessmentRouter.get("/:id", async (req, res) => {
-  try {
-    const assessment = await prisma.assessment.findUnique({
-      where: { id: req.params.id },
-      include: {
-        sections: {
-          include: {
-            questions: {
-              include: { testCases: { orderBy: { order: "asc" } } },
-              orderBy: { order: "asc" },
-            },
-          },
-          orderBy: { order: "asc" },
-        },
-        questions: {
-          include: { testCases: { orderBy: { order: "asc" } } },
-          orderBy: { order: "asc" },
-        },
-        attempts: {
-          include: { violations: true, submissions: true },
-          orderBy: { startedAt: "desc" },
-        },
-      },
-    });
-    if (!assessment) {
-      return res.status(404).json({ error: "Assessment not found" });
-    }
-    res.json(assessment);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 3. Download .seb Configuration File
+// 1. Download .seb Configuration File (Public route for Safe Exam Browser & candidates)
+// Must be defined BEFORE requireAdminSession so SEB can fetch config without admin JWT
 assessmentRouter.get("/:id/seb-config", async (req, res) => {
   try {
     const { id } = req.params;
@@ -106,6 +42,72 @@ assessmentRouter.get("/:id/seb-config", async (req, res) => {
       `attachment; filename="${assessment.code.replace(/[^a-zA-Z0-9_-]/g, "_")}.seb"`
     );
     res.send(xml);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// All following routes strictly require Professor / Administrator Authentication
+assessmentRouter.use(requireAdminSession);
+
+// 2. Get all assessments (Admin)
+assessmentRouter.get("/", async (_req, res) => {
+  try {
+    const assessments = await prisma.assessment.findMany({
+      include: {
+        sections: {
+          include: {
+            questions: {
+              include: { testCases: true },
+            },
+          },
+          orderBy: { order: "asc" },
+        },
+        questions: {
+          include: { testCases: true },
+          orderBy: { order: "asc" },
+        },
+        attempts: {
+          select: { id: true, rollNo: true, status: true, violationCount: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(assessments);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Get single assessment by ID (Admin)
+assessmentRouter.get("/:id", async (req, res) => {
+  try {
+    const assessment = await prisma.assessment.findUnique({
+      where: { id: req.params.id },
+      include: {
+        sections: {
+          include: {
+            questions: {
+              include: { testCases: { orderBy: { order: "asc" } } },
+              orderBy: { order: "asc" },
+            },
+          },
+          orderBy: { order: "asc" },
+        },
+        questions: {
+          include: { testCases: { orderBy: { order: "asc" } } },
+          orderBy: { order: "asc" },
+        },
+        attempts: {
+          include: { violations: true, submissions: true },
+          orderBy: { startedAt: "desc" },
+        },
+      },
+    });
+    if (!assessment) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
+    res.json(assessment);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

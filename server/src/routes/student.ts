@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
-import { isSebRequest } from "../services/sebService.js";
+import { isSebRequest, generateSebConfig, generateSebToken } from "../services/sebService.js";
 import { gradeStudentCode, gradeMcqQuestion } from "../services/gradingService.js";
 import {
   issueAttemptSessionToken,
@@ -20,6 +20,43 @@ function shuffleArray<T>(array: T[]): T[] {
   }
   return result;
 }
+
+// 0. Download .seb Configuration File for Student / Safe Exam Browser
+studentRouter.get("/seb-config/:code", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const cleanCode = code.trim().toUpperCase();
+    const assessment = await prisma.assessment.findFirst({
+      where: {
+        OR: [{ code: cleanCode }, { id: code }],
+      },
+    });
+    if (!assessment) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
+
+    const host = req.get("host") || "localhost:3000";
+    const protocol = req.protocol || "http";
+    const sebToken = generateSebToken(assessment.code);
+    const startUrl = `${protocol}://${host}/?code=${encodeURIComponent(assessment.code)}&sebToken=${encodeURIComponent(sebToken)}`;
+
+    const xml = generateSebConfig({
+      assessmentCode: assessment.code,
+      startUrl,
+      quitPassword: assessment.sebQuitPassword || "exit123",
+      title: `${assessment.title} (${assessment.code})`,
+    });
+
+    res.setHeader("Content-Type", "application/seb");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${assessment.code.replace(/[^a-zA-Z0-9_-]/g, "_")}.seb"`
+    );
+    res.send(xml);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // 1. Get Assessment Public Info & Check SEB Status (Gatekeeper check)
 studentRouter.get("/info/:code", async (req, res) => {
