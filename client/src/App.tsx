@@ -20,11 +20,23 @@ type ViewMode =
   | "admin-gradebook"
   | "admin-editor";
 
+const isAttemptValid = (att: any, asmt: any): boolean => {
+  if (!att || !asmt) return false;
+  if (att.status === "SUBMITTED" || att.status === "TIME_EXPIRED") return false;
+  if (typeof att.remainingSeconds === "number" && att.remainingSeconds <= 0) return false;
+  return true;
+};
+
 export function App() {
   const [activeAssessment, setActiveAssessment] = useState<Assessment | null>(() => {
     try {
+      const urlCode = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("code") : null;
       const saved = sessionStorage.getItem("active_assessment") || localStorage.getItem("active_assessment");
-      return saved ? JSON.parse(saved) : null;
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (urlCode && parsed && parsed.code && parsed.code.toUpperCase() !== urlCode.toUpperCase()) {
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -32,8 +44,18 @@ export function App() {
 
   const [activeAttempt, setActiveAttempt] = useState<StudentAttempt | null>(() => {
     try {
+      const urlCode = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("code") : null;
+      const savedAsmt = sessionStorage.getItem("active_assessment") || localStorage.getItem("active_assessment");
+      const parsedAsmt = savedAsmt ? JSON.parse(savedAsmt) : null;
+      if (urlCode && parsedAsmt && parsedAsmt.code && parsedAsmt.code.toUpperCase() !== urlCode.toUpperCase()) {
+        return null;
+      }
       const saved = sessionStorage.getItem("active_attempt") || localStorage.getItem("active_attempt");
-      return saved ? JSON.parse(saved) : null;
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (!isAttemptValid(parsed, parsedAsmt)) {
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -41,15 +63,36 @@ export function App() {
 
   const [view, setView] = useState<ViewMode>(() => {
     try {
+      const urlCode = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("code") : null;
       const savedView = sessionStorage.getItem("active_view") || localStorage.getItem("active_view");
       const savedAttempt = sessionStorage.getItem("active_attempt") || localStorage.getItem("active_attempt");
       const savedAssessment = sessionStorage.getItem("active_assessment") || localStorage.getItem("active_assessment");
-      if (savedView === "student-assessment" && savedAttempt && savedAssessment) {
-        const parsed = JSON.parse(savedAttempt);
-        if (parsed.status !== "SUBMITTED" && parsed.status !== "TIME_EXPIRED") {
-          return "student-assessment";
-        }
+      
+      const parsedAsmt = savedAssessment ? JSON.parse(savedAssessment) : null;
+      const parsedAtt = savedAttempt ? JSON.parse(savedAttempt) : null;
+
+      if (urlCode && parsedAsmt && parsedAsmt.code && parsedAsmt.code.toUpperCase() !== urlCode.toUpperCase()) {
+        // Different assessment opened in URL, reset stale attempt
+        sessionStorage.removeItem("active_attempt");
+        sessionStorage.removeItem("active_assessment");
+        sessionStorage.removeItem("active_view");
+        localStorage.removeItem("active_attempt");
+        localStorage.removeItem("active_assessment");
+        localStorage.removeItem("active_view");
+        return "student-login";
       }
+
+      if (savedView === "student-assessment" && isAttemptValid(parsedAtt, parsedAsmt)) {
+        return "student-assessment";
+      }
+
+      // If invalid/expired attempt, clear storage
+      sessionStorage.removeItem("active_attempt");
+      sessionStorage.removeItem("active_assessment");
+      sessionStorage.removeItem("active_view");
+      localStorage.removeItem("active_attempt");
+      localStorage.removeItem("active_assessment");
+      localStorage.removeItem("active_view");
     } catch {}
     return "student-login";
   });

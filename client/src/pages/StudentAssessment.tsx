@@ -146,20 +146,12 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   const flaggedQuestionsRef = useRef<string[]>(flaggedQuestions);
   flaggedQuestionsRef.current = flaggedQuestions;
 
-  // Calculate authoritative remaining seconds directly from student's individual startedAt timestamp
+  // Authoritative remaining seconds directly from server attempt
   const computeInitialRemaining = () => {
-    if (initialAttempt.startedAt) {
-      const startedMs = new Date(initialAttempt.startedAt).getTime();
-      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
-      const totalSec = (initialAssessment.durationMinutes || 60) * 60;
-      let rem = Math.max(0, totalSec - elapsedSec);
-      if (initialAssessment.endTime) {
-        const untilEnd = Math.max(0, Math.floor((new Date(initialAssessment.endTime).getTime() - Date.now()) / 1000));
-        rem = Math.min(rem, untilEnd);
-      }
-      return rem;
+    if (typeof initialAttempt.remainingSeconds === "number" && initialAttempt.remainingSeconds > 0) {
+      return initialAttempt.remainingSeconds;
     }
-    return initialAttempt.remainingSeconds || (initialAssessment.durationMinutes || 60) * 60;
+    return (initialAssessment.durationMinutes || 60) * 60;
   };
 
   const initialRemaining = computeInitialRemaining();
@@ -168,7 +160,7 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
 
   const saveTimeoutRef = useRef<any>(null);
 
-  // Authoritative client-side timer anchor to prevent sleep/tab-throttling/interval drift
+  // Authoritative monotonic client-side timer anchor (immune to clock skew and tab throttling)
   const timerAnchorRef = useRef<{ startedAtMs: number; initialRemaining: number }>({
     startedAtMs: Date.now(),
     initialRemaining: initialRemaining,
@@ -316,6 +308,7 @@ int main() {
       setLockReason("");
       if (typeof data.remainingSeconds === "number" && data.remainingSeconds > 0) {
         setRemainingSeconds(data.remainingSeconds);
+        remainingSecondsRef.current = data.remainingSeconds;
         timerAnchorRef.current = {
           startedAtMs: Date.now(),
           initialRemaining: data.remainingSeconds,
@@ -352,11 +345,29 @@ int main() {
     try {
       setIsCheckingStatus(true);
       const res = await api.getAttemptStatus(attempt.id, attemptToken || undefined);
+      if (res && (res.status === "TIME_EXPIRED" || res.isExpired)) {
+        handleAutoSubmit();
+        return;
+      }
+      if (res && (res.status === "SUBMITTED" || res.isSubmitted)) {
+        setIsSubmitted(true);
+        try {
+          sessionStorage.removeItem("active_attempt");
+          sessionStorage.removeItem("active_assessment");
+          sessionStorage.removeItem("active_view");
+          localStorage.removeItem("active_attempt");
+          localStorage.removeItem("active_assessment");
+          localStorage.removeItem("active_view");
+        } catch {}
+        api.setAttemptToken(null);
+        return;
+      }
       if (res && res.status === "IN_PROGRESS") {
         setIsLocked(false);
         setLockReason("");
         if (typeof res.remainingSeconds === "number" && res.remainingSeconds > 0) {
           setRemainingSeconds(res.remainingSeconds);
+          remainingSecondsRef.current = res.remainingSeconds;
           timerAnchorRef.current = {
             startedAtMs: Date.now(),
             initialRemaining: res.remainingSeconds,
@@ -401,19 +412,13 @@ int main() {
     return () => clearInterval(poller);
   }, [isLocked, isSubmitted, checkUnlockStatus]);
 
-  // 2. Countdown Timer (drift-resistant with visibility synchronization)
+  // 2. Countdown Timer (drift-resistant monotonic client anchor)
   useEffect(() => {
     if (isLocked || isSubmitted) return;
 
     const tick = () => {
-      const startedMs = new Date(attempt.startedAt || initialAttempt.startedAt).getTime();
-      const elapsed = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
-      const totalAllowed = (assessment.durationMinutes || 60) * 60;
-      let remaining = Math.max(0, totalAllowed - elapsed);
-      if (assessment.endTime) {
-        const untilEnd = Math.max(0, Math.floor((new Date(assessment.endTime).getTime() - Date.now()) / 1000));
-        remaining = Math.min(remaining, untilEnd);
-      }
+      const elapsed = Math.max(0, Math.floor((Date.now() - timerAnchorRef.current.startedAtMs) / 1000));
+      const remaining = Math.max(0, timerAnchorRef.current.initialRemaining - elapsed);
       setRemainingSeconds(remaining);
       remainingSecondsRef.current = remaining;
       if (remaining <= 0) {
@@ -733,6 +738,17 @@ int main() {
   const handleAutoSubmit = async () => {
     if (isSubmitted) return;
     setIsSubmitted(true);
+
+    try {
+      sessionStorage.removeItem("active_attempt");
+      sessionStorage.removeItem("active_assessment");
+      sessionStorage.removeItem("active_view");
+      localStorage.removeItem("active_attempt");
+      localStorage.removeItem("active_assessment");
+      localStorage.removeItem("active_view");
+    } catch {}
+    api.setAttemptToken(null);
+
     try {
       // 1. Auto submit all updates before closing the test
       await api.saveDraft(attempt.id, undefined, draftsRef.current, mcqResponsesRef.current, flaggedQuestionsRef.current, 0).catch(() => {});
@@ -744,13 +760,15 @@ int main() {
         try {
           window.location.href = `${window.location.origin}/quit`;
         } catch {}
-      }, 1500);
+      }, 3000);
     } catch (err) {
       console.error("Auto submit failed:", err);
-      try { window.close(); } catch {}
-      try {
-        window.location.href = `${window.location.origin}/quit`;
-      } catch {}
+      setTimeout(() => {
+        try { window.close(); } catch {}
+        try {
+          window.location.href = `${window.location.origin}/quit`;
+        } catch {}
+      }, 3000);
     }
   };
 
@@ -758,6 +776,15 @@ int main() {
     try {
       await api.saveDraft(attempt.id, undefined, draftsRef.current, mcqResponsesRef.current, flaggedQuestionsRef.current, remainingSecondsRef.current);
       await api.finishAssessment(attempt.id, attemptToken || undefined);
+      try {
+        sessionStorage.removeItem("active_attempt");
+        sessionStorage.removeItem("active_assessment");
+        sessionStorage.removeItem("active_view");
+        localStorage.removeItem("active_attempt");
+        localStorage.removeItem("active_assessment");
+        localStorage.removeItem("active_view");
+      } catch {}
+      api.setAttemptToken(null);
       setIsSubmitted(true);
       setShowSubmitModal(false);
     } catch (err: any) {
@@ -773,6 +800,16 @@ int main() {
   };
 
   const handleExitSeb = () => {
+    try {
+      sessionStorage.removeItem("active_attempt");
+      sessionStorage.removeItem("active_assessment");
+      sessionStorage.removeItem("active_view");
+      localStorage.removeItem("active_attempt");
+      localStorage.removeItem("active_assessment");
+      localStorage.removeItem("active_view");
+    } catch {}
+    api.setAttemptToken(null);
+
     if (!isSubmitted) {
       if (socketRef.current) {
         socketRef.current.emit("student:violation", {
