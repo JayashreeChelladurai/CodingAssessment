@@ -67,17 +67,27 @@ export function isSebRequest(req: any, assessmentCode?: string): boolean {
     return false;
   }
 
-  // If assessment code is provided, require the cryptographic per-assessment HMAC token
-  if (assessmentCode) {
-    const candidateToken =
-      (req.headers["x-seb-token"] as string | undefined) ||
-      (req.query?.sebToken as string | undefined) ||
-      (req.body?.sebToken as string | undefined);
+  // If candidate token is provided, cryptographically verify it matches this assessment
+  const candidateToken =
+    (req.headers["x-seb-token"] as string | undefined) ||
+    (req.query?.sebToken as string | undefined) ||
+    (req.body?.sebToken as string | undefined);
 
+  if (candidateToken && candidateToken.trim() !== "" && candidateToken !== "undefined" && candidateToken !== "null") {
     return verifySebToken(candidateToken, assessmentCode);
   }
 
+  // If no candidate token was provided, but client is confirmed running inside Safe Exam Browser
   return true;
+}
+
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 /**
@@ -101,6 +111,10 @@ export function generateSebConfig(options: SebConfigOptions): string {
     quitUrl = "http://127.0.0.1:3000/quit";
   }
 
+  const xmlStartUrl = escapeXml(startUrl);
+  const xmlTitle = escapeXml(title);
+  const xmlQuitUrl = escapeXml(quitUrl);
+
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -108,9 +122,9 @@ export function generateSebConfig(options: SebConfigOptions): string {
     <key>originatorVersion</key>
     <string>SEB_Universal_3.x</string>
     <key>startURL</key>
-    <string>${startUrl}</string>
+    <string>${xmlStartUrl}</string>
     <key>title</key>
-    <string>${title}</string>
+    <string>${xmlTitle}</string>
     
     <!-- Quit & Password Policies -->
     <key>allowQuit</key>
@@ -118,7 +132,7 @@ export function generateSebConfig(options: SebConfigOptions): string {
     <key>hashedQuitPassword</key>
     <string>${hashedQuitPassword}</string>
     <key>quitURL</key>
-    <string>${quitUrl}</string>
+    <string>${xmlQuitUrl}</string>
     <key>quitURLConfirm</key>
     <false/>
     

@@ -16,14 +16,19 @@ try {
   // ignore
 }
 
-function getSebToken(): string | null {
+function getSebToken(assessmentCode?: string): string | null {
   try {
     if (typeof window === "undefined") return null;
-    return (
-      new URLSearchParams(window.location?.search || "").get("sebToken") ||
-      window.sessionStorage?.getItem(SEB_TOKEN_KEY) ||
-      null
-    );
+    const urlToken = new URLSearchParams(window.location?.search || "").get("sebToken");
+    const storedToken = window.sessionStorage?.getItem(SEB_TOKEN_KEY);
+    const token = urlToken || storedToken || null;
+    if (token && assessmentCode) {
+      const codePart = token.split(":")[0];
+      if (codePart && codePart.toUpperCase() !== assessmentCode.trim().toUpperCase()) {
+        return null;
+      }
+    }
+    return token;
   } catch {
     return null;
   }
@@ -79,7 +84,7 @@ function adminHeaders(extra: Record<string, string> = {}): HeadersInit {
   return headers;
 }
 
-function studentHeaders(attemptToken?: string, extra: Record<string, string> = {}): HeadersInit {
+function studentHeaders(attemptToken?: string, extra: Record<string, string> = {}, assessmentCode?: string): HeadersInit {
   const headers: Record<string, string> = {
     ...extra,
     "Content-Type": "application/json",
@@ -88,7 +93,7 @@ function studentHeaders(attemptToken?: string, extra: Record<string, string> = {
   if (token) {
     headers["x-attempt-token"] = token;
   }
-  const sebToken = getSebToken();
+  const sebToken = getSebToken(assessmentCode);
   if (sebToken) {
     headers["x-seb-token"] = sebToken;
   }
@@ -190,10 +195,10 @@ export const api = {
 
   // Student routes
   getAssessmentInfo: async (code: string) => {
-    const sebToken = getSebToken();
+    const sebToken = getSebToken(code);
     const query = sebToken ? `?sebToken=${encodeURIComponent(sebToken)}` : "";
     const res = await fetch(`${API_BASE}/student/info/${encodeURIComponent(code)}${query}`, {
-      headers: studentHeaders(),
+      headers: studentHeaders(undefined, {}, code),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "Assessment not found" }));
@@ -203,11 +208,11 @@ export const api = {
   },
 
   startAssessment: async (code: string, rollNo: string, studentName: string) => {
-    const sebToken = getSebToken();
+    const sebToken = getSebToken(code);
     const deviceInfo = getClientDeviceInfo();
     const res = await fetch(`${API_BASE}/student/start`, {
       method: "POST",
-      headers: studentHeaders(),
+      headers: studentHeaders(undefined, {}, code),
       body: JSON.stringify({ code, rollNo, studentName, sebToken, deviceInfo }),
     });
     if (!res.ok) {

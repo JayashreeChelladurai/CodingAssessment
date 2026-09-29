@@ -199,6 +199,13 @@ All question content (titles, descriptions, explanations) must be clean plain te
   - The assessment strictly mandates Safe Exam Browser (`requireSeb: true`).
   - **Zero Proctor Override**: Bypassing, overriding, or testing without SEB is strictly prohibited and disabled in both the client UI and server API. Non-SEB requests receive HTTP 403.
   - **NO Intrusive Browser Overlay Hacks**: Intrusive in-browser lockdown shields, fullscreen traps, and selection blocking are removed in favor of native SEB operating system level isolation.
+* **SEB Launch Architecture & Gatekeeper Loop Prevention**:
+  - **Protocol Link Target**: `seb://` and `sebs://` 1-click links point directly to `/api/assessments/:id/seb-config` (never `/?code=...` which serves HTML). SEB expects an XML plist from `seb://` endpoints; pointing to HTML causes plist parsing failure.
+  - **XML Plist Compliant Escaping**: Special characters in configuration URLs (notably `&` in query strings such as `&sebToken=...`) are escaped as `&amp;` to ensure strict XML plist parser compliance across macOS and Windows SEB engines.
+  - **Dual-Mode SEB Verification**:
+    1. *With HMAC Token*: Validates cryptographically that the token was signed by the server and matches the target assessment code.
+    2. *Direct Desktop/Applications Launch*: If no token is provided but genuine SEB headers or User-Agent are present, request is accepted as genuine SEB to prevent gatekeeper bounce loops for students opening SEB directly.
+  - **Client-Side Gatekeeper Guard**: `StudentLogin` inspects `navigator.userAgent`. If the browser is recognized as Safe Exam Browser, `SebGatekeeper` is never rendered, admitting students directly to login and exam start.
 * **Strict Violation Policy**:
   - Violations and lockouts are raised **ONLY** if SEB is closed (`SEB_EXIT`) or tampered with (`SEB_TAMPER`).
   - Window blur, display focus adjustments, or internal SEB re-renders are completely ignored and do not trigger violations.

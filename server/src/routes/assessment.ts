@@ -78,8 +78,11 @@ assessmentRouter.get("/:id", async (req, res) => {
 // 3. Download .seb Configuration File
 assessmentRouter.get("/:id/seb-config", async (req, res) => {
   try {
-    const assessment = await prisma.assessment.findUnique({
-      where: { id: req.params.id },
+    const { id } = req.params;
+    const assessment = await prisma.assessment.findFirst({
+      where: {
+        OR: [{ id }, { code: id.trim().toUpperCase() }],
+      },
     });
     if (!assessment) {
       return res.status(404).json({ error: "Assessment not found" });

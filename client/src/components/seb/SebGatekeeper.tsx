@@ -4,17 +4,20 @@ import { api } from "../../services/api";
 
 interface SebGatekeeperProps {
   assessment: any;
+  onBack?: () => void;
 }
 
 export const SebGatekeeper: React.FC<SebGatekeeperProps> = ({
   assessment,
+  onBack,
 }) => {
-  const sebDownloadUrl = api.getSebConfigUrl(assessment.id);
+  const sebTarget = assessment.id || assessment.code;
+  const sebDownloadUrl = api.getSebConfigUrl(sebTarget);
 
-  // Construct seb:// protocol link for 1-click launch of pre-installed SEB without file download
+  // Construct seb:// protocol link for 1-click launch of pre-installed SEB pointing to the .seb configuration endpoint
   const host = window.location.host;
   const protocol = window.location.protocol.replace(":", "");
-  const sebProtocolUrl = `${protocol === "https" ? "sebs" : "seb"}://${host}/?code=${encodeURIComponent(assessment.code)}`;
+  const sebProtocolUrl = `${protocol === "https" ? "sebs" : "seb"}://${host}/api/assessments/${encodeURIComponent(sebTarget)}/seb-config`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col justify-between p-4 sm:p-8 text-slate-100">
@@ -119,6 +122,18 @@ export const SebGatekeeper: React.FC<SebGatekeeperProps> = ({
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
+
+          {onBack && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={onBack}
+                className="w-full flex items-center justify-center gap-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-medium py-2.5 px-4 rounded-xl transition text-xs border border-slate-700/80"
+              >
+                <span>&larr; Back to Login / Change Code</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -42,9 +42,11 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
       setLoading(true);
       setError("");
 
+      const isClientSeb = typeof navigator !== "undefined" && /SafeExamBrowser|SEB/i.test(navigator.userAgent);
+
       // Check SEB status first
       const info = await api.getAssessmentInfo(code);
-      if (info.assessment.requireSeb && !info.isSeb) {
+      if (info.assessment.requireSeb && !info.isSeb && !isClientSeb) {
         setAssessmentInfo(info.assessment);
         setShowSebGatekeeper(true);
         setLoading(false);
@@ -63,7 +65,10 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
 
   if (showSebGatekeeper && assessmentInfo) {
     return (
-      <SebGatekeeper assessment={assessmentInfo} />
+      <SebGatekeeper
+        assessment={assessmentInfo}
+        onBack={() => setShowSebGatekeeper(false)}
+      />
     );
   }
 
@@ -104,10 +109,17 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
       <main className="max-w-md w-full mx-auto my-8">
         <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl shadow-slate-950/80 space-y-6">
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1">
-              <Shield className="w-3 h-3" />
-              <span>Safe Exam Browser Verified</span>
-            </div>
+            {typeof navigator !== "undefined" && /SafeExamBrowser|SEB/i.test(navigator.userAgent) ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1">
+                <ShieldCheck className="w-3 h-3" />
+                <span>Safe Exam Browser Detected</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-1">
+                <Shield className="w-3 h-3" />
+                <span>SEB Required for Exam Entry</span>
+              </div>
+            )}
             <h2 className="text-2xl font-extrabold text-white tracking-tight">Student Exam Login</h2>
             <p className="text-xs text-slate-400">Enter your assessment code and roll number to enter the exam</p>
           </div>
