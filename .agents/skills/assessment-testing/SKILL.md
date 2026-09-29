@@ -455,13 +455,13 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
   2. Verify that no violation warning or lockout overlay appears and the test does not reload.
 
 ### 15.4 Anti-Reset Timer Architecture
-- [x] **Individual Timer**: Starts from each student's authoritative `attempt.startedAt`.
-- [x] **Elapsed Time Calculation**: Remaining seconds computed as `(durationMinutes * 60) - floor((Date.now() - startedAt) / 1000)`.
+- [x] **Authoritative Server Timer**: Starts from server's calculated `attempt.remainingSeconds`.
+- [x] **Monotonic Client Delta**: Active countdown computed from local monotonic anchor (`Date.now() - anchor.startedAtMs`), immune to server/client clock differences, timezone discrepancies, and interval sleep drift.
 - [x] **Immutability on Refresh**: Refreshing the browser or reconnecting never resets the timer to 60:00.
 - **Verification Procedure**:
   1. Start an assessment and wait 2 minutes (timer shows 58:00).
   2. Refresh the browser page (`F5` or `Ctrl+R`).
-  3. Verify the timer resumes from ~57:58 and does NOT reset to 60:00.
+  3. Verify the timer resumes from ~57:58 and does NOT reset to 60:00 or evaluate to 00:00.
 
 ### 15.5 Student Socket & Draft Isolation
 - [x] **Private Room Join**: Students join ONLY `student:${attemptId}`, never shared exam broadcast rooms.
@@ -472,12 +472,14 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
   3. Verify that Student B's editor remains completely unaffected.
 
 ### 15.6 Auto-Submit & Automatic SEB Termination
+- [x] **Storage Eviction on Submit**: `handleAutoSubmit()`, `handleFinalSubmit()`, and `handleExitSeb()` immediately purge `active_attempt`, `active_assessment`, `active_view`, and the session token from `localStorage` and `sessionStorage`.
 - [x] **Auto-Save on Expiry**: When timer reaches 00:00, all unsaved drafts are flushed to SQLite via `api.saveDraft`.
 - [x] **Finalization**: Calls `api.finishAssessment` to mark attempt completed.
-- [x] **SEB Auto-Quit**: Redirects to `${origin}/quit` and executes `window.close()` to cleanly terminate SEB without student confirmation.
+- [x] **SEB Auto-Quit**: Redirects to `${origin}/quit` and executes `window.close()` after 3 seconds to cleanly terminate SEB without student confirmation.
 - **Verification Procedure**:
   1. Let the countdown timer reach 00:00.
   2. Verify drafts are saved and the browser navigates to `/quit`, closing SEB.
+  3. Check browser `localStorage` and verify that `active_attempt` and `active_view` have been deleted.
 
 ### 15.7 Student IP Address & Device Audit Logging
 - [x] **Client Metadata Detection**: `getClientDeviceInfo()` captures OS, platform, browser, and screen resolution.
@@ -487,3 +489,12 @@ Complete end-to-end flow from creation to evaluation, submission, and gradebook.
   1. Submit an attempt.
   2. Open Professor Gradebook -> Click 'View Code'.
   3. Verify the student's IP address and device specifications are visible in the inspector header.
+
+### 15.8 SEB Reopen & Stale Session Guard Testing
+- [x] **No Infinite Closing Loop**: Relaunching Safe Exam Browser after an assessment has completed or expired always loads the clean Student Login page rather than re-entering an expired test and immediately closing.
+- [x] **Attempt Validity Filter**: `isAttemptValid(attempt, assessment)` rejects any attempt that is `SUBMITTED`, `TIME_EXPIRED`, or has `remainingSeconds <= 0`.
+- [x] **URL Test Code Synchronization**: If SEB launches with `?code=B3` while storage contains an attempt for another test code, old attempt storage is purged immediately.
+- **Verification Procedure**:
+  1. Launch SEB for an assessment and complete or let the test expire.
+  2. After SEB terminates, reopen SEB manually.
+  3. Verify that SEB lands smoothly on the Student Login screen with empty fields and does NOT show 00:00 or enter a rapid close/reopen loop.

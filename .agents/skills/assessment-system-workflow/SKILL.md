@@ -223,10 +223,14 @@ All question content (titles, descriptions, explanations) must be clean plain te
   - Clicking any test case pill displays exact input, expected output, and stdout/stderr failure logs.
 
 ### 4.8 Timer Stages & Immutability Guarantee
-* **Individual Student Timer**: Countdown begins individually for each student upon clicking start (`attempt.startedAt`).
-* **Timer Immutability**:
-  - Remaining time is calculated as:
-    `remaining = (durationMinutes * 60) - floor((Date.now() - startedAt) / 1000)`
+* **Authoritative Server Timer**: Countdown begins individually for each student upon clicking start. The server calculates authoritative `remainingSeconds` using its own database clock, accounting for assessment duration and cutoff end times.
+* **Monotonic Client Delta (Immune to Clock Skew)**:
+  - The client takes the server's `remainingSeconds` and establishes a monotonic local anchor:
+    $$\text{anchor} = \{ \text{startedAtMs}: \text{Date.now()}, \text{initialRemaining}: \text{attempt.remainingSeconds} \}$$
+  - Active countdown computes:
+    $$\text{elapsed} = \max(0, \lfloor(\text{Date.now()} - \text{anchor.startedAtMs}) / 1000\rfloor)$$
+    $$\text{remaining} = \max(0, \text{anchor.initialRemaining} - \text{elapsed})$$
+  - **Zero Clock Skew Vulnerability**: The client **never** computes elapsed time by directly subtracting `Date.now()` from a server-sent UTC `startedAt` string. This guarantees that student machine clock offsets, timezone differences, or UTC parsing quirks can **never** cause the timer to prematurely evaluate to `00:00`.
   - The countdown will **NEVER** reset to 60:00 on page reload, network hiccup, or machine restart.
 
 ### 4.9 Auto-Save, Socket Isolation & Final Auto-Submission
@@ -235,10 +239,11 @@ All question content (titles, descriptions, explanations) must be clean plain te
   - Students never join shared exam broadcast rooms, preventing any cross-student code mingling or draft leakage.
 * **Automatic Submission & SEB Termination on Time-Up**:
   - When timer reaches `00:00`:
-    1. Draft code for all questions is automatically saved (`api.saveDraft`).
-    2. Attempt is marked finished (`api.finishAssessment`).
-    3. Browser automatically redirects to `${origin}/quit` and executes `window.close()`.
-    4. Safe Exam Browser detects the quit URL and cleanly terminates itself without manual student action.
+    1. **Storage Eviction**: All session keys (`active_attempt`, `active_assessment`, `active_view`, `student_attempt_token`) are immediately purged from `localStorage` and `sessionStorage`. This prevents any infinite restart or reload loops if SEB is relaunched.
+    2. Draft code for all questions is automatically saved (`api.saveDraft`).
+    3. Attempt is marked finished (`api.finishAssessment`).
+    4. Browser automatically redirects to `${origin}/quit` and executes `window.close()` after a brief 3-second delay, allowing the student to see the submission confirmation.
+    5. Safe Exam Browser detects the quit URL and cleanly terminates itself without manual student action.
 
 ---
 
@@ -278,10 +283,15 @@ When generating new assessments, adhere to the verified seeding architecture:
 3. Seed the assessment into the database with `requireSeb: true`, `sebQuitPassword: "exit123"`, and all test cases set to `isPublic: true`.
 4. Run verification scripts to execute canonical solutions against all 100 test cases per question to guarantee 100% pass rates.
 
-### 6.2 Assessment B2 Suite (Maximum Product, Counting Bits, Grid Unique Path)
-* **Question 1**: *Maximum Product Subarray in an Array* (35 marks, 100 test cases)
-* **Question 2**: *Counting Bits* (30 marks, 100 test cases)
-* **Question 3**: *Grid Unique Path* (35 marks, 100 test cases)
+### 6.2 Assessment Suites (B2 & B3)
+* **Assessment B2**:
+  - **Question 1**: *Maximum Product Subarray in an Array* (35 marks, 100 test cases)
+  - **Question 2**: *Counting Bits* (30 marks, 100 test cases)
+  - **Question 3**: *Grid Unique Path* (35 marks, 100 test cases)
+* **Assessment B3**:
+  - **Question 1**: *Contains Duplicate* (30 marks, 100 test cases)
+  - **Question 2**: *Reverse Bits* (35 marks, 100 test cases)
+  - **Question 3**: *Combination Sum* (35 marks, 100 test cases)
 * Clean formatting verified with zero stray `*`, `$`, `#` symbols.
 
 ### 6.3 Step-by-Step Guide for Creating New Seed Scripts (100 Test Cases)
@@ -302,13 +312,18 @@ When generating new assessments, adhere to the verified seeding architecture:
 * Students join strictly `student:${attemptId}`. Code broadcasts cannot bleed or cross-type across candidate screens.
 
 ### 7.3 Anti-Reset Timer Architecture
-* Timer countdown is anchored to `startedAt` in the database and local start timestamp. Page reloads calculate elapsed time and never reset the clock.
+* Timer countdown is anchored to the server's authoritative `remainingSeconds` and a local monotonic anchor (`Date.now() - anchor.startedAtMs`). Page reloads calculate elapsed time accurately from the server attempt and never reset to 60:00 or drift from client/server clock differences.
 
 ### 7.4 Intra-Section Question Shuffling
 * Question order is randomized only within sections; section progression remains strictly ordered.
 
 ### 7.5 Automated SEB Termination on Finish
 * Navigating to `/quit` terminates Safe Exam Browser without user prompt.
+
+### 7.6 Stale Session Guard & Infinite Reopening Loop Prevention
+* **Attempt Validation on Mount**: `App.tsx` executes `isAttemptValid(attempt, assessment)` on startup. If an attempt in storage is marked `SUBMITTED`, `TIME_EXPIRED`, or has `remainingSeconds <= 0`, it is immediately discarded and all storage keys are cleared.
+* **URL Parameter Guard (`?code=`)**: If the assessment code in the launch URL differs from `savedAssessment.code`, old attempt storage is purged, placing the student cleanly on the login screen.
+* **Storage Eviction on Termination**: `handleAutoSubmit()`, `handleFinalSubmit()`, and `handleExitSeb()` explicitly purge `active_attempt`, `active_assessment`, `active_view`, and the session token so relaunching SEB never remounts an expired session.
 
 ---
 
@@ -338,7 +353,8 @@ npx prisma generate
 ### 8.4 Troubleshooting Matrix
 | Symptom | Root Cause | Solution |
 | :--- | :--- | :--- |
-| Timer resets to 60:00 on refresh | Relying on stale client state | Anchored to authoritative `attempt.startedAt`. |
+| Timer resets to 60:00 on refresh | Relying on stale client state | Anchored to authoritative server `attempt.remainingSeconds`. |
+| Assessment opens with 00:00 and closes repeatedly in a loop | Stale attempt in localStorage + Client clock skew calculation | Server supplies `remainingSeconds`; client uses monotonic anchor; `isAttemptValid` rejects expired storage; storage purged on submit. |
 | Student sees another's code | Shared exam socket room | Ensure students only join `student:${attemptId}`. |
 | SEB false lockout | Blur/fullscreen listeners active | Guard violations to only `SEB_EXIT` and `SEB_TAMPER`. |
 | Formatting symbols in question | Raw markdown asterisks / hashes | Run `sanitizeQuestionContent()` on text. |
