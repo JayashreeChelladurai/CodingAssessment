@@ -12,12 +12,14 @@ export const SebGatekeeper: React.FC<SebGatekeeperProps> = ({
   onBack,
 }) => {
   const sebTarget = assessment.id || assessment.code;
+  const host = window.location.host;
+  const protocol = window.location.protocol.replace(":", "");
   const sebDownloadUrl = api.getSebConfigUrl(sebTarget);
 
   // Construct seb:// protocol link for 1-click launch of pre-installed SEB pointing to the .seb configuration endpoint
-  const host = window.location.host;
-  const protocol = window.location.protocol.replace(":", "");
-  const sebProtocolUrl = `${protocol === "https" ? "sebs" : "seb"}://${host}/api/assessments/${encodeURIComponent(sebTarget)}/seb-config`;
+  // Explicitly passes clientHost and clientProtocol to ensure LAN machines (e.g. 10.1.25.20:3003) do not receive loopback 127.0.0.1
+  const sebParams = `?clientHost=${encodeURIComponent(host)}&clientProtocol=${encodeURIComponent(protocol)}`;
+  const sebProtocolUrl = `${protocol === "https" ? "sebs" : "seb"}://${host}/api/assessments/${encodeURIComponent(sebTarget)}/seb-config${sebParams}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col justify-between p-4 sm:p-8 text-slate-100">

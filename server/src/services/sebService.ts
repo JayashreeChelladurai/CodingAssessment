@@ -91,6 +91,37 @@ function escapeXml(str: string): string {
 }
 
 /**
+ * Accurately resolve client host and protocol for LAN and proxy setups
+ * Prevents loopback 127.0.0.1 leakage when students access over LAN (e.g., 10.1.25.20:3003)
+ */
+export function resolveRequestHost(req: any): { host: string; protocol: string } {
+  const clientHostQuery = req.query?.clientHost as string | undefined;
+  const clientProtocolQuery = req.query?.clientProtocol as string | undefined;
+
+  const forwardedHost = (req.headers?.["x-forwarded-host"] as string)?.split(",")[0]?.trim();
+  const forwardedProto = (req.headers?.["x-forwarded-proto"] as string)?.split(",")[0]?.trim();
+
+  let host = clientHostQuery || forwardedHost || req.get?.("host") || "localhost:3000";
+  let protocol = clientProtocolQuery || forwardedProto || req.protocol || "http";
+
+  // If host is explicitly loopback (127.0.0.1 / localhost), but the client accessed from LAN via a referer:
+  const referer = (req.headers?.["referer"] || req.headers?.["referrer"]) as string | undefined;
+  if (referer && (host.startsWith("127.0.0.1") || host.startsWith("localhost"))) {
+    try {
+      const refUrl = new URL(referer);
+      if (refUrl.host && !refUrl.host.startsWith("127.0.0.1") && !refUrl.host.startsWith("localhost")) {
+        host = refUrl.host;
+        protocol = refUrl.protocol.replace(":", "");
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return { host, protocol };
+}
+
+/**
  * Generate Universal Cross-Platform SEB (.seb) XML Plist Configuration File
  * Compatible with macOS (Sonoma, Ventura, Monterey, Big Sur) and Windows (10, 11)
  */
@@ -103,12 +134,12 @@ export function generateSebConfig(options: SebConfigOptions): string {
     .update(quitPassword, "utf-8")
     .digest("hex");
 
-  let quitUrl = "http://127.0.0.1:3000/quit";
+  let quitUrl = "http://localhost:3000/quit";
   try {
     const parsed = new URL(startUrl);
     quitUrl = `${parsed.protocol}//${parsed.host}/quit`;
   } catch {
-    quitUrl = "http://127.0.0.1:3000/quit";
+    quitUrl = "http://localhost:3000/quit";
   }
 
   const xmlStartUrl = escapeXml(startUrl);

@@ -206,6 +206,11 @@ All question content (titles, descriptions, explanations) must be clean plain te
     1. *With HMAC Token*: Validates cryptographically that the token was signed by the server and matches the target assessment code.
     2. *Direct Desktop/Applications Launch*: If no token is provided but genuine SEB headers or User-Agent are present, request is accepted as genuine SEB to prevent gatekeeper bounce loops for students opening SEB directly.
   - **Client-Side Gatekeeper Guard**: `StudentLogin` inspects `navigator.userAgent`. If the browser is recognized as Safe Exam Browser, `SebGatekeeper` is never rendered, admitting students directly to login and exam start.
+  - **LAN & Multi-Device Host Resolution**:
+    1. In LAN environments (e.g. accessing `10.1.25.20:3003`), `startURL` and `quitURL` must dynamically resolve to the actual host (`10.1.25.20:3003`), never loopback `127.0.0.1` or `localhost`.
+    2. `SebGatekeeper` and `api.ts` pass `clientHost` and `clientProtocol` parameters to `/seb-config`.
+    3. The server uses `resolveRequestHost(req)` (checking `clientHost` query, `x-forwarded-host`, `Referer`, and `Host` header) to guarantee that candidate laptops on LAN never get redirected to their local `127.0.0.1`.
+    4. Vite proxy sets `changeOrigin: false` to preserve the original LAN `Host` header.
 * **Strict Violation Policy**:
   - Violations and lockouts are raised **ONLY** if SEB is closed (`SEB_EXIT`) or tampered with (`SEB_TAMPER`).
   - Window blur, display focus adjustments, or internal SEB re-renders are completely ignored and do not trigger violations.

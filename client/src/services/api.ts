@@ -159,7 +159,10 @@ export const api = {
   },
 
   getSebConfigUrl: (id: string) => {
-    return `${API_BASE}/assessments/${id}/seb-config`;
+    const host = typeof window !== "undefined" ? window.location.host : "";
+    const protocol = typeof window !== "undefined" ? window.location.protocol.replace(":", "") : "http";
+    const query = host ? `?clientHost=${encodeURIComponent(host)}&clientProtocol=${encodeURIComponent(protocol)}` : "";
+    return `${API_BASE}/assessments/${encodeURIComponent(id)}/seb-config${query}`;
   },
 
   toggleReviewMode: async (id: string, isReviewUnlocked: boolean, reviewUnlockTime?: string | null) => {

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
-import { isSebRequest, generateSebConfig, generateSebToken } from "../services/sebService.js";
+import { isSebRequest, generateSebConfig, generateSebToken, resolveRequestHost } from "../services/sebService.js";
 import { gradeStudentCode, gradeMcqQuestion } from "../services/gradingService.js";
 import {
   issueAttemptSessionToken,
@@ -35,8 +35,7 @@ studentRouter.get("/seb-config/:code", async (req, res) => {
       return res.status(404).json({ error: "Assessment not found" });
     }
 
-    const host = req.get("host") || "localhost:3000";
-    const protocol = req.protocol || "http";
+    const { host, protocol } = resolveRequestHost(req);
     const sebToken = generateSebToken(assessment.code);
     const startUrl = `${protocol}://${host}/?code=${encodeURIComponent(assessment.code)}&sebToken=${encodeURIComponent(sebToken)}`;
 
