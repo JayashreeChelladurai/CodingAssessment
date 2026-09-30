@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { generateSebConfig, generateSebToken, resolveRequestHost } from "../services/sebService.js";
-import { requireAdminSession } from "../services/auth.js";
+import { requireAdminSession, hashStudentPassword } from "../services/auth.js";
 import {
   broadcastStudentUnlocked,
   broadcastStudentUpdated,
@@ -596,6 +596,61 @@ assessmentRouter.post("/:id/resume/:attemptId", async (req, res) => {
 
     console.log(`[ADMIN RESUME] Unlocked student ${updated.rollNo} (${updated.studentName})`);
     res.json({ success: true, attempt: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 12. List all registered students (Admin)
+assessmentRouter.get("/admin/students", async (_req, res) => {
+  try {
+    const students = await prisma.student.findMany({
+      orderBy: { rollNo: "asc" },
+      select: {
+        id: true,
+        rollNo: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    res.json(students);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 13. Reset student password or delete registration (Admin)
+assessmentRouter.post("/admin/students/:rollNo/reset-password", async (req, res) => {
+  try {
+    const { rollNo } = req.params;
+    const { newPassword } = req.body;
+    const cleanRollNo = (rollNo || "").trim().toUpperCase();
+
+    const student = await prisma.student.findUnique({
+      where: { rollNo: cleanRollNo },
+    });
+    if (!student) {
+      return res.status(404).json({ error: "Student account not found." });
+    }
+
+    if (newPassword) {
+      if (newPassword.length < 4) {
+        return res.status(400).json({ error: "Password must be at least 4 characters long." });
+      }
+      const hashedPassword = hashStudentPassword(newPassword);
+      await prisma.student.update({
+        where: { rollNo: cleanRollNo },
+        data: { password: hashedPassword },
+      });
+      return res.json({ success: true, message: `Password updated for student ${cleanRollNo}` });
+    } else {
+      // Clear password registration so student can reset their password on next login
+      await prisma.student.delete({
+        where: { rollNo: cleanRollNo },
+      });
+      return res.json({ success: true, message: `Student registration for ${cleanRollNo} reset. Student can re-register.` });
+    }
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

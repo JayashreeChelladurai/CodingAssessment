@@ -230,3 +230,28 @@ export function requireAttemptSession(req: AuthenticatedRequest, res: Response, 
   req.attemptSession = claims;
   next();
 }
+
+/**
+ * Hash student password using PBKDF2 with SHA-512 and a random 16-byte salt
+ */
+export function hashStudentPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, "sha512").toString("hex");
+  return `${salt}:${hash}`;
+}
+
+/**
+ * Verify student password against stored PBKDF2 hash using timing-safe comparison
+ */
+export function verifyStudentPassword(password: string, storedHash: string): boolean {
+  if (!password || !storedHash) return false;
+  const parts = storedHash.split(":");
+  if (parts.length !== 2) return false;
+  const [salt, originalHash] = parts;
+  try {
+    const testHash = crypto.pbkdf2Sync(password, salt, 10000, 64, "sha512").toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(testHash, "utf8"), Buffer.from(originalHash, "utf8"));
+  } catch {
+    return false;
+  }
+}

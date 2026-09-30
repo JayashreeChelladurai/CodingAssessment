@@ -66,3 +66,10 @@ These rules are ALWAYS active across all assessment creation, modification, data
   - Automatically redirects to `${origin}/quit` and executes `window.close()` to cleanly terminate Safe Exam Browser without student interaction.
 - **Student Audit & Device Logging**:
   - The student's IPv4 address (`ipAddress`) and hardware/browser metadata (`deviceInfo`) must be captured upon entry and on infractions, and displayed to the professor in the Gradebook Code Inspector and CSV exports.
+
+---
+
+## 5. Strict Git Push Policy (Zero Automatic Push)
+- **NEVER Push to Git Automatically**: The AI assistant is strictly prohibited from running `git push` automatically or proactively after making changes.
+- **Explicit Approval Mandate**: All code changes must be kept local (or staged/committed locally). A `git push` command may **ONLY** be executed when the user gives an explicit, direct instruction in the chat (e.g., *"push to git"* or *"push the changes now"*).
+- **Permanent System Rule**: This rule is permanent across all sessions, features, bug fixes, and workflows.

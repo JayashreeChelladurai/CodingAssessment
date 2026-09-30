@@ -379,3 +379,15 @@ npx prisma generate
 | SEB false lockout | Blur/fullscreen listeners active | Guard violations to only `SEB_EXIT` and `SEB_TAMPER`. |
 | Formatting symbols in question | Raw markdown asterisks / hashes | Run `sanitizeQuestionContent()` on text. |
 | Test case failure hidden | Test case marked private | Ensure all test cases have `isPublic: true`. |
+
+---
+
+# 9. Git Repository Governance & Approval Mandate
+
+> [!CAUTION]
+> ### STRICT PERMANENT RULE: ZERO AUTOMATIC GIT PUSH
+> The AI assistant must **NEVER** execute `git push` automatically or proactively after completing tasks, writing code, or fixing bugs.
+>
+> 1. All changes must remain **local** on the disk (staged / committed locally).
+> 2. Pushing to GitHub / remote repositories is **STRICTLY FORBIDDEN** unless the user gives an explicit, direct instruction in the chat (e.g. *"push to git"*).
+> 3. This policy applies permanently to all current and future tasks, conversations, and workflows.

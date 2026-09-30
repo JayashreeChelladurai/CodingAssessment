@@ -6,6 +6,8 @@ import {
   issueAttemptSessionToken,
   requireAttemptSession,
   AuthenticatedRequest,
+  hashStudentPassword,
+  verifyStudentPassword,
 } from "../services/auth.js";
 import { getIO } from "../services/socketService.js";
 
@@ -21,7 +23,38 @@ function shuffleArray<T>(array: T[]): T[] {
   return result;
 }
 
-// 0. Download .seb Configuration File for Student / Safe Exam Browser
+// 0. Check student registration status by roll number
+studentRouter.get("/check-student/:rollNo", async (req, res) => {
+  try {
+    const { rollNo } = req.params;
+    const cleanRollNo = (rollNo || "").trim().toUpperCase();
+    if (!cleanRollNo) {
+      return res.status(400).json({ error: "Roll number is required" });
+    }
+
+    const student = await prisma.student.findUnique({
+      where: { rollNo: cleanRollNo },
+      select: { rollNo: true, name: true, createdAt: true },
+    });
+
+    if (student) {
+      return res.json({
+        exists: true,
+        rollNo: student.rollNo,
+        name: student.name,
+      });
+    }
+
+    return res.json({
+      exists: false,
+      rollNo: cleanRollNo,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 0b. Download .seb Configuration File for Student / Safe Exam Browser
 studentRouter.get("/seb-config/:code", async (req, res) => {
   try {
     const { code } = req.params;
@@ -102,14 +135,59 @@ studentRouter.get("/info/:code", async (req, res) => {
 // 2. Start / Resume Assessment Attempt
 studentRouter.post("/start", async (req, res) => {
   try {
-    const { code, rollNo, studentName, deviceInfo } = req.body;
+    const { code, rollNo, studentName, password, deviceInfo } = req.body;
 
-    if (!code || !rollNo || !studentName) {
-      return res.status(400).json({ error: "Assessment code, Roll Number, and Name are required" });
+    if (!code || !rollNo) {
+      return res.status(400).json({ error: "Assessment code and Roll Number are required" });
     }
 
     const cleanCode = code.trim().toUpperCase();
     const cleanRollNo = rollNo.trim().toUpperCase();
+
+    // 1. Student Authentication & Credential Verification
+    const existingStudent = await prisma.student.findUnique({
+      where: { rollNo: cleanRollNo },
+    });
+
+    let effectiveStudentName = (studentName || "").trim();
+
+    if (existingStudent) {
+      // Existing student: require password and validate
+      if (!password) {
+        return res.status(400).json({
+          error: `Password is required for roll number '${cleanRollNo}'.`,
+          requirePassword: true,
+        });
+      }
+
+      const isPasswordValid = verifyStudentPassword(password, existingStudent.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({
+          error: `Incorrect password for roll number '${cleanRollNo}'. Please enter your valid student password.`,
+          invalidPassword: true,
+        });
+      }
+
+      // Use authoritative registered name
+      effectiveStudentName = existingStudent.name;
+    } else {
+      // First-time student registration
+      if (!effectiveStudentName) {
+        return res.status(400).json({ error: "Full Name is required for first-time registration." });
+      }
+      if (!password || password.length < 4) {
+        return res.status(400).json({ error: "Please choose a password with at least 4 characters." });
+      }
+
+      const hashedPassword = hashStudentPassword(password);
+      await prisma.student.create({
+        data: {
+          rollNo: cleanRollNo,
+          name: effectiveStudentName,
+          password: hashedPassword,
+        },
+      });
+    }
 
     const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
     const cleanIp = rawIp.replace(/^::ffff:/, "");
@@ -273,7 +351,7 @@ studentRouter.post("/start", async (req, res) => {
         data: {
           assessmentId: assessment.id,
           rollNo: cleanRollNo,
-          studentName: studentName.trim(),
+          studentName: effectiveStudentName,
           remainingSeconds: Math.max(60, remaining),
           status: "IN_PROGRESS",
           questionOrder: JSON.stringify(questionOrder),

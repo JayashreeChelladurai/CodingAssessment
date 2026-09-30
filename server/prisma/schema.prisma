@@ -150,3 +150,12 @@ model Submission {
   testCaseResults String         @default("[]") // JSON array of result objects
   submittedAt     DateTime       @default(now())
 }
+
+model Student {
+  id        String   @id @default(uuid())
+  rollNo    String   @unique
+  name      String
+  password  String   // Salted PBKDF2 hashed password
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,7 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { api } from "../services/api";
 import { SebGatekeeper } from "../components/seb/SebGatekeeper";
-import { ShieldCheck, BookOpen, GraduationCap, ArrowRight, User, Hash, KeyRound, Sparkles, Download, Shield } from "lucide-react";
+import {
+  ShieldCheck,
+  BookOpen,
+  GraduationCap,
+  ArrowRight,
+  User,
+  Hash,
+  KeyRound,
+  Sparkles,
+  Download,
+  Shield,
+  Lock,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 interface StudentLoginProps {
   onStartExam: (data: { attempt: any; assessment: any }) => void;
@@ -24,6 +41,10 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
   });
   const [rollNo, setRollNo] = useState<string>("");
   const [studentName, setStudentName] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isExistingStudent, setIsExistingStudent] = useState<boolean | null>(null);
+  const [checkingStudent, setCheckingStudent] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -31,10 +52,45 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
   const [showSebGatekeeper, setShowSebGatekeeper] = useState<boolean>(false);
   const [assessmentInfo, setAssessmentInfo] = useState<any | null>(null);
 
+  // Debounced roll number registration check
+  useEffect(() => {
+    const clean = rollNo.trim().toUpperCase();
+    if (clean.length < 2) {
+      setIsExistingStudent(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setCheckingStudent(true);
+        const res = await api.checkStudent(clean);
+        if (res.exists) {
+          setIsExistingStudent(true);
+          if (res.name) {
+            setStudentName(res.name);
+          }
+        } else {
+          setIsExistingStudent(false);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setCheckingStudent(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [rollNo]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code || !rollNo || !studentName) {
-      setError("Please fill in all fields (Test Code, Roll Number, and Name).");
+    if (!code || !rollNo || !password) {
+      setError("Please fill in Assessment Code, Roll Number, and Password.");
+      return;
+    }
+
+    if (!isExistingStudent && !studentName.trim()) {
+      setError("Please enter your Full Name for registration.");
       return;
     }
 
@@ -53,7 +109,7 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
         return;
       }
 
-      const res = await api.startAssessment(code, rollNo, studentName);
+      const res = await api.startAssessment(code, rollNo, studentName, password);
       api.setAttemptToken(res.attemptToken || null);
       onStartExam(res);
     } catch (err: any) {
@@ -148,10 +204,31 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
               </div>
             </div>
 
+            {/* Roll Number */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Roll Number
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  Roll Number
+                </label>
+                {checkingStudent && (
+                  <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                    <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
+                    <span>Checking...</span>
+                  </span>
+                )}
+                {isExistingStudent === true && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Registered Account</span>
+                  </span>
+                )}
+                {isExistingStudent === false && rollNo.trim().length >= 2 && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full">
+                    <Sparkles className="w-3 h-3" />
+                    <span>New Registration</span>
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <Hash className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                 <input
@@ -165,30 +242,84 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
               </div>
             </div>
 
+            {/* Full Name */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Full Name
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  Full Name
+                </label>
+                {isExistingStudent && (
+                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <Lock className="w-2.5 h-2.5" />
+                    <span>Bound to Roll No</span>
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                 <input
                   type="text"
                   required
+                  readOnly={Boolean(isExistingStudent)}
                   value={studentName}
                   onChange={(e) => setStudentName(e.target.value)}
                   placeholder="e.g. Alex Johnson"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500 ${
+                    isExistingStudent ? "bg-slate-900/60 text-slate-300 cursor-not-allowed border-slate-800" : ""
+                  }`}
                 />
               </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  {isExistingStudent ? "Student Password" : "Set Account Password"}
+                </label>
+                <span className="text-[10px] text-slate-400">
+                  {isExistingStudent ? "Registered password" : "Min 4 characters"}
+                </span>
+              </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isExistingStudent ? "Enter your password" : "Create password (remember for all exams)"}
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-500 hover:text-slate-300 transition"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {!isExistingStudent && rollNo.trim().length >= 2 && (
+                <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+                  🔒 This password will be securely bound to your Roll Number so nobody else can take your exams.
+                </p>
+              )}
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || checkingStudent}
                 className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-xl transition shadow-lg shadow-emerald-950/50"
               >
-                <span>{loading ? "Verifying..." : "Enter Assessment"}</span>
+                <span>
+                  {loading
+                    ? "Authenticating..."
+                    : isExistingStudent
+                    ? "Verify & Enter Assessment"
+                    : "Register & Enter Assessment"}
+                </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

@@ -197,6 +197,16 @@ export const api = {
   },
 
   // Student routes
+  checkStudent: async (rollNo: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/student/check-student/${encodeURIComponent(rollNo)}`);
+      if (!res.ok) return { exists: false, rollNo };
+      return res.json();
+    } catch {
+      return { exists: false, rollNo };
+    }
+  },
+
   getAssessmentInfo: async (code: string) => {
     const sebToken = getSebToken(code);
     const query = sebToken ? `?sebToken=${encodeURIComponent(sebToken)}` : "";
@@ -210,17 +220,38 @@ export const api = {
     return res.json();
   },
 
-  startAssessment: async (code: string, rollNo: string, studentName: string) => {
+  startAssessment: async (code: string, rollNo: string, studentName: string, password?: string) => {
     const sebToken = getSebToken(code);
     const deviceInfo = getClientDeviceInfo();
     const res = await fetch(`${API_BASE}/student/start`, {
       method: "POST",
       headers: studentHeaders(undefined, {}, code),
-      body: JSON.stringify({ code, rollNo, studentName, sebToken, deviceInfo }),
+      body: JSON.stringify({ code, rollNo, studentName, password, sebToken, deviceInfo }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "Failed to start assessment" }));
       throw new Error(err.error || "Failed to start assessment");
+    }
+    return res.json();
+  },
+
+  getRegisteredStudents: async () => {
+    const res = await fetch(`${API_BASE}/assessments/admin/students`, {
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  resetStudentPassword: async (rollNo: string, newPassword?: string) => {
+    const res = await fetch(`${API_BASE}/assessments/admin/students/${encodeURIComponent(rollNo)}/reset-password`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ newPassword }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to reset student password" }));
+      throw new Error(err.error || "Failed to reset student password");
     }
     return res.json();
   },
