@@ -171,7 +171,10 @@ studentRouter.get("/info/:code", async (req, res) => {
       where: { code: cleanCode },
       include: {
         sections: { select: { id: true, title: true, order: true } },
-        questions: { select: { id: true, type: true, marks: true } },
+        questions: {
+          where: { templateQuestionId: null },
+          select: { id: true, type: true, marks: true, isRandom: true },
+        },
       },
     });
 
@@ -184,7 +187,7 @@ studentRouter.get("/info/:code", async (req, res) => {
     let totalQuestions = assessment.questions.length;
     let totalMarks = assessment.questions.reduce((sum, q) => sum + q.marks, 0);
 
-    if (assessment.isRandomized) {
+    if (totalQuestions === 0 && assessment.isRandomized) {
       let cfg: any = {};
       try {
         cfg = JSON.parse(assessment.randomConfig || "{}");
@@ -424,6 +427,236 @@ export function allocateStandardQuestions(assessment: any): {
   return { questionOrder, optionOrders };
 }
 
+// Comprehensive helper function to allocate questions per student attempt, supporting question-level folder random allocation
+export async function allocateQuestionsForStudentAttempt(assessmentId: string): Promise<{
+  questionOrder: string[];
+  optionOrders: Record<string, string[]>;
+}> {
+  const assessment = await prisma.assessment.findUnique({
+    where: { id: assessmentId },
+    include: {
+      sections: { orderBy: { order: "asc" } },
+      questions: {
+        where: { templateQuestionId: null },
+        include: {
+          testCases: { where: { isPublic: true }, orderBy: { order: "asc" } },
+        },
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+
+  if (!assessment) {
+    return { questionOrder: [], optionOrders: {} };
+  }
+
+  // Fallback to legacy random allocation if no template questions exist but isRandomized is set
+  if (assessment.questions.length === 0 && assessment.isRandomized) {
+    return populateRandomQuestionsForAssessment(assessment.id, assessment.randomConfig);
+  }
+
+  const sections =
+    assessment.sections && assessment.sections.length > 0
+      ? [...assessment.sections].sort((a, b) => a.order - b.order)
+      : [];
+
+  const optionOrders: Record<string, string[]> = {};
+  const assignedQuestionIds: string[] = [];
+  const assignedBankQuestionIds = new Set<string>();
+
+  // Process a question slot (either fixed or randomly picked from a Question Bank folder)
+  const processSlot = async (slot: any): Promise<string> => {
+    // 1. Fixed question
+    if (!slot.isRandom) {
+      if (slot.type === "MCQ") {
+        try {
+          const opts = JSON.parse(slot.options || "[]");
+          const optIds = opts.map((o: any) => o.id);
+          optionOrders[slot.id] = shuffleArray(optIds);
+        } catch {
+          optionOrders[slot.id] = [];
+        }
+      }
+      return slot.id;
+    }
+
+    // 2. Random question from folder
+    let folderIds: string[] = [];
+    if (slot.randomFolderId) {
+      folderIds = await getDescendantFolderIds(slot.randomFolderId);
+    } else {
+      const allFolders = await prisma.questionFolder.findMany({ select: { id: true } });
+      folderIds = allFolders.map((f) => f.id);
+    }
+
+    let candidateFilter: any = {
+      folderId: folderIds.length > 0 ? { in: folderIds } : undefined,
+    };
+    if (slot.randomDifficulty && slot.randomDifficulty !== "ANY") {
+      candidateFilter.difficulty = slot.randomDifficulty;
+    }
+    if (slot.randomType && slot.randomType !== "ANY") {
+      candidateFilter.type = slot.randomType;
+    }
+
+    let candidates = await prisma.bankQuestion.findMany({
+      where: candidateFilter,
+      include: {
+        testCases: { orderBy: { order: "asc" } },
+      },
+    });
+
+    // Fallback 1: Relax difficulty & type if none matched
+    if (candidates.length === 0) {
+      candidates = await prisma.bankQuestion.findMany({
+        where: {
+          folderId: folderIds.length > 0 ? { in: folderIds } : undefined,
+        },
+        include: {
+          testCases: { orderBy: { order: "asc" } },
+        },
+      });
+    }
+
+    // Fallback 2: Any question in DB if folder empty
+    if (candidates.length === 0) {
+      candidates = await prisma.bankQuestion.findMany({
+        include: {
+          testCases: { orderBy: { order: "asc" } },
+        },
+        take: 20,
+      });
+    }
+
+    if (candidates.length === 0) {
+      return slot.id;
+    }
+
+    // Exclude questions already assigned to earlier slots for this student
+    let availableCandidates = candidates.filter((bq) => !assignedBankQuestionIds.has(bq.id));
+    if (availableCandidates.length === 0) {
+      availableCandidates = candidates;
+    }
+
+    const chosenBq = shuffleArray(availableCandidates)[0];
+    assignedBankQuestionIds.add(chosenBq.id);
+
+    // Reuse or create question instance for this assessment slot
+    let instQ = await prisma.question.findFirst({
+      where: {
+        assessmentId: assessment.id,
+        templateQuestionId: slot.id,
+        bankQuestionId: chosenBq.id,
+      },
+      include: {
+        testCases: { where: { isPublic: true }, orderBy: { order: "asc" } },
+      },
+    });
+
+    if (!instQ) {
+      instQ = await prisma.question.create({
+        data: {
+          assessmentId: assessment.id,
+          sectionId: slot.sectionId,
+          templateQuestionId: slot.id,
+          bankQuestionId: chosenBq.id,
+          isRandom: false,
+          type: chosenBq.type,
+          title: chosenBq.title,
+          description: chosenBq.description,
+          marks: slot.marks, // Apply slot marks
+          negativeMarks: chosenBq.negativeMarks || 0,
+          order: slot.order,
+          mcqType: chosenBq.mcqType,
+          options: chosenBq.options,
+          correctAnswers: chosenBq.correctAnswers,
+          explanation: chosenBq.explanation,
+          allowedLanguages: chosenBq.allowedLanguages,
+          starterCodes: chosenBq.starterCodes,
+          starterCode: chosenBq.starterCode,
+          timeLimitSeconds: chosenBq.timeLimitSeconds,
+          memoryLimitMb: chosenBq.memoryLimitMb,
+          testCases: {
+            create: chosenBq.testCases.map((tc, tcIdx) => ({
+              input: tc.input,
+              expectedOutput: tc.expectedOutput,
+              isPublic: tc.isPublic,
+              weight: tc.weight,
+              order: tcIdx,
+            })),
+          },
+        },
+        include: {
+          testCases: { where: { isPublic: true }, orderBy: { order: "asc" } },
+        },
+      });
+    } else if (instQ.marks !== slot.marks) {
+      instQ = await prisma.question.update({
+        where: { id: instQ.id },
+        data: { marks: slot.marks },
+        include: {
+          testCases: { where: { isPublic: true }, orderBy: { order: "asc" } },
+        },
+      });
+    }
+
+    if (instQ.type === "MCQ") {
+      try {
+        const opts = JSON.parse(instQ.options || "[]");
+        const optIds = opts.map((o: any) => o.id);
+        optionOrders[instQ.id] = shuffleArray(optIds);
+      } catch {
+        optionOrders[instQ.id] = [];
+      }
+    }
+
+    return instQ.id;
+  };
+
+  if (sections.length > 0) {
+    for (const sec of sections) {
+      const secSlots = assessment.questions
+        .filter((q) => q.sectionId === sec.id)
+        .sort((a, b) => a.order - b.order);
+
+      let secQIds: string[] = [];
+      for (const slot of secSlots) {
+        const qId = await processSlot(slot);
+        secQIds.push(qId);
+      }
+      if (assessment.shuffleQuestions) {
+        secQIds = shuffleArray(secQIds);
+      }
+      assignedQuestionIds.push(...secQIds);
+    }
+
+    const orphanSlots = assessment.questions
+      .filter((q) => !q.sectionId)
+      .sort((a, b) => a.order - b.order);
+
+    let orphanQIds: string[] = [];
+    for (const slot of orphanSlots) {
+      const qId = await processSlot(slot);
+      orphanQIds.push(qId);
+    }
+    if (assessment.shuffleQuestions) {
+      orphanQIds = shuffleArray(orphanQIds);
+    }
+    assignedQuestionIds.push(...orphanQIds);
+  } else {
+    const orderedSlots = [...assessment.questions].sort((a, b) => a.order - b.order);
+    for (const slot of orderedSlots) {
+      const qId = await processSlot(slot);
+      assignedQuestionIds.push(qId);
+    }
+    if (assessment.shuffleQuestions) {
+      return { questionOrder: shuffleArray(assignedQuestionIds), optionOrders };
+    }
+  }
+
+  return { questionOrder: assignedQuestionIds, optionOrders };
+}
+
 // 2. Start / Resume Assessment Attempt
 studentRouter.post("/start", async (req, res) => {
   try {
@@ -474,6 +707,7 @@ studentRouter.post("/start", async (req, res) => {
           orderBy: { order: "asc" },
         },
         questions: {
+          where: { templateQuestionId: null },
           include: {
             testCases: {
               where: { isPublic: true }, // Only expose public/sample test cases!
@@ -551,39 +785,24 @@ studentRouter.post("/start", async (req, res) => {
         questionOrder = [];
       }
 
-      if (assessment.isRandomized) {
-        let expectedCount = 3;
-        try {
-          const cfg = JSON.parse(assessment.randomConfig || "{}");
-          expectedCount = Number(cfg.easyCount ?? 1) + Number(cfg.mediumCount ?? 1) + Number(cfg.hardCount ?? 1);
-        } catch {}
+      const templateQuestions = (assessment.questions || []).filter((q: any) => !q.templateQuestionId);
+      const expectedCount = templateQuestions.length > 0 ? templateQuestions.length : (assessment.isRandomized ? 3 : 1);
 
-        if (questionOrder.length < expectedCount) {
-          needsQuestions = true;
-        } else {
-          const validCount = await prisma.question.count({
-            where: { id: { in: questionOrder }, assessmentId: assessment.id },
-          });
-          if (validCount < expectedCount) {
-            needsQuestions = true;
-          }
-        }
+      if (questionOrder.length < expectedCount) {
+        needsQuestions = true;
       } else {
-        if (questionOrder.length === 0) {
+        const validCount = await prisma.question.count({
+          where: { id: { in: questionOrder }, assessmentId: assessment.id },
+        });
+        if (validCount < expectedCount) {
           needsQuestions = true;
         }
       }
 
       if (needsQuestions) {
-        if (assessment.isRandomized) {
-          const alloc = await populateRandomQuestionsForAssessment(assessment.id, assessment.randomConfig);
-          questionOrder = alloc.questionOrder;
-          optionOrders = alloc.optionOrders;
-        } else {
-          const alloc = allocateStandardQuestions(assessment);
-          questionOrder = alloc.questionOrder;
-          optionOrders = alloc.optionOrders;
-        }
+        const alloc = await allocateQuestionsForStudentAttempt(assessment.id);
+        questionOrder = alloc.questionOrder;
+        optionOrders = alloc.optionOrders;
       }
 
       const updateData: any = {
@@ -612,15 +831,9 @@ studentRouter.post("/start", async (req, res) => {
       let questionOrder: string[] = [];
       let optionOrders: Record<string, string[]> = {};
 
-      if (assessment.isRandomized) {
-        const alloc = await populateRandomQuestionsForAssessment(assessment.id, assessment.randomConfig);
-        questionOrder = alloc.questionOrder;
-        optionOrders = alloc.optionOrders;
-      } else {
-        const alloc = allocateStandardQuestions(assessment);
-        questionOrder = alloc.questionOrder;
-        optionOrders = alloc.optionOrders;
-      }
+      const alloc = await allocateQuestionsForStudentAttempt(assessment.id);
+      questionOrder = alloc.questionOrder;
+      optionOrders = alloc.optionOrders;
 
       attempt = await prisma.studentAttempt.create({
         data: {
@@ -648,18 +861,18 @@ studentRouter.post("/start", async (req, res) => {
       assignedQIds = [];
     }
 
-    let candidateQuestions = assessment.questions;
-    if (assessment.isRandomized || (assignedQIds.length > 0 && assignedQIds.length < assessment.questions.length)) {
-      candidateQuestions = await prisma.question.findMany({
-        where: { id: { in: assignedQIds } },
-        include: {
-          testCases: {
-            where: { isPublic: true },
-            orderBy: { order: "asc" },
-          },
+    const candidateQuestions = await prisma.question.findMany({
+      where: {
+        assessmentId: assessment.id,
+        id: assignedQIds.length > 0 ? { in: assignedQIds } : undefined,
+      },
+      include: {
+        testCases: {
+          where: { isPublic: true },
+          orderBy: { order: "asc" },
         },
-      });
-    }
+      },
+    });
 
     // Sort according to assignedQIds
     const sortedQuestions = [...candidateQuestions].sort((a, b) => {
@@ -1164,7 +1377,7 @@ export async function autoGradeAndFinalizeAttempt(
     assignedQIds = JSON.parse(attempt.questionOrder || "[]");
   } catch {}
 
-  const questionsToGrade = assignedQIds.length > 0 && attempt.assessment.isRandomized
+  const questionsToGrade = assignedQIds.length > 0
     ? attempt.assessment.questions.filter((q) => assignedQIds.includes(q.id))
     : attempt.assessment.questions;
 
@@ -1414,7 +1627,7 @@ studentRouter.get("/review/:code/:rollNo", async (req, res) => {
       assignedQIds = [];
     }
 
-    const reviewQuestions = assignedQIds.length > 0 && assessment.isRandomized
+    const reviewQuestions = assignedQIds.length > 0
       ? assessment.questions.filter((q) => assignedQIds.includes(q.id))
       : assessment.questions;
 

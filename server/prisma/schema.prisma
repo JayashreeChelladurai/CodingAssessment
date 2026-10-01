@@ -73,6 +73,15 @@ model Question {
   timeLimitSeconds Int          @default(3)
   memoryLimitMb    Int          @default(256)
   createdAt        DateTime     @default(now())
+
+  // Random Question Configuration
+  isRandom           Boolean         @default(false)
+  randomFolderId     String?
+  randomFolder       QuestionFolder? @relation(fields: [randomFolderId], references: [id], onDelete: SetNull)
+  randomDifficulty   String?         // "ANY" | "EASY" | "MEDIUM" | "HARD"
+  randomType         String?         // "ANY" | "CODING" | "MCQ"
+  templateQuestionId String?         // Template Question ID if dynamically instantiated for a student
+  bankQuestionId     String?         // Source BankQuestion ID if dynamically instantiated
   
   testCases        TestCase[]
   submissions      Submission[]
@@ -173,6 +182,7 @@ model QuestionFolder {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   questions   BankQuestion[]
+  randomQuestions Question[]
 }
 
 model BankQuestion {

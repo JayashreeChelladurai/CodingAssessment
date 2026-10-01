@@ -57,13 +57,16 @@ assessmentRouter.get("/", async (_req, res) => {
         sections: {
           include: {
             questions: {
-              include: { testCases: true },
+              where: { templateQuestionId: null },
+              include: { testCases: true, randomFolder: { select: { id: true, name: true, parentId: true } } },
+              orderBy: { order: "asc" },
             },
           },
           orderBy: { order: "asc" },
         },
         questions: {
-          include: { testCases: true },
+          where: { templateQuestionId: null },
+          include: { testCases: true, randomFolder: { select: { id: true, name: true, parentId: true } } },
           orderBy: { order: "asc" },
         },
         attempts: {
@@ -87,14 +90,16 @@ assessmentRouter.get("/:id", async (req, res) => {
         sections: {
           include: {
             questions: {
-              include: { testCases: { orderBy: { order: "asc" } } },
+              where: { templateQuestionId: null },
+              include: { testCases: { orderBy: { order: "asc" } }, randomFolder: { select: { id: true, name: true, parentId: true } } },
               orderBy: { order: "asc" },
             },
           },
           orderBy: { order: "asc" },
         },
         questions: {
-          include: { testCases: { orderBy: { order: "asc" } } },
+          where: { templateQuestionId: null },
+          include: { testCases: { orderBy: { order: "asc" } }, randomFolder: { select: { id: true, name: true, parentId: true } } },
           orderBy: { order: "asc" },
         },
         attempts: {
@@ -144,6 +149,10 @@ assessmentRouter.post("/", async (req, res) => {
       return res.status(400).json({ error: `Assessment code '${cleanCode}' is already in use.` });
     }
 
+    const hasRandomQuestions = !!isRandomized ||
+      (sections && Array.isArray(sections) && sections.some((s: any) => s.questions && s.questions.some((q: any) => q.isRandom))) ||
+      (questions && Array.isArray(questions) && questions.some((q: any) => q.isRandom));
+
     // Process sections or standalone questions
     const assessment = await prisma.assessment.create({
       data: {
@@ -158,7 +167,7 @@ assessmentRouter.post("/", async (req, res) => {
         sebQuitPassword: sebQuitPassword || "exit123",
         isReviewUnlocked: !!isReviewUnlocked,
         reviewUnlockTime: reviewUnlockTime ? new Date(reviewUnlockTime) : null,
-        isRandomized: !!isRandomized,
+        isRandomized: hasRandomQuestions,
         randomConfig: typeof randomConfig === "string" ? randomConfig : JSON.stringify(randomConfig || {}),
       },
     });
@@ -194,9 +203,10 @@ assessmentRouter.post("/", async (req, res) => {
       where: { id: assessment.id },
       include: {
         sections: {
-          include: { questions: { include: { testCases: true } } },
+          include: { questions: { where: { templateQuestionId: null }, include: { testCases: true, randomFolder: { select: { id: true, name: true, parentId: true } } }, orderBy: { order: "asc" } } },
+          orderBy: { order: "asc" },
         },
-        questions: { include: { testCases: true } },
+        questions: { where: { templateQuestionId: null }, include: { testCases: true, randomFolder: { select: { id: true, name: true, parentId: true } } }, orderBy: { order: "asc" } },
       },
     });
 
@@ -259,9 +269,11 @@ assessmentRouter.put("/:id", async (req, res) => {
         isReviewUnlocked: !!isReviewUnlocked,
         reviewUnlockTime: reviewUnlockTime ? new Date(reviewUnlockTime) : null,
       };
-      if (isRandomized !== undefined) {
-        updateData.isRandomized = !!isRandomized;
-      }
+      const hasRandomQuestions = !!isRandomized ||
+        (sections && Array.isArray(sections) && sections.some((s: any) => s.questions && s.questions.some((q: any) => q.isRandom))) ||
+        (questions && Array.isArray(questions) && questions.some((q: any) => q.isRandom));
+      updateData.isRandomized = hasRandomQuestions;
+
       if (randomConfig !== undefined) {
         updateData.randomConfig = typeof randomConfig === "string" ? randomConfig : JSON.stringify(randomConfig);
       }
@@ -328,16 +340,12 @@ assessmentRouter.put("/:id", async (req, res) => {
         }
       }
 
-      // 4. Safely delete ONLY questions and sections that the instructor actually removed
-      // For randomized assessments from Question Bank, do NOT delete dynamic student questions
-      const isRandomExam = Boolean(isRandomized !== undefined ? isRandomized : updateData.isRandomized);
-      if (!isRandomExam) {
-        const questionsToDelete = existingQuestions.filter((q) => !keptQuestionIds.has(q.id));
-        if (questionsToDelete.length > 0) {
-          await tx.question.deleteMany({
-            where: { id: { in: questionsToDelete.map((q) => q.id) } },
-          });
-        }
+      // 4. Safely delete ONLY template questions and sections that the instructor actually removed
+      const questionsToDelete = existingQuestions.filter((q) => q.templateQuestionId === null && !keptQuestionIds.has(q.id));
+      if (questionsToDelete.length > 0) {
+        await tx.question.deleteMany({
+          where: { id: { in: questionsToDelete.map((q) => q.id) } },
+        });
       }
 
       const sectionsToDelete = existingSections.filter((s) => !keptSectionIds.has(s.id));
@@ -351,9 +359,10 @@ assessmentRouter.put("/:id", async (req, res) => {
         where: { id },
         include: {
           sections: {
-            include: { questions: { include: { testCases: true } } },
+            include: { questions: { where: { templateQuestionId: null }, include: { testCases: true, randomFolder: { select: { id: true, name: true, parentId: true } } }, orderBy: { order: "asc" } } },
+            orderBy: { order: "asc" },
           },
-          questions: { include: { testCases: true } },
+          questions: { where: { templateQuestionId: null }, include: { testCases: true, randomFolder: { select: { id: true, name: true, parentId: true } } }, orderBy: { order: "asc" } },
         },
       });
     });
@@ -766,6 +775,7 @@ async function createQuestionRecord(
   tx: { question: typeof prisma.question } = prisma
 ) {
   const isMcq = q.type === "MCQ";
+  const isRandom = Boolean(q.isRandom);
   const optionsStr = typeof q.options === "string" ? q.options : JSON.stringify(q.options || []);
   const correctAnswersStr = typeof q.correctAnswers === "string" ? q.correctAnswers : JSON.stringify(q.correctAnswers || []);
   const starterCodesStr = typeof q.starterCodes === "string" ? q.starterCodes : JSON.stringify(q.starterCodes || {});
@@ -775,8 +785,13 @@ async function createQuestionRecord(
       assessmentId,
       sectionId,
       type: isMcq ? "MCQ" : "CODING",
-      title: sanitizeQuestionContent(q.title || `Question ${qIdx + 1}`),
-      description: sanitizeQuestionContent(q.description || ""),
+      isRandom,
+      randomFolderId: isRandom ? (q.randomFolderId || null) : null,
+      randomDifficulty: isRandom ? (q.randomDifficulty || null) : null,
+      randomType: isRandom ? (q.randomType || null) : null,
+      templateQuestionId: null,
+      title: sanitizeQuestionContent(q.title || (isRandom ? `Random Question ${qIdx + 1}` : `Question ${qIdx + 1}`)),
+      description: sanitizeQuestionContent(q.description || (isRandom ? "Randomly assigned from Question Bank folder" : "")),
       marks: Number(q.marks) || (isMcq ? 2 : 50),
       negativeMarks: Number(q.negativeMarks) || 0,
       order: qIdx,
@@ -790,7 +805,7 @@ async function createQuestionRecord(
       timeLimitSeconds: Number(q.timeLimitSeconds) || 3,
       memoryLimitMb: Number(q.memoryLimitMb) || 256,
       testCases: {
-        create: !isMcq && q.testCases ? q.testCases.map((tc: any, tcIdx: number) => ({
+        create: !isRandom && !isMcq && q.testCases ? q.testCases.map((tc: any, tcIdx: number) => ({
           input: tc.input || "",
           expectedOutput: tc.expectedOutput || "",
           isPublic: tc.isPublic ?? true,
@@ -811,16 +826,22 @@ async function upsertQuestionRecord(
   tx: any
 ): Promise<string> {
   const isMcq = q.type === "MCQ";
+  const isRandom = Boolean(q.isRandom);
   const optionsStr = typeof q.options === "string" ? q.options : JSON.stringify(q.options || []);
   const correctAnswersStr = typeof q.correctAnswers === "string" ? q.correctAnswers : JSON.stringify(q.correctAnswers || []);
   const starterCodesStr = typeof q.starterCodes === "string" ? q.starterCodes : JSON.stringify(q.starterCodes || {});
 
-  const qData = {
+  const qData: any = {
     assessmentId,
     sectionId,
     type: isMcq ? "MCQ" : "CODING",
-    title: sanitizeQuestionContent(q.title || `Question ${qIdx + 1}`),
-    description: sanitizeQuestionContent(q.description || ""),
+    isRandom,
+    randomFolderId: isRandom ? (q.randomFolderId || null) : null,
+    randomDifficulty: isRandom ? (q.randomDifficulty || null) : null,
+    randomType: isRandom ? (q.randomType || null) : null,
+    templateQuestionId: null,
+    title: sanitizeQuestionContent(q.title || (isRandom ? `Random Question ${qIdx + 1}` : `Question ${qIdx + 1}`)),
+    description: sanitizeQuestionContent(q.description || (isRandom ? "Randomly assigned from Question Bank folder" : "")),
     marks: Number(q.marks) || (isMcq ? 2 : 50),
     negativeMarks: Number(q.negativeMarks) || 0,
     order: qIdx,
@@ -835,7 +856,7 @@ async function upsertQuestionRecord(
     memoryLimitMb: Number(q.memoryLimitMb) || 256,
   };
 
-  const testCasesData = (!isMcq && q.testCases && Array.isArray(q.testCases))
+  const testCasesData = (!isRandom && !isMcq && q.testCases && Array.isArray(q.testCases))
     ? q.testCases.map((tc: any, tcIdx: number) => ({
         input: tc.input || "",
         expectedOutput: tc.expectedOutput || "",

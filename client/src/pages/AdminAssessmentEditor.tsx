@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Assessment, Question, Section, BankQuestion } from "../types";
+import React, { useState, useEffect, useMemo } from "react";
+import { Assessment, Question, Section, BankQuestion, QuestionFolder } from "../types";
 import { api } from "../services/api";
 import { DateTimePicker } from "../components/common/DateTimePicker";
 import { QuestionBankModal } from "../components/admin/QuestionBankModal";
@@ -89,6 +89,46 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
   const [showQbModal, setShowQbModal] = useState<boolean>(false);
   const [qbTargetSectionIndex, setQbTargetSectionIndex] = useState<number | null>(null);
 
+  // Question Folders for random question allocation
+  const [folders, setFolders] = useState<QuestionFolder[]>([]);
+
+  useEffect(() => {
+    api.getQuestionFolders()
+      .then((fList) => {
+        setFolders(fList || []);
+      })
+      .catch((err) => {
+        console.error("Failed to load question folders:", err);
+      });
+  }, []);
+
+  // Construct hierarchical folder paths e.g. "Coding > Easy > Array (10 questions)"
+  const folderTreeOptions = useMemo(() => {
+    if (!folders || folders.length === 0) return [];
+
+    const folderMap = new Map<string, QuestionFolder>();
+    folders.forEach((f) => folderMap.set(f.id, f));
+
+    const getPath = (f: QuestionFolder): string => {
+      const parts = [f.name];
+      let curr = f;
+      while (curr.parentId && folderMap.has(curr.parentId)) {
+        curr = folderMap.get(curr.parentId)!;
+        parts.unshift(curr.name);
+      }
+      return parts.join(" > ");
+    };
+
+    return folders
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        fullPath: getPath(f),
+        questionCount: f._count?.questions ?? 0,
+      }))
+      .sort((a, b) => a.fullPath.localeCompare(b.fullPath));
+  }, [folders]);
+
   const DEFAULT_BOILERPLATES: Record<string, string> = {
     JAVA: `import java.util.*;
 
@@ -146,10 +186,16 @@ int main() {
       // ignore
     }
 
+    const isRandom = Boolean(q.isRandom);
+
     return {
       id: q.id || `q-${Date.now()}-${idx}`,
       type: q.type || "CODING",
-      title: q.title || `Question ${idx + 1}`,
+      isRandom,
+      randomFolderId: q.randomFolderId || "",
+      randomDifficulty: q.randomDifficulty || "ANY",
+      randomType: q.randomType || "ANY",
+      title: q.title || (isRandom ? `Random Question ${idx + 1}` : `Question ${idx + 1}`),
       description: q.description || "",
       marks: q.marks !== undefined ? Number(q.marks) : (q.type === "MCQ" ? 2 : 48),
       negativeMarks: q.negativeMarks !== undefined ? Number(q.negativeMarks) : 0,
@@ -342,6 +388,41 @@ int main() {
       testCases: [
         { input: "", expectedOutput: "", isPublic: true, weight: 1 },
       ],
+    };
+
+    setSections((prev) =>
+      prev.map((sec, sIdx) =>
+        sIdx === secIdx
+          ? { ...sec, questions: [...sec.questions, newQ] }
+          : sec
+      )
+    );
+
+    if (fieldErrors[`section-questions-${secIdx}`]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[`section-questions-${secIdx}`];
+        return copy;
+      });
+    }
+  };
+
+  const handleAddRandomQuestion = (secIdx: number) => {
+    const defaultFolder = folderTreeOptions.find((f) => f.questionCount > 0) || folderTreeOptions[0];
+    const newQ = {
+      id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type: "CODING",
+      isRandom: true,
+      randomFolderId: defaultFolder?.id || "",
+      randomDifficulty: "ANY",
+      randomType: "ANY",
+      title: defaultFolder ? `Random Question (${defaultFolder.name})` : `Random Question`,
+      description: defaultFolder ? `A random question will be dynamically allocated from "${defaultFolder.fullPath}" for each candidate.` : "",
+      marks: 50,
+      negativeMarks: 0,
+      allowedLanguages: "JAVA,C,CPP",
+      starterCodes: { ...DEFAULT_BOILERPLATES },
+      testCases: [],
     };
 
     setSections((prev) =>
@@ -687,7 +768,11 @@ int main() {
           setFieldError(`q-marks-${sIdx}-${qIdx}`, `Marks must be greater than 0.`);
         }
 
-        if (q.type === "MCQ") {
+        if (q.isRandom) {
+          if (!q.randomFolderId) {
+            setFieldError(`q-folder-${sIdx}-${qIdx}`, `Please select a Question Bank folder for Question ${qIdx + 1}.`);
+          }
+        } else if (q.type === "MCQ") {
           const opts = q.options || [];
           if (opts.length < 2) {
             setFieldError(`mcq-options-${sIdx}-${qIdx}`, `MCQ must contain at least 2 options.`);
@@ -1087,6 +1172,15 @@ int main() {
 
                   <button
                     type="button"
+                    onClick={() => handleAddRandomQuestion(secIdx)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-950/40 text-purple-300 border border-purple-800/40 hover:bg-purple-900/50 transition shadow-sm"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>+ 🎲 Random from Folder</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => {
                       setQbTargetSectionIndex(secIdx);
                       setShowQbModal(true);
@@ -1134,18 +1228,48 @@ int main() {
                   </p>
                 ) : (
                   sec.questions.map((q: any, qIdx: number) => (
-                    <div key={q.id || qIdx} className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-inner">
+                    <div key={q.id || qIdx} className={`bg-slate-950/80 border ${q.isRandom ? "border-purple-600/70 shadow-lg shadow-purple-950/30 ring-1 ring-purple-500/20" : "border-slate-800"} rounded-2xl p-5 space-y-4 shadow-inner`}>
                       <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                         <div className="flex items-center gap-2">
                           <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold ${
-                            q.type === "MCQ" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            q.isRandom
+                              ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1"
+                              : q.type === "MCQ"
+                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                           }`}>
-                            {q.type}
+                            {q.isRandom && <Sparkles className="w-2.5 h-2.5 text-purple-400" />}
+                            <span>{q.isRandom ? "RANDOM FROM FOLDER" : q.type}</span>
                           </span>
                           <span className="font-bold text-xs text-white">Q{qIdx + 1}: {q.title}</span>
                         </div>
 
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextIsRandom = !q.isRandom;
+                              const defaultFolder = folderTreeOptions.find((f) => f.questionCount > 0) || folderTreeOptions[0];
+                              handleUpdateQuestion(secIdx, qIdx, {
+                                isRandom: nextIsRandom,
+                                randomFolderId: nextIsRandom ? (q.randomFolderId || defaultFolder?.id || "") : q.randomFolderId,
+                                title: nextIsRandom
+                                  ? (q.title && !q.title.startsWith("Question") && !q.title.startsWith("Problem") ? q.title : `Random Question (${defaultFolder?.name || "Folder"})`)
+                                  : (q.type === "MCQ" ? `MCQ Question` : `Coding Problem`),
+                                description: nextIsRandom ? `A random question will be picked from the specified folder.` : q.description,
+                              });
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition border flex items-center gap-1 ${
+                              q.isRandom
+                                ? "bg-purple-950/70 text-purple-300 border-purple-800/60 hover:bg-purple-900/60"
+                                : "bg-slate-900 text-slate-400 border-slate-800 hover:text-purple-300 hover:border-purple-800/40"
+                            }`}
+                            title={q.isRandom ? "Switch to Fixed Question" : "Switch to Random Question from Folder"}
+                          >
+                            <Sparkles className="w-3 h-3 text-purple-400" />
+                            <span>{q.isRandom ? "🎲 Random Mode Active" : "🎲 Set as Random from Folder"}</span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => handleCloneQuestion(secIdx, qIdx)}
@@ -1165,7 +1289,193 @@ int main() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      {q.isRandom ? (
+                        <div className="space-y-4 pt-1">
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div className="sm:col-span-2">
+                              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                                Question Slot Title <span className="text-rose-400">*</span>
+                              </label>
+                              <input
+                                id={`q-title-${secIdx}-${qIdx}`}
+                                type="text"
+                                value={q.title}
+                                onChange={(e) => {
+                                  handleUpdateQuestion(secIdx, qIdx, { title: e.target.value });
+                                  const fieldId = `q-title-${secIdx}-${qIdx}`;
+                                  if (fieldErrors[fieldId]) {
+                                    setFieldErrors((prev) => {
+                                      const c = { ...prev };
+                                      delete c[fieldId];
+                                      return c;
+                                    });
+                                  }
+                                }}
+                                placeholder="e.g. Random Array Problem"
+                                className={`w-full px-3 py-1.5 bg-slate-900 border rounded-xl text-xs text-white focus:outline-none transition ${
+                                  fieldErrors[`q-title-${secIdx}-${qIdx}`]
+                                    ? "border-rose-500 ring-1 ring-rose-500/50 bg-rose-950/20"
+                                    : "border-slate-800 focus:border-purple-500"
+                                }`}
+                              />
+                              {fieldErrors[`q-title-${secIdx}-${qIdx}`] && (
+                                <p className="text-[11px] text-rose-400 mt-1 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  <span>{fieldErrors[`q-title-${secIdx}-${qIdx}`]}</span>
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                                Marks Awarded <span className="text-rose-400">*</span>
+                              </label>
+                              <input
+                                id={`q-marks-${secIdx}-${qIdx}`}
+                                type="number"
+                                value={q.marks}
+                                onChange={(e) => {
+                                  handleUpdateQuestion(secIdx, qIdx, { marks: Number(e.target.value) });
+                                  const fieldId = `q-marks-${secIdx}-${qIdx}`;
+                                  if (fieldErrors[fieldId]) {
+                                    setFieldErrors((prev) => {
+                                      const c = { ...prev };
+                                      delete c[fieldId];
+                                      return c;
+                                    });
+                                  }
+                                }}
+                                className={`w-full px-3 py-1.5 bg-slate-900 border rounded-xl text-xs text-white font-mono transition ${
+                                  fieldErrors[`q-marks-${secIdx}-${qIdx}`]
+                                    ? "border-rose-500 ring-1 ring-rose-500/50 bg-rose-950/20"
+                                    : "border-slate-800 focus:border-purple-500"
+                                }`}
+                              />
+                              {fieldErrors[`q-marks-${secIdx}-${qIdx}`] && (
+                                <p className="text-[11px] text-rose-400 mt-1 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  <span>{fieldErrors[`q-marks-${secIdx}-${qIdx}`]}</span>
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                                Allowed Languages
+                              </label>
+                              <input
+                                type="text"
+                                value={q.allowedLanguages || "JAVA,C,CPP"}
+                                onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { allowedLanguages: e.target.value.toUpperCase() })}
+                                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono text-emerald-400"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Folder Selector and Filter Box */}
+                          {(() => {
+                            const selectedFolder = folderTreeOptions.find((f) => f.id === q.randomFolderId);
+                            return (
+                              <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-800/40 space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <label className="text-xs font-bold text-purple-200 flex items-center gap-2">
+                                    <Layers className="w-4 h-4 text-purple-400" />
+                                    <span>Select Question Bank Folder for Question {qIdx + 1}</span>
+                                    <span className="text-rose-400">*</span>
+                                  </label>
+                                  {selectedFolder && (
+                                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-900/60 text-purple-200 border border-purple-700/50 font-mono">
+                                      {selectedFolder.questionCount} {selectedFolder.questionCount === 1 ? "problem" : "problems"} available
+                                    </span>
+                                  )}
+                                </div>
+
+                                <select
+                                  id={`q-folder-${secIdx}-${qIdx}`}
+                                  value={q.randomFolderId || ""}
+                                  onChange={(e) => {
+                                    const folderId = e.target.value;
+                                    const fOpt = folderTreeOptions.find((f) => f.id === folderId);
+                                    handleUpdateQuestion(secIdx, qIdx, {
+                                      randomFolderId: folderId,
+                                      title: q.title.startsWith("Random") || !q.title ? `Random Question (${fOpt?.name || "Topic"})` : q.title,
+                                    });
+                                    const fieldId = `q-folder-${secIdx}-${qIdx}`;
+                                    if (fieldErrors[fieldId]) {
+                                      setFieldErrors((prev) => {
+                                        const c = { ...prev };
+                                        delete c[fieldId];
+                                        return c;
+                                      });
+                                    }
+                                  }}
+                                  className={`w-full px-3.5 py-2.5 bg-slate-900 border rounded-xl text-xs text-white focus:outline-none transition ${
+                                    fieldErrors[`q-folder-${secIdx}-${qIdx}`]
+                                      ? "border-rose-500 ring-1 ring-rose-500/50 bg-rose-950/20"
+                                      : "border-purple-700/60 focus:border-purple-400"
+                                  }`}
+                                >
+                                  <option value="">-- Choose Question Bank Folder --</option>
+                                  {folderTreeOptions.map((f) => (
+                                    <option key={f.id} value={f.id}>
+                                      {f.fullPath} ({f.questionCount} {f.questionCount === 1 ? "question" : "questions"})
+                                    </option>
+                                  ))}
+                                </select>
+
+                                {fieldErrors[`q-folder-${secIdx}-${qIdx}`] && (
+                                  <p className="text-[11px] text-rose-400 flex items-center gap-1 font-medium">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    <span>{fieldErrors[`q-folder-${secIdx}-${qIdx}`]}</span>
+                                  </p>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                                      Difficulty Filter (Optional)
+                                    </label>
+                                    <select
+                                      value={q.randomDifficulty || "ANY"}
+                                      onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { randomDifficulty: e.target.value })}
+                                      className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 focus:border-purple-500 rounded-xl text-xs text-white"
+                                    >
+                                      <option value="ANY">Any Difficulty (Default)</option>
+                                      <option value="EASY">Easy Only</option>
+                                      <option value="MEDIUM">Medium Only</option>
+                                      <option value="HARD">Hard Only</option>
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                                      Question Type Filter (Optional)
+                                    </label>
+                                    <select
+                                      value={q.randomType || "ANY"}
+                                      onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { randomType: e.target.value, type: e.target.value === "MCQ" ? "MCQ" : "CODING" })}
+                                      className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 focus:border-purple-500 rounded-xl text-xs text-white"
+                                    >
+                                      <option value="ANY">Any Type (Coding or MCQ)</option>
+                                      <option value="CODING">Coding Problems Only</option>
+                                      <option value="MCQ">MCQ Conceptual Only</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="text-[11px] text-slate-400 bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex items-center gap-2.5">
+                                  <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                                  <span className="leading-relaxed">
+                                    <strong className="text-purple-300">Offline Automatic Randomization:</strong> When students log in to this assessment, a unique random question from this folder is assigned directly from your local SQLite database without requiring any internet connection.
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div className="sm:col-span-2">
                           <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                             Question Title <span className="text-rose-400">*</span>
@@ -1709,7 +2019,9 @@ int main() {
                           </div>
                         </div>
                       )}
-                    </div>
+                    </>
+                  )}
+                </div>
                   ))
                 )}
               </div>

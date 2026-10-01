@@ -35,6 +35,19 @@ export interface Question {
   timeLimitSeconds?: number;
   memoryLimitMb?: number;
   testCases?: TestCase[];
+
+  // Random question generation from Question Bank folder
+  isRandom?: boolean;
+  randomFolderId?: string | null;
+  randomDifficulty?: "ANY" | "EASY" | "MEDIUM" | "HARD";
+  randomType?: "ANY" | "CODING" | "MCQ";
+  templateQuestionId?: string | null;
+  bankQuestionId?: string | null;
+  randomFolder?: {
+    id: string;
+    name: string;
+    parentId?: string | null;
+  };
 }
 
 export interface Section {

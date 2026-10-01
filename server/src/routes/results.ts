@@ -77,7 +77,10 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
       return res.status(404).json({ error: "Assessment not found" });
     }
 
-    const totalPossibleMarks = assessment.questions.reduce((sum, q) => sum + q.marks, 0);
+    const templateQuestions = assessment.questions.filter((q) => !q.templateQuestionId);
+    const totalPossibleMarks = templateQuestions.length > 0
+      ? templateQuestions.reduce((sum, q) => sum + q.marks, 0)
+      : assessment.questions.reduce((sum, q) => sum + q.marks, 0);
 
     const students = assessment.attempts.map((att) => {
       const questionScores: Record<string, { score: number; maxScore: number; status: string; type: string; submissionId?: string }> = {};
@@ -90,7 +93,7 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
         assignedQIds = JSON.parse(att.questionOrder || "[]");
       } catch {}
 
-      const studentQuestions = (assessment.isRandomized && assignedQIds.length > 0)
+      const studentQuestions = assignedQIds.length > 0
         ? assessment.questions.filter((q) => assignedQIds.includes(q.id))
         : assessment.questions;
 
