@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Editor, { loader, OnMount } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import { Code2, Terminal, RefreshCw, Layers } from "lucide-react";
+import { Code2, Lock, Sparkles, AlertCircle } from "lucide-react";
 
 // Configure @monaco-editor/react to use locally bundled monaco (offline support with ZERO CDN network latency!)
 loader.config({ monaco });
@@ -14,6 +14,11 @@ interface MonacoCodeEditorProps {
   questionId?: string;
 }
 
+interface LockedRanges {
+  topLockedEndLine: number; // 1-indexed: lines 1..topLockedEndLine are locked
+  bottomLockedStartLine: number; // 1-indexed: lines bottomLockedStartLine..lines.length are locked
+}
+
 export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   code,
   onChange,
@@ -23,11 +28,26 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
 }) => {
   const [monacoLoaded, setMonacoLoaded] = useState<boolean>(false);
   const [fallbackMode, setFallbackMode] = useState<boolean>(false);
+  const [hasLockedStarter, setHasLockedStarter] = useState<boolean>(false);
+  const [lockedNotice, setLockedNotice] = useState<string | null>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monaco | null>(null);
   const decorationsRef = useRef<string[]>([]);
+  const lockedRangesRef = useRef<LockedRanges | null>(null);
+  const noticeTimerRef = useRef<any>(null);
+
+  const showLockedNotice = (msg?: string) => {
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    setLockedNotice(
+      msg || "🔒 Starter code is non-editable. Please write your solution inside the active method."
+    );
+    noticeTimerRef.current = setTimeout(() => {
+      setLockedNotice(null);
+    }, 2800);
+  };
 
   // Map our internal language string to Monaco editor language identifiers
   const getMonacoLanguage = (lang: string) => {
@@ -37,8 +57,8 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     return "java";
   };
 
-  // Helper to dynamically calculate and apply dimming decorations on boilerplate scaffolding
-  const applyDimDecorations = (
+  // Helper to dynamically calculate and apply locked styling and decorations on boilerplate scaffolding
+  const applyStarterCodeDecorations = (
     editor: monaco.editor.IStandaloneCodeEditor,
     monacoInstance: typeof monaco,
     currentCode: string
@@ -49,11 +69,15 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
       /^\s*(?:public\s+)?class\s+(?:Solution|MedianFinder)\b/.test(l)
     );
 
-    // If no standard solution class structure is detected, clear decorations
+    // If no standard solution class structure is detected, clear decorations & locks
     if (solClassIdx === -1) {
       decorationsRef.current = editor.deltaDecorations(decorationsRef.current, []);
+      lockedRangesRef.current = null;
+      setHasLockedStarter(false);
       return;
     }
+
+    setHasLockedStarter(true);
 
     // Determine where the student's solution method begins
     let methodStartIdx = solClassIdx;
@@ -71,29 +95,47 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
       (l, idx) => idx > solClassIdx && /^\s*public\s+static\s+/.test(l)
     );
 
-    const topEndLine = methodStartIdx; // 1-indexed line right before student method
-    const activeStartLine = methodStartIdx + 1;
+    // Top scaffolding: 1-indexed lines 1 to methodStartIdx + 1 (the method signature line itself is locked)
+    const topEndLine = methodStartIdx + 1;
+    // Active editable solution code: methodStartIdx + 2 to firstStaticIdx
+    const activeStartLine = methodStartIdx + 2;
     const activeEndLine = firstStaticIdx !== -1 ? firstStaticIdx : lines.length;
+    // Bottom driver: firstStaticIdx + 1 to lines.length
     const bottomStartLine = firstStaticIdx !== -1 ? firstStaticIdx + 1 : lines.length + 1;
+
+    lockedRangesRef.current = {
+      topLockedEndLine: topEndLine,
+      bottomLockedStartLine: bottomStartLine,
+    };
 
     const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
 
-    // 1. Dim Top Scaffolding (Imports, Helper Classes like TreeNode/ListNode/Node)
+    // 1. Top Locked Starter Scaffolding (Imports, Helper Classes like TreeNode/ListNode/Node, Class & Method signature)
     if (topEndLine >= 1) {
       newDecorations.push({
         range: new monacoInstance.Range(1, 1, topEndLine, 1),
         options: {
           isWholeLine: true,
-          className: "monaco-dimmed-line",
+          className: "monaco-locked-starter-line",
+          linesDecorationsClassName: "monaco-locked-gutter-marker",
           hoverMessage: {
             value:
-              "⚙️ **Pre-configured Harness**  \nImports and data structure definitions (e.g. `TreeNode`, `ListNode`). Write your solution in the active bright method below.",
+              "🔒 **Starter Code (Non-editable)**  \nPre-configured imports, data structures, and class definitions. Write your solution in the active method below.",
           },
+        },
+      });
+
+      // Boundary separator at the bottom of top scaffolding
+      newDecorations.push({
+        range: new monacoInstance.Range(topEndLine, 1, topEndLine, 1),
+        options: {
+          isWholeLine: true,
+          className: "monaco-locked-boundary-top",
         },
       });
     }
 
-    // 2. Active Solution Logic Gutter Marker (Accent line in editor gutter)
+    // 2. Active Solution Logic Gutter Marker (Emerald accent line in editor gutter)
     if (activeStartLine <= activeEndLine) {
       newDecorations.push({
         range: new monacoInstance.Range(activeStartLine, 1, activeEndLine, 1),
@@ -104,16 +146,26 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
       });
     }
 
-    // 3. Dim Bottom Driver (Static helpers, main method, test case parsing, closing brace)
+    // 3. Bottom Locked Driver (Static helpers, main method, test case parsing, closing brace)
     if (bottomStartLine <= lines.length) {
+      // Boundary separator at the top of driver
+      newDecorations.push({
+        range: new monacoInstance.Range(bottomStartLine, 1, bottomStartLine, 1),
+        options: {
+          isWholeLine: true,
+          className: "monaco-locked-boundary-bottom",
+        },
+      });
+
       newDecorations.push({
         range: new monacoInstance.Range(bottomStartLine, 1, lines.length, 1),
         options: {
           isWholeLine: true,
-          className: "monaco-dimmed-line",
+          className: "monaco-locked-starter-line",
+          linesDecorationsClassName: "monaco-locked-gutter-marker",
           hoverMessage: {
             value:
-              "⚙️ **Pre-configured Test Driver**  \nInput parsing and runner. Write your solution in the active bright method above.",
+              "🔒 **Test Driver & Runner (Non-editable)**  \nPre-configured automated test runner and input parser. Write your solution in the active method above.",
           },
         },
       });
@@ -136,7 +188,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   // Re-apply decorations whenever code changes externally or questionId switches
   useEffect(() => {
     if (editorRef.current && monacoRef.current) {
-      applyDimDecorations(editorRef.current, monacoRef.current, code);
+      applyStarterCodeDecorations(editorRef.current, monacoRef.current, code);
     }
   }, [code, questionId]);
 
@@ -146,8 +198,8 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     setMonacoLoaded(true);
     setFallbackMode(false);
 
-    // Apply dimmed decorations immediately on mount
-    applyDimDecorations(editor, monacoInstance, code);
+    // Apply locked starter decorations immediately on mount
+    applyStarterCodeDecorations(editor, monacoInstance, code);
 
     // Smoothly scroll the editor so the student's solution method is centered
     const lines = code.split("\n");
@@ -155,37 +207,115 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
       /^\s*(?:public\s+)?class\s+(?:Solution|MedianFinder)\b/.test(l)
     );
     if (solClassIdx !== -1) {
-      const activeLine = solClassIdx + 2;
+      const activeLine = solClassIdx + 3;
       setTimeout(() => {
         editor.revealLineInCenter(activeLine);
       }, 150);
     }
 
-    // Dynamically update dim decorations in real time as the candidate types
+    // Dynamically update locked decorations in real time as the candidate types
     editor.onDidChangeModelContent(() => {
-      applyDimDecorations(editor, monacoInstance, editor.getValue());
+      applyStarterCodeDecorations(editor, monacoInstance, editor.getValue());
     });
 
-    // 1. Disable Ctrl+Z / Cmd+Z (Undo) to prevent undo operations across question switches
+    // 1. Intercept KeyDown to enforce NON-EDITABLE starter code
+    editor.onKeyDown((e: monaco.IKeyboardEvent) => {
+      if (readOnly) return;
+
+      const keyCode = e.keyCode;
+
+      // Allow navigation keys everywhere
+      const isNavKey =
+        keyCode === monacoInstance.KeyCode.LeftArrow ||
+        keyCode === monacoInstance.KeyCode.RightArrow ||
+        keyCode === monacoInstance.KeyCode.UpArrow ||
+        keyCode === monacoInstance.KeyCode.DownArrow ||
+        keyCode === monacoInstance.KeyCode.PageUp ||
+        keyCode === monacoInstance.KeyCode.PageDown ||
+        keyCode === monacoInstance.KeyCode.Home ||
+        keyCode === monacoInstance.KeyCode.End ||
+        keyCode === monacoInstance.KeyCode.Escape ||
+        keyCode === monacoInstance.KeyCode.Shift ||
+        keyCode === monacoInstance.KeyCode.Ctrl ||
+        keyCode === monacoInstance.KeyCode.Alt ||
+        keyCode === monacoInstance.KeyCode.Meta;
+
+      // Allow copy (Ctrl+C / Cmd+C) & select all (Ctrl+A / Cmd+A)
+      if ((e.ctrlKey || e.metaKey) && (keyCode === monacoInstance.KeyCode.KeyC || keyCode === monacoInstance.KeyCode.KeyA)) {
+        return;
+      }
+
+      if (isNavKey) return;
+
+      const selection = editor.getSelection();
+      if (!selection || !lockedRangesRef.current) return;
+
+      const { topLockedEndLine, bottomLockedStartLine } = lockedRangesRef.current;
+      const touchesTopLocked = selection.startLineNumber <= topLockedEndLine;
+      const touchesBottomLocked = selection.endLineNumber >= bottomLockedStartLine;
+
+      if (touchesTopLocked || touchesBottomLocked) {
+        e.preventDefault();
+        e.stopPropagation();
+        showLockedNotice();
+
+        // Guide cursor back into the active editable region
+        if (touchesTopLocked) {
+          editor.setPosition({ lineNumber: topLockedEndLine + 1, column: 1 });
+          editor.revealLine(topLockedEndLine + 1);
+        } else if (touchesBottomLocked) {
+          editor.setPosition({ lineNumber: Math.max(1, bottomLockedStartLine - 1), column: 1 });
+          editor.revealLine(Math.max(1, bottomLockedStartLine - 1));
+        }
+      }
+    });
+
+    // 2. Intercept Paste to prevent pasting into non-editable regions
+    editor.onDidPaste((e) => {
+      if (!lockedRangesRef.current) return;
+      const { topLockedEndLine, bottomLockedStartLine } = lockedRangesRef.current;
+      if (e.range.startLineNumber <= topLockedEndLine || e.range.endLineNumber >= bottomLockedStartLine) {
+        editor.trigger("lock", "undo", null);
+        showLockedNotice();
+      }
+    });
+
+    // 3. Disable Ctrl+Z / Cmd+Z (Undo) across question switches
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyZ, () => {
-      // No-op: Undo disabled
+      // Handled cleanly
     });
-    // 2. Disable Ctrl+Y / Cmd+Y (Redo)
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyY, () => {
-      // No-op: Redo disabled
+      // Handled cleanly
     });
-    // 3. Disable Ctrl+Shift+Z / Cmd+Shift+Z (Redo)
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyZ, () => {
-      // No-op: Redo disabled
+      // Handled cleanly
     });
   };
 
-  // Handle Tab key in fallback textarea (insert 4 spaces)
+  // Handle Tab and lock interception in fallback textarea
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Disable Ctrl+Z in fallback textarea as well
     if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z" || e.key === "y" || e.key === "Y")) {
       e.preventDefault();
       return;
+    }
+
+    // Intercept editing in locked lines in fallback textarea
+    if (lockedRangesRef.current && textareaRef.current) {
+      const textarea = textareaRef.current;
+      const textBefore = textarea.value.substring(0, textarea.selectionStart);
+      const currentLineNum = textBefore.split("\n").length;
+      const { topLockedEndLine, bottomLockedStartLine } = lockedRangesRef.current;
+
+      const isNavKey = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(e.key);
+      const isCopy = (e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "C" || e.key === "a" || e.key === "A");
+
+      if (!isNavKey && !isCopy) {
+        if (currentLineNum <= topLockedEndLine || currentLineNum >= bottomLockedStartLine) {
+          e.preventDefault();
+          showLockedNotice();
+          return;
+        }
+      }
     }
 
     if (e.key === "Tab") {
@@ -217,7 +347,29 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col border border-slate-800 rounded-xl overflow-hidden shadow-inner bg-[#1e1e1e]">
+    <div className="w-full h-full flex flex-col border border-slate-800 rounded-xl overflow-hidden shadow-inner bg-[#1e1e1e] relative">
+      {/* Top Status Bar with Lock Indicator */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#14171f] border-b border-slate-800 text-[11px] shrink-0">
+        <div className="flex items-center gap-2 text-slate-400 font-mono">
+          <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Language: <strong className="text-white">{language}</strong></span>
+        </div>
+        {hasLockedStarter && (
+          <div className="flex items-center gap-1.5 text-purple-300 font-mono text-[10px] bg-purple-950/80 px-2.5 py-0.5 rounded-full border border-purple-800/60 shadow-sm">
+            <Lock className="w-3 h-3 text-purple-400" />
+            <span>Starter Harness Locked (Non-editable)</span>
+          </div>
+        )}
+      </div>
+
+      {/* Floating Locked Notice Toast */}
+      {lockedNotice && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-40 bg-purple-950/95 border border-purple-500/90 text-purple-200 px-4 py-2 rounded-xl text-xs font-semibold shadow-2xl flex items-center gap-2 backdrop-blur-md transition-all">
+          <Lock className="w-4 h-4 text-purple-400 shrink-0" />
+          <span>{lockedNotice}</span>
+        </div>
+      )}
+
       {/* Fallback Lightweight Editor when Monaco is unavailable or toggled */}
       {fallbackMode ? (
         <div className="flex-1 flex flex-col h-full bg-[#1e1e1e] font-mono text-xs overflow-hidden">
@@ -244,7 +396,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
               onScroll={handleScroll}
               placeholder="// Write your solution here..."
               spellCheck={false}
-              className="flex-1 p-3 bg-[#1e1e1e] text-slate-100 font-mono text-xs leading-[21px] focus:outline-none resize-none overflow-auto selection:bg-emerald-800 selection:text-white"
+              className="flex-1 p-3 bg-[#1e1e1e] text-slate-100 font-mono text-xs leading-[21px] focus:outline-none resize-none overflow-auto selection:bg-purple-900 selection:text-white"
             />
           </div>
         </div>

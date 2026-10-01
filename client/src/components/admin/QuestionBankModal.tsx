@@ -21,6 +21,7 @@ import {
   FileCode,
   Tag,
   Loader2,
+  Lock,
 } from "lucide-react";
 
 interface QuestionBankModalProps {
@@ -600,6 +601,23 @@ export const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
                       <div className="flex items-center gap-3 text-xs text-slate-400">
                         <span>Language: <strong className="text-white">Java (JDK 21)</strong></span>
                         <span>Time Limit: <strong className="text-white">{previewQuestion.timeLimitSeconds}s</strong></span>
+                      </div>
+
+                      {/* Starter Code Preview */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-semibold uppercase text-purple-300 flex items-center gap-1">
+                            <Code2 className="w-3 h-3 text-purple-400" />
+                            <span>Starter Code Harness</span>
+                          </span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-200 border border-purple-700/60 flex items-center gap-1 shadow-sm">
+                            <Lock className="w-2.5 h-2.5 text-purple-400" />
+                            <span>Non-editable</span>
+                          </span>
+                        </div>
+                        <pre className="p-3 bg-[#131722] border border-purple-800/40 rounded-xl text-[11px] font-mono text-purple-200/90 max-h-48 overflow-y-auto whitespace-pre leading-relaxed select-all">
+                          {previewQuestion.starterCode || (previewQuestion.starterCodes ? JSON.parse(previewQuestion.starterCodes)?.JAVA : "") || "// Pre-configured driver code"}
+                        </pre>
                       </div>
 
                       {previewQuestion.testCases && previewQuestion.testCases.length > 0 && (

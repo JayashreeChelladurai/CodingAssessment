@@ -27,6 +27,7 @@ import {
   Tag,
   Loader2,
   MoreVertical,
+  Lock,
 } from "lucide-react";
 
 interface AdminQuestionBankProps {
@@ -683,6 +684,12 @@ export const AdminQuestionBank: React.FC<AdminQuestionBankProps> = ({ onBack }) 
                         </div>
 
                         <div className="flex items-center gap-2">
+                          {q.type === "CODING" && (
+                            <span className="text-[10px] font-mono text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800/40 flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5 text-purple-400" />
+                              <span>Locked Starter</span>
+                            </span>
+                          )}
                           {q.type === "CODING" && q.testCases && (
                             <span className="text-[10px] text-slate-500 font-mono">
                               {q.testCases.length} test cases
@@ -1178,9 +1185,15 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
           {/* CODING SPECIFIC SECTION */}
           {type === "CODING" && (
             <div className="space-y-4 pt-4 border-t border-slate-800">
-              <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                Coding Execution & Starter Code
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                  Coding Execution & Starter Code
+                </span>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-800/60 flex items-center gap-1.5 shadow-sm">
+                  <Lock className="w-3 h-3 text-purple-400" />
+                  <span>Non-editable (Read-Only)</span>
+                </span>
+              </div>
 
               {/* Languages & Boilerplates */}
               <div className="space-y-2">
@@ -1192,7 +1205,7 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
                       onClick={() => setActiveCodeTab(lang)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
                         activeCodeTab === lang
-                          ? "bg-slate-800 text-emerald-400 border border-slate-700"
+                          ? "bg-purple-900/60 text-purple-200 border border-purple-700/60"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
@@ -1201,15 +1214,20 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
                   ))}
                 </div>
 
-                <textarea
-                  rows={6}
-                  value={starterCodes[activeCodeTab] || ""}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setStarterCodes((prev) => ({ ...prev, [activeCodeTab]: val }));
-                  }}
-                  className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-emerald-400 font-mono focus:outline-none focus:border-emerald-500"
-                />
+                <div className="space-y-1.5">
+                  <textarea
+                    rows={8}
+                    readOnly
+                    value={starterCodes[activeCodeTab] || ""}
+                    className="w-full p-3.5 bg-[#131722] border border-purple-800/40 rounded-xl text-xs text-purple-200/90 font-mono select-all focus:outline-none cursor-not-allowed selection:bg-purple-900 selection:text-white"
+                  />
+                  <div className="text-[11px] text-slate-400 bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span>
+                      <strong className="text-purple-300">Question Bank Driver:</strong> Starter code includes the standardized automated test runner & driver. It is locked across all questions in QB to guarantee evaluation integrity.
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Test Cases Editor */}

@@ -19,7 +19,8 @@ import {
   Shield,
   RotateCcw,
   CheckCircle,
-  Check
+  Check,
+  Lock,
 } from "lucide-react";
 
 interface AdminAssessmentEditorProps {
@@ -1711,11 +1712,17 @@ int main() {
                           {/* Language Starter Code Boilerplates */}
                           <div className="space-y-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
                             <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-800">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <Code2 className="w-4 h-4 text-emerald-400" />
                                 <span className="text-xs font-bold uppercase tracking-wider text-white">
                                   Default Starter Code Boilerplates
                                 </span>
+                                {Boolean(q.bankQuestionId) && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-800/60 flex items-center gap-1 shadow-sm">
+                                    <Lock className="w-2.5 h-2.5 text-purple-400" />
+                                    <span>QB Locked (Non-editable)</span>
+                                  </span>
+                                )}
                                 <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">
                                   (Students see this template pre-filled when they switch languages)
                                 </span>
@@ -1758,6 +1765,7 @@ int main() {
                             {(() => {
                               const qKey = q.id || `${secIdx}-${qIdx}`;
                               const activeTab = starterCodeTabs[qKey] || "JAVA";
+                              const isFromBank = Boolean(q.bankQuestionId);
 
                               if (activeTab === "SPLIT") {
                                 return (
@@ -1765,31 +1773,41 @@ int main() {
                                     {/* Java */}
                                     <div className="space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
                                       <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1">
+                                        <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1.5">
                                           <span>☕ Java Starter Code</span>
+                                          {isFromBank && (
+                                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800/60 flex items-center gap-1">
+                                              <Lock className="w-2.5 h-2.5 text-purple-400" />
+                                              <span>Locked</span>
+                                            </span>
+                                          )}
                                         </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            handleUpdateQuestion(secIdx, qIdx, {
-                                              starterCodes: {
-                                                ...(q.starterCodes || {}),
-                                                JAVA: DEFAULT_BOILERPLATES.JAVA,
-                                              },
-                                              starterCode: DEFAULT_BOILERPLATES.JAVA,
-                                            });
-                                          }}
-                                          className="text-[10px] text-slate-500 hover:text-amber-300 flex items-center gap-1"
-                                          title="Reset to clean Java template"
-                                        >
-                                          <RotateCcw className="w-2.5 h-2.5" />
-                                          <span>Reset</span>
-                                        </button>
+                                        {!isFromBank && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              handleUpdateQuestion(secIdx, qIdx, {
+                                                starterCodes: {
+                                                  ...(q.starterCodes || {}),
+                                                  JAVA: DEFAULT_BOILERPLATES.JAVA,
+                                                },
+                                                starterCode: DEFAULT_BOILERPLATES.JAVA,
+                                              });
+                                            }}
+                                            className="text-[10px] text-slate-500 hover:text-amber-300 flex items-center gap-1"
+                                            title="Reset to clean Java template"
+                                          >
+                                            <RotateCcw className="w-2.5 h-2.5" />
+                                            <span>Reset</span>
+                                          </button>
+                                        )}
                                       </div>
                                       <textarea
                                         rows={12}
+                                        readOnly={isFromBank}
                                         value={q.starterCodes?.JAVA || ""}
                                         onChange={(e) => {
+                                          if (isFromBank) return;
                                           handleUpdateQuestion(secIdx, qIdx, {
                                             starterCodes: {
                                               ...(q.starterCodes || {}),
@@ -1799,7 +1817,11 @@ int main() {
                                           });
                                         }}
                                         placeholder="Enter default Java starter code for students..."
-                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-slate-100 leading-relaxed focus:outline-none focus:border-amber-500 resize-y min-h-[240px]"
+                                        className={`w-full p-3 ${
+                                          isFromBank
+                                            ? "bg-[#131722] border-purple-800/40 text-purple-200/90 cursor-not-allowed select-all"
+                                            : "bg-slate-950 border-slate-800 text-slate-100 focus:border-amber-500"
+                                        } border rounded-lg font-mono text-xs leading-relaxed focus:outline-none resize-y min-h-[240px]`}
                                         spellCheck={false}
                                       />
                                     </div>
@@ -1807,30 +1829,40 @@ int main() {
                                     {/* C */}
                                     <div className="space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
                                       <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-bold text-blue-400 flex items-center gap-1">
+                                        <span className="text-[11px] font-bold text-blue-400 flex items-center gap-1.5">
                                           <span>⚙️ C Starter Code</span>
+                                          {isFromBank && (
+                                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800/60 flex items-center gap-1">
+                                              <Lock className="w-2.5 h-2.5 text-purple-400" />
+                                              <span>Locked</span>
+                                            </span>
+                                          )}
                                         </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            handleUpdateQuestion(secIdx, qIdx, {
-                                              starterCodes: {
-                                                ...(q.starterCodes || {}),
-                                                C: DEFAULT_BOILERPLATES.C,
-                                              },
-                                            });
-                                          }}
-                                          className="text-[10px] text-slate-500 hover:text-blue-300 flex items-center gap-1"
-                                          title="Reset to clean C template"
-                                        >
-                                          <RotateCcw className="w-2.5 h-2.5" />
-                                          <span>Reset</span>
-                                        </button>
+                                        {!isFromBank && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              handleUpdateQuestion(secIdx, qIdx, {
+                                                starterCodes: {
+                                                  ...(q.starterCodes || {}),
+                                                  C: DEFAULT_BOILERPLATES.C,
+                                                },
+                                              });
+                                            }}
+                                            className="text-[10px] text-slate-500 hover:text-blue-300 flex items-center gap-1"
+                                            title="Reset to clean C template"
+                                          >
+                                            <RotateCcw className="w-2.5 h-2.5" />
+                                            <span>Reset</span>
+                                          </button>
+                                        )}
                                       </div>
                                       <textarea
                                         rows={12}
+                                        readOnly={isFromBank}
                                         value={q.starterCodes?.C || ""}
                                         onChange={(e) => {
+                                          if (isFromBank) return;
                                           handleUpdateQuestion(secIdx, qIdx, {
                                             starterCodes: {
                                               ...(q.starterCodes || {}),
@@ -1839,7 +1871,11 @@ int main() {
                                           });
                                         }}
                                         placeholder="Enter default C starter code for students..."
-                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-slate-100 leading-relaxed focus:outline-none focus:border-blue-500 resize-y min-h-[240px]"
+                                        className={`w-full p-3 ${
+                                          isFromBank
+                                            ? "bg-[#131722] border-purple-800/40 text-purple-200/90 cursor-not-allowed select-all"
+                                            : "bg-slate-950 border-slate-800 text-slate-100 focus:border-blue-500"
+                                        } border rounded-lg font-mono text-xs leading-relaxed focus:outline-none resize-y min-h-[240px]`}
                                         spellCheck={false}
                                       />
                                     </div>
@@ -1847,30 +1883,40 @@ int main() {
                                     {/* C++ */}
                                     <div className="space-y-1.5 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
                                       <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-bold text-cyan-400 flex items-center gap-1">
+                                        <span className="text-[11px] font-bold text-cyan-400 flex items-center gap-1.5">
                                           <span>⚡ C++ Starter Code</span>
+                                          {isFromBank && (
+                                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800/60 flex items-center gap-1">
+                                              <Lock className="w-2.5 h-2.5 text-purple-400" />
+                                              <span>Locked</span>
+                                            </span>
+                                          )}
                                         </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            handleUpdateQuestion(secIdx, qIdx, {
-                                              starterCodes: {
-                                                ...(q.starterCodes || {}),
-                                                CPP: DEFAULT_BOILERPLATES.CPP,
-                                              },
-                                            });
-                                          }}
-                                          className="text-[10px] text-slate-500 hover:text-cyan-300 flex items-center gap-1"
-                                          title="Reset to clean C++ template"
-                                        >
-                                          <RotateCcw className="w-2.5 h-2.5" />
-                                          <span>Reset</span>
-                                        </button>
+                                        {!isFromBank && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              handleUpdateQuestion(secIdx, qIdx, {
+                                                starterCodes: {
+                                                  ...(q.starterCodes || {}),
+                                                  CPP: DEFAULT_BOILERPLATES.CPP,
+                                                },
+                                              });
+                                            }}
+                                            className="text-[10px] text-slate-500 hover:text-cyan-300 flex items-center gap-1"
+                                            title="Reset to clean C++ template"
+                                          >
+                                            <RotateCcw className="w-2.5 h-2.5" />
+                                            <span>Reset</span>
+                                          </button>
+                                        )}
                                       </div>
                                       <textarea
                                         rows={12}
+                                        readOnly={isFromBank}
                                         value={q.starterCodes?.CPP || ""}
                                         onChange={(e) => {
+                                          if (isFromBank) return;
                                           handleUpdateQuestion(secIdx, qIdx, {
                                             starterCodes: {
                                               ...(q.starterCodes || {}),
@@ -1879,7 +1925,11 @@ int main() {
                                           });
                                         }}
                                         placeholder="Enter default C++ starter code for students..."
-                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-slate-100 leading-relaxed focus:outline-none focus:border-cyan-500 resize-y min-h-[240px]"
+                                        className={`w-full p-3 ${
+                                          isFromBank
+                                            ? "bg-[#131722] border-purple-800/40 text-purple-200/90 cursor-not-allowed select-all"
+                                            : "bg-slate-950 border-slate-800 text-slate-100 focus:border-cyan-500"
+                                        } border rounded-lg font-mono text-xs leading-relaxed focus:outline-none resize-y min-h-[240px]`}
                                         spellCheck={false}
                                       />
                                     </div>
@@ -1905,33 +1955,43 @@ int main() {
                                       <span className={`font-bold ${langLabels.color}`}>
                                         {langLabels.title}
                                       </span>
+                                      {isFromBank && (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-800/60 flex items-center gap-1 shadow-sm">
+                                          <Lock className="w-2.5 h-2.5 text-purple-400" />
+                                          <span>Locked Question Bank Starter</span>
+                                        </span>
+                                      )}
                                       <span className="text-[10px] text-slate-500 font-mono">
                                         ({lineCount} lines, {currentVal.length} chars)
                                       </span>
                                     </div>
 
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        handleUpdateQuestion(secIdx, qIdx, {
-                                          starterCodes: {
-                                            ...(q.starterCodes || {}),
-                                            [langKey]: DEFAULT_BOILERPLATES[langKey],
-                                          },
-                                          ...(langKey === "JAVA" ? { starterCode: DEFAULT_BOILERPLATES.JAVA } : {}),
-                                        });
-                                      }}
-                                      className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition"
-                                    >
-                                      <RotateCcw className="w-3 h-3 text-slate-400" />
-                                      <span>Reset to Clean Template</span>
-                                    </button>
+                                    {!isFromBank && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleUpdateQuestion(secIdx, qIdx, {
+                                            starterCodes: {
+                                              ...(q.starterCodes || {}),
+                                              [langKey]: DEFAULT_BOILERPLATES[langKey],
+                                            },
+                                            ...(langKey === "JAVA" ? { starterCode: DEFAULT_BOILERPLATES.JAVA } : {}),
+                                          });
+                                        }}
+                                        className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition"
+                                      >
+                                        <RotateCcw className="w-3 h-3 text-slate-400" />
+                                        <span>Reset to Clean Template</span>
+                                      </button>
+                                    )}
                                   </div>
 
                                   <textarea
                                     rows={14}
+                                    readOnly={isFromBank}
                                     value={currentVal}
                                     onChange={(e) => {
+                                      if (isFromBank) return;
                                       handleUpdateQuestion(secIdx, qIdx, {
                                         starterCodes: {
                                           ...(q.starterCodes || {}),
@@ -1941,7 +2001,11 @@ int main() {
                                       });
                                     }}
                                     placeholder={`Enter default starter code template for ${langKey}...`}
-                                    className={`w-full p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-xs text-slate-100 leading-relaxed focus:outline-none ${langLabels.border} resize-y min-h-[280px] shadow-inner`}
+                                    className={`w-full p-4 ${
+                                      isFromBank
+                                        ? "bg-[#131722] border-purple-800/40 text-purple-200/90 cursor-not-allowed select-all"
+                                        : `bg-slate-950 border-slate-800 text-slate-100 ${langLabels.border}`
+                                    } border rounded-xl font-mono text-xs leading-relaxed focus:outline-none resize-y min-h-[280px] shadow-inner`}
                                     spellCheck={false}
                                   />
                                 </div>
