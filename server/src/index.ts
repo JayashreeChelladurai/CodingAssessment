@@ -10,6 +10,7 @@ import { studentRouter } from "./routes/student.js";
 import { executionRouter } from "./routes/execution.js";
 import { resultsRouter } from "./routes/results.js";
 import { authRouter } from "./routes/auth.js";
+import { questionBankRouter } from "./routes/questionBank.js";
 import { initDatabaseOptimizations } from "./db.js";
 
 initDatabaseOptimizations();
@@ -42,6 +43,7 @@ setupSocketService(io);
 // API Routes
 app.use("/api/auth", authRouter);
 app.use("/api/assessments", assessmentRouter);
+app.use("/api/question-bank", questionBankRouter);
 app.use("/api/student", studentRouter);
 app.use("/api/execution", executionRouter);
 app.use("/api/results", resultsRouter);

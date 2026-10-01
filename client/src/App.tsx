@@ -8,6 +8,7 @@ import { AdminDashboard } from "./pages/AdminDashboard";
 import { AdminLiveMonitor } from "./pages/AdminLiveMonitor";
 import { AdminGradebook } from "./pages/AdminGradebook";
 import { AdminAssessmentEditor } from "./pages/AdminAssessmentEditor";
+import { AdminQuestionBank } from "./pages/AdminQuestionBank";
 import { api } from "./services/api";
 
 type ViewMode =
@@ -18,7 +19,8 @@ type ViewMode =
   | "admin-dashboard"
   | "admin-live"
   | "admin-gradebook"
-  | "admin-editor";
+  | "admin-editor"
+  | "admin-question-bank";
 
 const isAttemptValid = (att: any, asmt: any): boolean => {
   if (!att || !asmt) return false;
@@ -187,7 +189,14 @@ export function App() {
             api.setAttemptToken(null);
             setView("student-login");
           }}
+          onNavigateToQuestionBank={() => {
+            setView("admin-question-bank");
+          }}
         />
+      )}
+
+      {view === "admin-question-bank" && (
+        <AdminQuestionBank onBack={() => setView("admin-dashboard")} />
       )}
 
       {view === "admin-live" && activeAssessment && (

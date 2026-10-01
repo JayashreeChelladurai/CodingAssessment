@@ -37,3 +37,21 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #4f5379;
 }
+
+/* Monaco Editor: Dimmed Boilerplate Scaffolding */
+.monaco-editor .monaco-dimmed-line {
+  opacity: 0.38 !important;
+  filter: saturate(0.60);
+  transition: opacity 0.2s ease-in-out;
+}
+
+.monaco-editor .monaco-dimmed-line:hover {
+  opacity: 0.90 !important;
+  filter: saturate(1.0);
+}
+
+/* Monaco Editor: Active Solution Logic Gutter Marker */
+.monaco-editor .monaco-active-gutter-marker {
+  border-left: 3px solid #10b981 !important;
+  margin-left: 2px;
+}

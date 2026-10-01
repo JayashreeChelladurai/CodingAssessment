@@ -127,6 +127,8 @@ assessmentRouter.post("/", async (req, res) => {
       sebQuitPassword,
       isReviewUnlocked,
       reviewUnlockTime,
+      isRandomized,
+      randomConfig,
       sections,
       questions,
     } = req.body;
@@ -156,6 +158,8 @@ assessmentRouter.post("/", async (req, res) => {
         sebQuitPassword: sebQuitPassword || "exit123",
         isReviewUnlocked: !!isReviewUnlocked,
         reviewUnlockTime: reviewUnlockTime ? new Date(reviewUnlockTime) : null,
+        isRandomized: !!isRandomized,
+        randomConfig: typeof randomConfig === "string" ? randomConfig : JSON.stringify(randomConfig || {}),
       },
     });
 
@@ -218,6 +222,8 @@ assessmentRouter.put("/:id", async (req, res) => {
       sebQuitPassword,
       isReviewUnlocked,
       reviewUnlockTime,
+      isRandomized,
+      randomConfig,
       sections,
       questions,
     } = req.body;
@@ -240,21 +246,29 @@ assessmentRouter.put("/:id", async (req, res) => {
 
     const updated = await prisma.$transaction(async (tx) => {
       // 1. Update Assessment meta
+      const updateData: any = {
+        title,
+        description: description || "",
+        code: cleanCode,
+        durationMinutes: Number(durationMinutes) || 60,
+        startTime: startTime ? new Date(startTime) : null,
+        endTime: endTime ? new Date(endTime) : null,
+        shuffleQuestions: shuffleQuestions ?? true,
+        requireSeb: requireSeb ?? true,
+        sebQuitPassword: sebQuitPassword || "exit123",
+        isReviewUnlocked: !!isReviewUnlocked,
+        reviewUnlockTime: reviewUnlockTime ? new Date(reviewUnlockTime) : null,
+      };
+      if (isRandomized !== undefined) {
+        updateData.isRandomized = !!isRandomized;
+      }
+      if (randomConfig !== undefined) {
+        updateData.randomConfig = typeof randomConfig === "string" ? randomConfig : JSON.stringify(randomConfig);
+      }
+
       await tx.assessment.update({
         where: { id },
-        data: {
-          title,
-          description: description || "",
-          code: cleanCode,
-          durationMinutes: Number(durationMinutes) || 60,
-          startTime: startTime ? new Date(startTime) : null,
-          endTime: endTime ? new Date(endTime) : null,
-          shuffleQuestions: shuffleQuestions ?? true,
-          requireSeb: requireSeb ?? true,
-          sebQuitPassword: sebQuitPassword || "exit123",
-          isReviewUnlocked: !!isReviewUnlocked,
-          reviewUnlockTime: reviewUnlockTime ? new Date(reviewUnlockTime) : null,
-        },
+        data: updateData,
       });
 
       // 2. Fetch existing sections and questions to diff against
@@ -315,11 +329,15 @@ assessmentRouter.put("/:id", async (req, res) => {
       }
 
       // 4. Safely delete ONLY questions and sections that the instructor actually removed
-      const questionsToDelete = existingQuestions.filter((q) => !keptQuestionIds.has(q.id));
-      if (questionsToDelete.length > 0) {
-        await tx.question.deleteMany({
-          where: { id: { in: questionsToDelete.map((q) => q.id) } },
-        });
+      // For randomized assessments from Question Bank, do NOT delete dynamic student questions
+      const isRandomExam = Boolean(isRandomized !== undefined ? isRandomized : updateData.isRandomized);
+      if (!isRandomExam) {
+        const questionsToDelete = existingQuestions.filter((q) => !keptQuestionIds.has(q.id));
+        if (questionsToDelete.length > 0) {
+          await tx.question.deleteMany({
+            where: { id: { in: questionsToDelete.map((q) => q.id) } },
+          });
+        }
       }
 
       const sectionsToDelete = existingSections.filter((s) => !keptSectionIds.has(s.id));
@@ -651,6 +669,66 @@ assessmentRouter.post("/admin/students/:rollNo/reset-password", async (req, res)
       });
       return res.json({ success: true, message: `Student registration for ${cleanRollNo} reset. Student can re-register.` });
     }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 14. Admin manually register new student
+assessmentRouter.post("/admin/students", async (req, res) => {
+  try {
+    const { rollNo, name, password } = req.body;
+    if (!rollNo || !name || !password) {
+      return res.status(400).json({ error: "Roll number, name, and password are all required." });
+    }
+    const cleanRollNo = rollNo.trim().toUpperCase();
+    const cleanName = name.trim();
+
+    if (cleanRollNo.length < 2) {
+      return res.status(400).json({ error: "Roll number must be at least 2 characters." });
+    }
+    if (cleanName.length < 2) {
+      return res.status(400).json({ error: "Full name must be at least 2 characters." });
+    }
+    if (password.length < 4) {
+      return res.status(400).json({ error: "Password must be at least 4 characters long." });
+    }
+
+    const existing = await prisma.student.findUnique({ where: { rollNo: cleanRollNo } });
+    if (existing) {
+      return res.status(409).json({ error: `Roll number '${cleanRollNo}' is already registered.` });
+    }
+
+    const hashedPassword = hashStudentPassword(password);
+    const created = await prisma.student.create({
+      data: {
+        rollNo: cleanRollNo,
+        name: cleanName,
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+        rollNo: true,
+        name: true,
+        createdAt: true,
+      },
+    });
+
+    res.status(201).json({ success: true, student: created });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 15. Admin delete student account
+assessmentRouter.delete("/admin/students/:rollNo", async (req, res) => {
+  try {
+    const { rollNo } = req.params;
+    const cleanRollNo = (rollNo || "").trim().toUpperCase();
+    await prisma.student.delete({
+      where: { rollNo: cleanRollNo },
+    });
+    res.json({ success: true, message: `Student '${cleanRollNo}' deleted successfully.` });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

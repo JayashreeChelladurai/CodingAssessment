@@ -21,12 +21,14 @@ import {
   Lock,
   Unlock
 } from "lucide-react";
+import { StudentManagementModal } from "../components/admin/StudentManagementModal";
 
 interface AdminDashboardProps {
   onNavigateToLive: (assessment: Assessment) => void;
   onNavigateToGradebook: (assessment: Assessment) => void;
   onNavigateToEditor: (assessment?: Assessment | null) => void;
   onNavigateToStudent: () => void;
+  onNavigateToQuestionBank: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -34,10 +36,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onNavigateToGradebook,
   onNavigateToEditor,
   onNavigateToStudent,
+  onNavigateToQuestionBank,
 }) => {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
+  const [showStudentsModal, setShowStudentsModal] = useState<boolean>(false);
 
   useEffect(() => {
     loadAssessments();
@@ -113,6 +117,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <GraduationCap className="w-4 h-4 text-emerald-400" />
             <span>Student Exam View</span>
+          </button>
+
+          <button
+            onClick={onNavigateToQuestionBank}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-950/40 text-indigo-300 hover:bg-indigo-900/50 transition border border-indigo-800/40"
+          >
+            <Layers className="w-4 h-4 text-indigo-400" />
+            <span>Question Bank</span>
+          </button>
+
+          <button
+            onClick={() => setShowStudentsModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 transition border border-cyan-800/40"
+          >
+            <Users className="w-4 h-4 text-cyan-400" />
+            <span>Students & Passwords</span>
           </button>
 
           <button
@@ -352,6 +372,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
       )}
+
+      <StudentManagementModal
+        isOpen={showStudentsModal}
+        onClose={() => setShowStudentsModal(false)}
+      />
     </div>
   );
 };

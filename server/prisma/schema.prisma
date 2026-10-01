@@ -20,7 +20,7 @@ model Assessment {
   title                String
   description          String           @default("")
   code                 String           @unique
-  durationMinutes      Int              @default(60)
+  durationMinutes      Int              @default(90)
   startTime            DateTime?
   endTime              DateTime?
   shuffleQuestions     Boolean          @default(true)
@@ -28,6 +28,8 @@ model Assessment {
   sebQuitPassword      String           @default("exit123")
   isReviewUnlocked     Boolean          @default(false)
   reviewUnlockTime     DateTime?
+  isRandomized         Boolean          @default(false)
+  randomConfig         String           @default("{}") // JSON: { sourceFolderId: string, easyCount: 1, mediumCount: 1, hardCount: 1 }
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   sections             Section[]
@@ -97,7 +99,7 @@ model StudentAttempt {
   status           String       @default("IN_PROGRESS") // IN_PROGRESS, LOCKED_OUT, SUBMITTED, TIME_EXPIRED
   startedAt        DateTime     @default(now())
   submittedAt      DateTime?
-  remainingSeconds Int          @default(3600)
+  remainingSeconds Int          @default(5400)
   lastHeartbeat    DateTime     @default(now())
   questionOrder    String       @default("[]") // JSON array of randomized question IDs for this student
   optionOrders     String       @default("{}") // JSON map: { questionId: ["opt-3", "opt-1", ...] }
@@ -158,4 +160,60 @@ model Student {
   password  String   // Salted PBKDF2 hashed password
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model QuestionFolder {
+  id          String           @id @default(uuid())
+  name        String
+  description String           @default("")
+  parentId    String?
+  parent      QuestionFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    QuestionFolder[] @relation("FolderHierarchy")
+  order       Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  questions   BankQuestion[]
+}
+
+model BankQuestion {
+  id               String          @id @default(uuid())
+  folderId         String?
+  folder           QuestionFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  type             String          @default("CODING") // "CODING" | "MCQ"
+  title            String
+  description      String          // Markdown problem statement or question
+  difficulty       String          @default("MEDIUM") // "EASY" | "MEDIUM" | "HARD"
+  tags             String          @default("") // Comma-separated or JSON array of tags
+  marks            Float           @default(10.0)
+  negativeMarks    Float           @default(0.0)
+  order            Int             @default(0)
+
+  // MCQ Specific Fields
+  mcqType          String          @default("SINGLE") // "SINGLE" | "MULTIPLE"
+  options          String          @default("[]") // JSON: [{ id: "opt-1", text: "..." }]
+  correctAnswers   String          @default("[]") // JSON: ["opt-1"]
+  explanation      String          @default("")
+
+  // Coding Specific Fields
+  allowedLanguages String          @default("JAVA,C,CPP")
+  starterCodes     String          @default("{}") // JSON: { "JAVA": "...", "C": "...", "CPP": "..." }
+  starterCode      String          @default("")
+  timeLimitSeconds Int             @default(3)
+  memoryLimitMb    Int             @default(256)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  testCases        BankTestCase[]
+}
+
+model BankTestCase {
+  id             String       @id @default(uuid())
+  bankQuestionId String
+  bankQuestion   BankQuestion @relation(fields: [bankQuestionId], references: [id], onDelete: Cascade)
+  input          String       @default("")
+  expectedOutput String
+  isPublic       Boolean      @default(true)
+  weight         Float        @default(1.0)
+  order          Int          @default(0)
+  createdAt      DateTime     @default(now())
 }

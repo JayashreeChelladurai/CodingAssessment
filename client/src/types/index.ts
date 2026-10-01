@@ -58,6 +58,8 @@ export interface Assessment {
   sebQuitPassword?: string;
   isReviewUnlocked?: boolean;
   reviewUnlockTime?: string | null;
+  isRandomized?: boolean;
+  randomConfig?: string;
   sections?: Section[];
   questions?: Question[];
   attempts?: StudentAttempt[];
@@ -139,4 +141,52 @@ export interface CodingGradingResponse {
   totalTestCases: number;
   compilationError?: string;
   results: TestCaseEvaluationResult[];
+}
+
+export interface QuestionFolder {
+  id: string;
+  name: string;
+  description?: string;
+  parentId?: string | null;
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    questions: number;
+  };
+}
+
+export interface BankQuestion {
+  id: string;
+  folderId?: string | null;
+  folder?: {
+    id: string;
+    name: string;
+    parentId?: string | null;
+  };
+  type: "CODING" | "MCQ";
+  title: string;
+  description: string;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  tags?: string;
+  marks: number;
+  negativeMarks?: number;
+  order: number;
+
+  // MCQ fields
+  mcqType?: "SINGLE" | "MULTIPLE";
+  options?: string; // JSON: McqOption[]
+  correctAnswers?: string; // JSON: string[]
+  explanation?: string;
+
+  // Coding fields
+  allowedLanguages?: string;
+  starterCodes?: string;
+  starterCode?: string;
+  timeLimitSeconds?: number;
+  memoryLimitMb?: number;
+  testCases?: TestCase[];
+
+  createdAt?: string;
+  updatedAt?: string;
 }

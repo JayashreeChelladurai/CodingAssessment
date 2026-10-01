@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Assessment, Question, Section } from "../types";
+import { Assessment, Question, Section, BankQuestion } from "../types";
 import { api } from "../services/api";
 import { DateTimePicker } from "../components/common/DateTimePicker";
+import { QuestionBankModal } from "../components/admin/QuestionBankModal";
 import {
   ArrowLeft,
   Save,
@@ -36,7 +37,7 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
   const [description, setDescription] = useState<string>(initialAssessment?.description || "");
   const [code, setCode] = useState<string>(initialAssessment?.code || "");
   const [durationMinutes, setDurationMinutes] = useState<number>(
-    initialAssessment?.durationMinutes || 60
+    initialAssessment?.durationMinutes || 90
   );
 
   // Formatting date for HTML datetime-local or DateTimePicker
@@ -83,6 +84,10 @@ export const AdminAssessmentEditor: React.FC<AdminAssessmentEditorProps> = ({
 
   // Active Starter Code Tab per coding question
   const [starterCodeTabs, setStarterCodeTabs] = useState<Record<string, string>>({});
+
+  // Question Bank import modal state
+  const [showQbModal, setShowQbModal] = useState<boolean>(false);
+  const [qbTargetSectionIndex, setQbTargetSectionIndex] = useState<number | null>(null);
 
   const DEFAULT_BOILERPLATES: Record<string, string> = {
     JAVA: `import java.util.*;
@@ -158,7 +163,7 @@ int main() {
       ],
       correctAnswers: correctAnswers.length > 0 ? correctAnswers : ["opt-1"],
       explanation: q.explanation || "",
-      allowedLanguages: q.allowedLanguages || "JAVA,C,CPP",
+      allowedLanguages: q.allowedLanguages || "JAVA",
       starterCodes,
       starterCode: q.starterCode || starterCodes.JAVA,
       timeLimitSeconds: Number(q.timeLimitSeconds) || 3,
@@ -238,7 +243,7 @@ int main() {
             marks: 48,
             timeLimitSeconds: 3,
             memoryLimitMb: 256,
-            allowedLanguages: "JAVA,C,CPP",
+            allowedLanguages: "JAVA",
             starterCodes: {
               JAVA: "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        int sum = 0;\n        for(int i=0; i<n; i++) sum += sc.nextInt();\n        System.out.println(sum);\n    }\n}\n",
               C: "#include <stdio.h>\n\nint main() {\n    int n, x, sum = 0;\n    if(scanf(\"%d\", &n) != 1) return 0;\n    for(int i=0; i<n; i++) { scanf(\"%d\", &x); sum += x; }\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
@@ -328,7 +333,7 @@ int main() {
       marks: 48,
       timeLimitSeconds: 3,
       memoryLimitMb: 256,
-      allowedLanguages: "JAVA,C,CPP",
+      allowedLanguages: "JAVA",
       starterCodes: {
         JAVA: "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        // Java\n    }\n}\n",
         C: "#include <stdio.h>\n\nint main() {\n    // C\n    return 0;\n}\n",
@@ -354,6 +359,84 @@ int main() {
         return copy;
       });
     }
+  };
+
+  const handleImportFromBank = (importedBankQuestions: BankQuestion[]) => {
+    if (qbTargetSectionIndex === null || importedBankQuestions.length === 0) return;
+
+    const clonedQuestions = importedBankQuestions.map((bq, idx) => {
+      const qId = `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${idx}`;
+
+      let parsedOptions = [];
+      try {
+        parsedOptions = typeof bq.options === "string" ? JSON.parse(bq.options) : bq.options || [];
+      } catch {
+        parsedOptions = [];
+      }
+
+      let parsedCorrect = [];
+      try {
+        parsedCorrect = typeof bq.correctAnswers === "string" ? JSON.parse(bq.correctAnswers) : bq.correctAnswers || [];
+      } catch {
+        parsedCorrect = [];
+      }
+
+      let parsedStarterCodes = {};
+      try {
+        parsedStarterCodes = typeof bq.starterCodes === "string" ? JSON.parse(bq.starterCodes) : bq.starterCodes || {};
+      } catch {
+        parsedStarterCodes = {};
+      }
+
+      const clonedTestCases = (bq.testCases || []).map((tc, tcIdx) => ({
+        id: `tc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${tcIdx}`,
+        input: tc.input || "",
+        expectedOutput: tc.expectedOutput || "",
+        isPublic: tc.isPublic !== false,
+        weight: tc.weight || 1,
+        order: tc.order ?? tcIdx,
+      }));
+
+      return {
+        id: qId,
+        type: bq.type,
+        title: bq.title,
+        description: bq.description,
+        marks: bq.marks || 10,
+        negativeMarks: bq.negativeMarks || 0,
+        order: 0,
+        // MCQ
+        mcqType: bq.mcqType || "SINGLE",
+        options: parsedOptions,
+        correctAnswers: parsedCorrect,
+        explanation: bq.explanation || "",
+        // Coding
+        allowedLanguages: bq.allowedLanguages || "JAVA",
+        starterCodes: parsedStarterCodes,
+        starterCode: bq.starterCode || "",
+        timeLimitSeconds: bq.timeLimitSeconds || 3,
+        memoryLimitMb: bq.memoryLimitMb || 256,
+        testCases: clonedTestCases,
+      };
+    });
+
+    setSections((prev) =>
+      prev.map((sec, sIdx) =>
+        sIdx === qbTargetSectionIndex
+          ? { ...sec, questions: [...sec.questions, ...clonedQuestions] }
+          : sec
+      )
+    );
+
+    if (fieldErrors[`section-questions-${qbTargetSectionIndex}`]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[`section-questions-${qbTargetSectionIndex}`];
+        return copy;
+      });
+    }
+
+    setQbTargetSectionIndex(null);
   };
 
   const handleRemoveQuestion = (secIdx: number, qIdx: number) => {
@@ -1004,6 +1087,18 @@ int main() {
 
                   <button
                     type="button"
+                    onClick={() => {
+                      setQbTargetSectionIndex(secIdx);
+                      setShowQbModal(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-950/40 text-indigo-300 border border-indigo-800/40 hover:bg-indigo-900/50 transition"
+                  >
+                    <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>+ Import from Question Bank</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleCloneSection(secIdx)}
                     className="p-2 text-slate-500 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition"
                     title="Duplicate / Clone Section"
@@ -1154,7 +1249,7 @@ int main() {
                             <label className="block text-[11px] font-semibold text-slate-400 mb-1">Allowed Languages</label>
                             <input
                               type="text"
-                              value={q.allowedLanguages || "JAVA,C,CPP"}
+                              value={q.allowedLanguages || "JAVA"}
                               onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { allowedLanguages: e.target.value.toUpperCase() })}
                               className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono text-emerald-400"
                             />
@@ -1664,6 +1759,19 @@ int main() {
           </div>
         </div>
       </main>
+
+      {/* Question Bank Import Modal */}
+      {showQbModal && (
+        <QuestionBankModal
+          isOpen={showQbModal}
+          targetSectionTitle={qbTargetSectionIndex !== null ? sections[qbTargetSectionIndex]?.title : undefined}
+          onClose={() => {
+            setShowQbModal(false);
+            setQbTargetSectionIndex(null);
+          }}
+          onImport={handleImportFromBank}
+        />
+      )}
 
       {/* Save Success Toast */}
       {saveToast && (

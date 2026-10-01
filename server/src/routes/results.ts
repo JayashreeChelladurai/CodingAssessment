@@ -85,7 +85,18 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
       let mcqScore = 0;
       let codingScore = 0;
 
-      assessment.questions.forEach((q) => {
+      let assignedQIds: string[] = [];
+      try {
+        assignedQIds = JSON.parse(att.questionOrder || "[]");
+      } catch {}
+
+      const studentQuestions = (assessment.isRandomized && assignedQIds.length > 0)
+        ? assessment.questions.filter((q) => assignedQIds.includes(q.id))
+        : assessment.questions;
+
+      const studentMaxPossibleMarks = studentQuestions.reduce((sum, q) => sum + q.marks, 0);
+
+      studentQuestions.forEach((q) => {
         const sub = att.submissions.find((s) => s.questionId === q.id);
         const score = sub ? sub.score : 0;
         totalEarnedScore += score;
@@ -137,8 +148,10 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
         mcqScore: Number(mcqScore.toFixed(2)),
         codingScore: Number(codingScore.toFixed(2)),
         totalScore: Number(totalEarnedScore.toFixed(2)),
-        maxScore: totalPossibleMarks,
-        percentage: totalPossibleMarks > 0 ? Number(((totalEarnedScore / totalPossibleMarks) * 100).toFixed(1)) : 0,
+        maxScore: assessment.isRandomized ? studentMaxPossibleMarks : totalPossibleMarks,
+        percentage: (assessment.isRandomized ? studentMaxPossibleMarks : totalPossibleMarks) > 0
+          ? Number(((totalEarnedScore / (assessment.isRandomized ? studentMaxPossibleMarks : totalPossibleMarks)) * 100).toFixed(1))
+          : 0,
       };
     });
 
@@ -338,7 +351,16 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
         }
       });
 
-      const percentage = totalPossibleMarks > 0 ? ((totalEarnedScore / totalPossibleMarks) * 100).toFixed(1) : "0";
+      let assignedQIds: string[] = [];
+      try {
+        assignedQIds = JSON.parse(att.questionOrder || "[]");
+      } catch {}
+
+      const studentMax = assessment.isRandomized && assignedQIds.length > 0
+        ? assessment.questions.filter((q) => assignedQIds.includes(q.id)).reduce((s, q) => s + q.marks, 0)
+        : totalPossibleMarks;
+
+      const percentage = studentMax > 0 ? ((totalEarnedScore / studentMax) * 100).toFixed(1) : "0";
 
       rows.push([
         sanitizeCsvCell(att.rollNo),
@@ -350,7 +372,7 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
         sanitizeCsvCell(mcqScore.toFixed(2)),
         sanitizeCsvCell(codingScore.toFixed(2)),
         sanitizeCsvCell(totalEarnedScore.toFixed(2)),
-        sanitizeCsvCell(totalPossibleMarks.toString()),
+        sanitizeCsvCell(studentMax.toString()),
         sanitizeCsvCell(`${percentage}%`),
         ...questionColumns,
         sanitizeCsvCell(att.startedAt.toISOString()),

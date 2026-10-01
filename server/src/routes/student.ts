@@ -23,6 +23,20 @@ function shuffleArray<T>(array: T[]): T[] {
   return result;
 }
 
+// Recursively retrieve all descendant folder IDs for a question folder
+async function getDescendantFolderIds(rootFolderId: string): Promise<string[]> {
+  const result: string[] = [rootFolderId];
+  const children = await prisma.questionFolder.findMany({
+    where: { parentId: rootFolderId },
+    select: { id: true },
+  });
+  for (const child of children) {
+    const descendants = await getDescendantFolderIds(child.id);
+    result.push(...descendants);
+  }
+  return result;
+}
+
 // 0. Check student registration status by roll number
 studentRouter.get("/check-student/:rollNo", async (req, res) => {
   try {
@@ -48,6 +62,63 @@ studentRouter.get("/check-student/:rollNo", async (req, res) => {
     return res.json({
       exists: false,
       rollNo: cleanRollNo,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 0a. One-Time Student Registration (Irrespective of assessment)
+studentRouter.post("/register", async (req, res) => {
+  try {
+    const { rollNo, name, password } = req.body;
+    if (!rollNo || !name || !password) {
+      return res.status(400).json({
+        error: "Roll Number, Full Name, and Password are all required for registration.",
+      });
+    }
+
+    const cleanRollNo = rollNo.trim().toUpperCase();
+    const cleanName = name.trim();
+
+    if (cleanRollNo.length < 2) {
+      return res.status(400).json({ error: "Roll Number must be at least 2 characters long." });
+    }
+
+    if (cleanName.length < 2) {
+      return res.status(400).json({ error: "Full Name must be at least 2 characters long." });
+    }
+
+    if (password.length < 4) {
+      return res.status(400).json({ error: "Password must be at least 4 characters long." });
+    }
+
+    const existing = await prisma.student.findUnique({
+      where: { rollNo: cleanRollNo },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        error: `Roll number '${cleanRollNo}' is already registered. You can enter any assessment using your registered password. If you forgot your password, contact your instructor to reset it.`,
+      });
+    }
+
+    const hashedPassword = hashStudentPassword(password);
+    const student = await prisma.student.create({
+      data: {
+        rollNo: cleanRollNo,
+        name: cleanName,
+        password: hashedPassword,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Student registered successfully. You can now enter any assessment using this roll number and password.",
+      student: {
+        rollNo: student.rollNo,
+        name: student.name,
+      },
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -110,6 +181,24 @@ studentRouter.get("/info/:code", async (req, res) => {
 
     const isSeb = isSebRequest(req, cleanCode);
 
+    let totalQuestions = assessment.questions.length;
+    let totalMarks = assessment.questions.reduce((sum, q) => sum + q.marks, 0);
+
+    if (assessment.isRandomized) {
+      let cfg: any = {};
+      try {
+        cfg = JSON.parse(assessment.randomConfig || "{}");
+      } catch {}
+      const easyCount = Number(cfg.easyCount ?? 1);
+      const mediumCount = Number(cfg.mediumCount ?? 1);
+      const hardCount = Number(cfg.hardCount ?? 1);
+      totalQuestions = easyCount + mediumCount + hardCount;
+      const easyMarks = Number(cfg.easyMarks ?? 25);
+      const mediumMarks = Number(cfg.mediumMarks ?? 35);
+      const hardMarks = Number(cfg.hardMarks ?? 40);
+      totalMarks = (easyCount * easyMarks) + (mediumCount * mediumMarks) + (hardCount * hardMarks);
+    }
+
     res.json({
       assessment: {
         id: assessment.id,
@@ -120,9 +209,10 @@ studentRouter.get("/info/:code", async (req, res) => {
         startTime: assessment.startTime,
         endTime: assessment.endTime,
         requireSeb: assessment.requireSeb,
-        totalQuestions: assessment.questions.length,
-        totalMarks: assessment.questions.reduce((sum, q) => sum + q.marks, 0),
+        totalQuestions,
+        totalMarks,
         sections: assessment.sections,
+        isRandomized: assessment.isRandomized,
       },
       isSeb,
       canStart: !assessment.requireSeb || isSeb,
@@ -132,62 +222,247 @@ studentRouter.get("/info/:code", async (req, res) => {
   }
 });
 
+// Helper function to allocate randomized questions from Question Bank
+export async function populateRandomQuestionsForAssessment(
+  assessmentId: string,
+  randomConfigStr?: string | null
+): Promise<{ questionOrder: string[]; optionOrders: Record<string, string[]> }> {
+  let cfg: any = {};
+  try {
+    cfg = JSON.parse(randomConfigStr || "{}");
+  } catch {
+    cfg = {};
+  }
+
+  const easyCount = Number(cfg.easyCount ?? 1);
+  const mediumCount = Number(cfg.mediumCount ?? 1);
+  const hardCount = Number(cfg.hardCount ?? 1);
+
+  let folderIds: string[] = [];
+  if (cfg.sourceFolderId) {
+    folderIds = await getDescendantFolderIds(cfg.sourceFolderId);
+  } else if (cfg.sourceFolderName) {
+    const folder = await prisma.questionFolder.findFirst({
+      where: { name: cfg.sourceFolderName },
+    });
+    if (folder) {
+      folderIds = await getDescendantFolderIds(folder.id);
+    }
+  } else {
+    const folder = await prisma.questionFolder.findFirst({
+      where: { name: "Coding" },
+    });
+    if (folder) {
+      folderIds = await getDescendantFolderIds(folder.id);
+    } else {
+      const allFolders = await prisma.questionFolder.findMany({ select: { id: true } });
+      folderIds = allFolders.map((f) => f.id);
+    }
+  }
+
+  const bankQuestions = await prisma.bankQuestion.findMany({
+    where: {
+      folderId: folderIds.length > 0 ? { in: folderIds } : undefined,
+    },
+    include: {
+      testCases: { orderBy: { order: "asc" } },
+    },
+  });
+
+  const easyPool = bankQuestions.filter((q) => q.difficulty === "EASY");
+  const mediumPool = bankQuestions.filter((q) => q.difficulty === "MEDIUM");
+  const hardPool = bankQuestions.filter((q) => q.difficulty === "HARD");
+
+  const pickedEasy = shuffleArray(easyPool).slice(0, easyCount);
+  const pickedMedium = shuffleArray(mediumPool).slice(0, mediumCount);
+  const pickedHard = shuffleArray(hardPool).slice(0, hardCount);
+  const chosenBank = [...pickedEasy, ...pickedMedium, ...pickedHard];
+
+  const assignedQuestions: any[] = [];
+  for (let i = 0; i < chosenBank.length; i++) {
+    const bq = chosenBank[i];
+    let qRecord = await prisma.question.findFirst({
+      where: {
+        assessmentId,
+        title: bq.title,
+      },
+      include: {
+        testCases: {
+          where: { isPublic: true },
+          orderBy: { order: "asc" },
+        },
+      },
+    });
+
+    let expectedMarks = bq.marks;
+    if (bq.difficulty === "EASY") expectedMarks = Number(cfg.easyMarks ?? 25);
+    else if (bq.difficulty === "MEDIUM") expectedMarks = Number(cfg.mediumMarks ?? 35);
+    else if (bq.difficulty === "HARD") expectedMarks = Number(cfg.hardMarks ?? 40);
+
+    if (!qRecord) {
+      qRecord = await prisma.question.create({
+        data: {
+          assessmentId,
+          type: bq.type,
+          title: bq.title,
+          description: bq.description,
+          marks: expectedMarks,
+          negativeMarks: bq.negativeMarks || 0,
+          order: i,
+          mcqType: bq.mcqType,
+          options: bq.options,
+          correctAnswers: bq.correctAnswers,
+          explanation: bq.explanation,
+          allowedLanguages: bq.allowedLanguages,
+          starterCodes: bq.starterCodes,
+          starterCode: bq.starterCode,
+          timeLimitSeconds: bq.timeLimitSeconds,
+          memoryLimitMb: bq.memoryLimitMb,
+          testCases: {
+            create: bq.testCases.map((tc, tcIdx) => ({
+              input: tc.input,
+              expectedOutput: tc.expectedOutput,
+              isPublic: tc.isPublic,
+              weight: tc.weight,
+              order: tcIdx,
+            })),
+          },
+        },
+        include: {
+          testCases: {
+            where: { isPublic: true },
+            orderBy: { order: "asc" },
+          },
+        },
+      });
+    } else if (qRecord.marks !== expectedMarks) {
+      qRecord = await prisma.question.update({
+        where: { id: qRecord.id },
+        data: { marks: expectedMarks },
+        include: {
+          testCases: {
+            where: { isPublic: true },
+            orderBy: { order: "asc" },
+          },
+        },
+      });
+    }
+
+    assignedQuestions.push(qRecord);
+  }
+
+  const questionOrder = assignedQuestions.map((q) => q.id);
+  const optionOrders: Record<string, string[]> = {};
+  assignedQuestions.forEach((q) => {
+    if (q.type === "MCQ") {
+      try {
+        const opts = JSON.parse(q.options || "[]");
+        const optIds = opts.map((o: any) => o.id);
+        optionOrders[q.id] = shuffleArray(optIds);
+      } catch {
+        optionOrders[q.id] = [];
+      }
+    }
+  });
+
+  return { questionOrder, optionOrders };
+}
+
+// Helper function to allocate standard questions with intra-section shuffling
+export function allocateStandardQuestions(assessment: any): {
+  questionOrder: string[];
+  optionOrders: Record<string, string[]>;
+} {
+  let questionOrder: string[] = [];
+  const optionOrders: Record<string, string[]> = {};
+
+  const sections =
+    assessment.sections && assessment.sections.length > 0
+      ? [...assessment.sections].sort((a: any, b: any) => a.order - b.order)
+      : [];
+
+  if (sections.length > 0) {
+    for (const sec of sections) {
+      const secQuestions = (assessment.questions || [])
+        .filter((q: any) => q.sectionId === sec.id)
+        .sort((a: any, b: any) => a.order - b.order);
+
+      let secQIds = secQuestions.map((q: any) => q.id);
+      if (assessment.shuffleQuestions) {
+        secQIds = shuffleArray(secQIds);
+      }
+      questionOrder.push(...secQIds);
+    }
+
+    const orphanQuestions = (assessment.questions || [])
+      .filter((q: any) => !q.sectionId)
+      .sort((a: any, b: any) => a.order - b.order);
+    let orphanQIds = orphanQuestions.map((q: any) => q.id);
+    if (assessment.shuffleQuestions) {
+      orphanQIds = shuffleArray(orphanQIds);
+    }
+    questionOrder.push(...orphanQIds);
+  } else {
+    questionOrder = (assessment.questions || []).map((q: any) => q.id);
+    if (assessment.shuffleQuestions) {
+      questionOrder = shuffleArray(questionOrder);
+    }
+  }
+
+  (assessment.questions || []).forEach((q: any) => {
+    if (q.type === "MCQ") {
+      try {
+        const opts = JSON.parse(q.options || "[]");
+        const optIds = opts.map((o: any) => o.id);
+        optionOrders[q.id] = shuffleArray(optIds);
+      } catch {
+        optionOrders[q.id] = [];
+      }
+    }
+  });
+
+  return { questionOrder, optionOrders };
+}
+
 // 2. Start / Resume Assessment Attempt
 studentRouter.post("/start", async (req, res) => {
   try {
     const { code, rollNo, studentName, password, deviceInfo } = req.body;
 
-    if (!code || !rollNo) {
-      return res.status(400).json({ error: "Assessment code and Roll Number are required" });
+    if (!code || !rollNo || !studentName?.trim() || !password) {
+      return res.status(400).json({
+        error: "Assessment code, Roll Number, Full Name, and Password are all required.",
+      });
     }
 
     const cleanCode = code.trim().toUpperCase();
     const cleanRollNo = rollNo.trim().toUpperCase();
+    const rawStudentName = studentName.trim();
 
     // 1. Student Authentication & Credential Verification
+    // Registration is one-time and must be completed independently before entering exams.
     const existingStudent = await prisma.student.findUnique({
       where: { rollNo: cleanRollNo },
     });
 
-    let effectiveStudentName = (studentName || "").trim();
-
-    if (existingStudent) {
-      // Existing student: require password and validate
-      if (!password) {
-        return res.status(400).json({
-          error: `Password is required for roll number '${cleanRollNo}'.`,
-          requirePassword: true,
-        });
-      }
-
-      const isPasswordValid = verifyStudentPassword(password, existingStudent.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({
-          error: `Incorrect password for roll number '${cleanRollNo}'. Please enter your valid student password.`,
-          invalidPassword: true,
-        });
-      }
-
-      // Use authoritative registered name
-      effectiveStudentName = existingStudent.name;
-    } else {
-      // First-time student registration
-      if (!effectiveStudentName) {
-        return res.status(400).json({ error: "Full Name is required for first-time registration." });
-      }
-      if (!password || password.length < 4) {
-        return res.status(400).json({ error: "Please choose a password with at least 4 characters." });
-      }
-
-      const hashedPassword = hashStudentPassword(password);
-      await prisma.student.create({
-        data: {
-          rollNo: cleanRollNo,
-          name: effectiveStudentName,
-          password: hashedPassword,
-        },
+    if (!existingStudent) {
+      return res.status(404).json({
+        error: `Roll number '${cleanRollNo}' is not registered. Please complete one-time registration first before entering the assessment.`,
+        notRegistered: true,
       });
     }
+
+    const isPasswordValid = verifyStudentPassword(password, existingStudent.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        error: `Incorrect password for roll number '${cleanRollNo}'. Please enter your valid student password.`,
+        invalidPassword: true,
+      });
+    }
+
+    // Roll number and password are exact matched. Name alone can have differences.
+    // The attempt records the student-entered name for this session.
+    const effectiveStudentName = rawStudentName || existingStudent.name;
 
     const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
     const cleanIp = rawIp.replace(/^::ffff:/, "");
@@ -247,44 +522,86 @@ studentRouter.post("/start", async (req, res) => {
       include: { violations: true, submissions: true },
     });
 
+    const durationMinutes = assessment.durationMinutes || 90;
+    let freshRemainingSeconds = durationMinutes * 60;
+    if (assessment.endTime) {
+      const secondsUntilEnd = Math.floor((assessment.endTime.getTime() - now.getTime()) / 1000);
+      freshRemainingSeconds = Math.min(freshRemainingSeconds, Math.max(0, secondsUntilEnd));
+    }
+
     if (attempt) {
-      if (attempt.status === "SUBMITTED") {
-        return res.status(403).json({
-          error: "You have already submitted this assessment.",
-          isSubmitted: true,
-        });
-      }
-      if (attempt.status === "TIME_EXPIRED") {
-        return res.status(403).json({
-          error: "Your assessment time has expired.",
-          isExpired: true,
-        });
+      // The test got canceled in mid. Restart the timer freshly when they login again!
+      await prisma.violation.updateMany({
+        where: { attemptId: attempt.id, resolved: false },
+        data: { resolved: true, resolvedAt: now },
+      });
+
+      // Clear any prior incomplete submissions from the canceled session
+      await prisma.submission.deleteMany({
+        where: { attemptId: attempt.id },
+      });
+
+      let questionOrder: string[] = [];
+      let optionOrders: Record<string, string[]> = {};
+      let needsQuestions = false;
+
+      try {
+        questionOrder = JSON.parse(attempt.questionOrder || "[]");
+      } catch {
+        questionOrder = [];
       }
 
-      // Calculate strictly elapsed server time so the timer can NEVER restart or reset
-      const elapsedSeconds = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000);
-      const totalAllowedSeconds = assessment.durationMinutes * 60;
-      let accurateRemaining = Math.max(0, totalAllowedSeconds - elapsedSeconds);
-      if (assessment.endTime) {
-        const secondsUntilEnd = Math.floor((assessment.endTime.getTime() - now.getTime()) / 1000);
-        accurateRemaining = Math.min(accurateRemaining, Math.max(0, secondsUntilEnd));
+      if (assessment.isRandomized) {
+        let expectedCount = 3;
+        try {
+          const cfg = JSON.parse(assessment.randomConfig || "{}");
+          expectedCount = Number(cfg.easyCount ?? 1) + Number(cfg.mediumCount ?? 1) + Number(cfg.hardCount ?? 1);
+        } catch {}
+
+        if (questionOrder.length < expectedCount) {
+          needsQuestions = true;
+        } else {
+          const validCount = await prisma.question.count({
+            where: { id: { in: questionOrder }, assessmentId: assessment.id },
+          });
+          if (validCount < expectedCount) {
+            needsQuestions = true;
+          }
+        }
+      } else {
+        if (questionOrder.length === 0) {
+          needsQuestions = true;
+        }
       }
 
-      if (accurateRemaining <= 0) {
-        attempt = await autoGradeAndFinalizeAttempt(attempt.id, "TIME_EXPIRED");
-        return res.status(403).json({
-          error: "Your assessment time has expired.",
-          isExpired: true,
-        });
+      if (needsQuestions) {
+        if (assessment.isRandomized) {
+          const alloc = await populateRandomQuestionsForAssessment(assessment.id, assessment.randomConfig);
+          questionOrder = alloc.questionOrder;
+          optionOrders = alloc.optionOrders;
+        } else {
+          const alloc = allocateStandardQuestions(assessment);
+          questionOrder = alloc.questionOrder;
+          optionOrders = alloc.optionOrders;
+        }
       }
 
-      // Sync the accurate countdown in DB
       const updateData: any = {
-        remainingSeconds: accurateRemaining,
+        remainingSeconds: freshRemainingSeconds,
+        startedAt: now,
         lastHeartbeat: now,
+        status: "IN_PROGRESS",
+        submittedAt: null,
+        violationCount: 0,
       };
       if (cleanIp) updateData.ipAddress = cleanIp;
       if (deviceInfo) updateData.deviceInfo = String(deviceInfo);
+      if (effectiveStudentName) updateData.studentName = effectiveStudentName;
+      if (needsQuestions) {
+        updateData.questionOrder = JSON.stringify(questionOrder);
+        updateData.optionOrders = JSON.stringify(optionOrders);
+        updateData.drafts = "{}";
+      }
 
       attempt = await prisma.studentAttempt.update({
         where: { id: attempt.id },
@@ -292,79 +609,69 @@ studentRouter.post("/start", async (req, res) => {
         include: { violations: true, submissions: true },
       });
     } else {
-      let remaining = assessment.durationMinutes * 60;
-      if (assessment.endTime) {
-        const secondsUntilEnd = Math.floor((assessment.endTime.getTime() - now.getTime()) / 1000);
-        remaining = Math.min(remaining, secondsUntilEnd);
-      }
-
-      // Generate question order (shuffled ONLY within each specific section, preserving section sequence!)
       let questionOrder: string[] = [];
-      const sections = assessment.sections && assessment.sections.length > 0
-        ? [...assessment.sections].sort((a, b) => a.order - b.order)
-        : [];
+      let optionOrders: Record<string, string[]> = {};
 
-      if (sections.length > 0) {
-        for (const sec of sections) {
-          const secQuestions = assessment.questions
-            .filter((q) => q.sectionId === sec.id)
-            .sort((a, b) => a.order - b.order);
-
-          let secQIds = secQuestions.map((q) => q.id);
-          if (assessment.shuffleQuestions) {
-            secQIds = shuffleArray(secQIds);
-          }
-          questionOrder.push(...secQIds);
-        }
-
-        // Include any orphan questions without sectionId if any
-        const orphanQuestions = assessment.questions
-          .filter((q) => !q.sectionId)
-          .sort((a, b) => a.order - b.order);
-        let orphanQIds = orphanQuestions.map((q) => q.id);
-        if (assessment.shuffleQuestions) {
-          orphanQIds = shuffleArray(orphanQIds);
-        }
-        questionOrder.push(...orphanQIds);
+      if (assessment.isRandomized) {
+        const alloc = await populateRandomQuestionsForAssessment(assessment.id, assessment.randomConfig);
+        questionOrder = alloc.questionOrder;
+        optionOrders = alloc.optionOrders;
       } else {
-        questionOrder = assessment.questions.map((q) => q.id);
-        if (assessment.shuffleQuestions) {
-          questionOrder = shuffleArray(questionOrder);
-        }
+        const alloc = allocateStandardQuestions(assessment);
+        questionOrder = alloc.questionOrder;
+        optionOrders = alloc.optionOrders;
       }
-
-      // Generate option orders for MCQs (shuffled)
-      const optionOrders: Record<string, string[]> = {};
-      assessment.questions.forEach((q) => {
-        if (q.type === "MCQ") {
-          try {
-            const opts = JSON.parse(q.options || "[]");
-            const optIds = opts.map((o: any) => o.id);
-            optionOrders[q.id] = shuffleArray(optIds);
-          } catch {
-            optionOrders[q.id] = [];
-          }
-        }
-      });
 
       attempt = await prisma.studentAttempt.create({
         data: {
           assessmentId: assessment.id,
           rollNo: cleanRollNo,
           studentName: effectiveStudentName,
-          remainingSeconds: Math.max(60, remaining),
+          remainingSeconds: Math.max(60, freshRemainingSeconds),
           status: "IN_PROGRESS",
+          startedAt: now,
           questionOrder: JSON.stringify(questionOrder),
           optionOrders: JSON.stringify(optionOrders),
           ipAddress: cleanIp || null,
           deviceInfo: deviceInfo ? String(deviceInfo) : null,
+          violationCount: 0,
         },
         include: { violations: true, submissions: true },
       });
     }
 
+    // Resolve which questions belong to this student attempt
+    let assignedQIds: string[] = [];
+    try {
+      assignedQIds = JSON.parse(attempt.questionOrder || "[]");
+    } catch {
+      assignedQIds = [];
+    }
+
+    let candidateQuestions = assessment.questions;
+    if (assessment.isRandomized || (assignedQIds.length > 0 && assignedQIds.length < assessment.questions.length)) {
+      candidateQuestions = await prisma.question.findMany({
+        where: { id: { in: assignedQIds } },
+        include: {
+          testCases: {
+            where: { isPublic: true },
+            orderBy: { order: "asc" },
+          },
+        },
+      });
+    }
+
+    // Sort according to assignedQIds
+    const sortedQuestions = [...candidateQuestions].sort((a, b) => {
+      const idxA = assignedQIds.indexOf(a.id);
+      const idxB = assignedQIds.indexOf(b.id);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+
     // Sanitize questions: strip correctAnswers for exam mode!
-    const sanitizedQuestions = assessment.questions.map((q) => ({
+    const sanitizedQuestions = sortedQuestions.map((q) => ({
       id: q.id,
       sectionId: q.sectionId,
       type: q.type,
@@ -382,11 +689,11 @@ studentRouter.post("/start", async (req, res) => {
       testCases: q.testCases,
     }));
 
-      const attemptToken = issueAttemptSessionToken(attempt.id, assessment.id, cleanRollNo);
-      res.json({
-        attempt,
-        attemptToken,
-        assessment: {
+    const attemptToken = issueAttemptSessionToken(attempt.id, assessment.id, cleanRollNo);
+    res.json({
+      attempt,
+      attemptToken,
+      assessment: {
         id: assessment.id,
         title: assessment.title,
         description: assessment.description,
@@ -394,6 +701,9 @@ studentRouter.post("/start", async (req, res) => {
         durationMinutes: assessment.durationMinutes,
         sections: assessment.sections,
         questions: sanitizedQuestions,
+        totalQuestions: sanitizedQuestions.length,
+        totalMarks: sanitizedQuestions.reduce((sum, q) => sum + q.marks, 0),
+        isRandomized: assessment.isRandomized,
       },
     });
   } catch (err: any) {
@@ -512,7 +822,7 @@ studentRouter.post("/save-draft", requireAttemptSession, async (req: Authenticat
     }
 
     // Authoritative server clock calculation
-    const maxDurationSeconds = (attempt.assessment?.durationMinutes || 60) * 60;
+    const maxDurationSeconds = (attempt.assessment?.durationMinutes || 90) * 60;
     const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000));
     const serverRemaining = Math.max(0, maxDurationSeconds - elapsedSeconds);
 
@@ -571,7 +881,7 @@ studentRouter.get("/attempt-status/:attemptId", requireAttemptSession, async (re
     if (attempt.status === "IN_PROGRESS") {
       const now = new Date();
       const elapsedSeconds = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000);
-      const totalAllowed = (attempt.assessment?.durationMinutes || 60) * 60;
+      const totalAllowed = (attempt.assessment?.durationMinutes || 90) * 60;
       accurateRemaining = Math.max(0, totalAllowed - elapsedSeconds);
       if (attempt.assessment?.endTime) {
         const untilEnd = Math.floor((attempt.assessment.endTime.getTime() - now.getTime()) / 1000);
@@ -849,7 +1159,16 @@ export async function autoGradeAndFinalizeAttempt(
   const existingSubmissions = attempt.submissions || [];
   let totalScore = 0;
 
-  for (const q of attempt.assessment.questions) {
+  let assignedQIds: string[] = [];
+  try {
+    assignedQIds = JSON.parse(attempt.questionOrder || "[]");
+  } catch {}
+
+  const questionsToGrade = assignedQIds.length > 0 && attempt.assessment.isRandomized
+    ? attempt.assessment.questions.filter((q) => assignedQIds.includes(q.id))
+    : attempt.assessment.questions;
+
+  for (const q of questionsToGrade) {
     const existingSub = existingSubmissions.find((s) => s.questionId === q.id);
 
     if (q.type === "CODING") {
@@ -1088,6 +1407,17 @@ studentRouter.get("/review/:code/:rollNo", async (req, res) => {
 
     const reviewAttemptToken = issueAttemptSessionToken(attempt.id, assessment.id, attempt.rollNo);
 
+    let assignedQIds: string[] = [];
+    try {
+      assignedQIds = JSON.parse(attempt.questionOrder || "[]");
+    } catch {
+      assignedQIds = [];
+    }
+
+    const reviewQuestions = assignedQIds.length > 0 && assessment.isRandomized
+      ? assessment.questions.filter((q) => assignedQIds.includes(q.id))
+      : assessment.questions;
+
     res.json({
       isUnlocked: true,
       attemptToken: reviewAttemptToken,
@@ -1097,7 +1427,7 @@ studentRouter.get("/review/:code/:rollNo", async (req, res) => {
         description: assessment.description,
         code: assessment.code,
         sections: assessment.sections,
-        questions: assessment.questions, // Includes all testcases and correctAnswers for review!
+        questions: reviewQuestions, // Includes all testcases and correctAnswers for review!
       },
       attempt,
     });

@@ -1,0 +1,760 @@
+[
+  {
+    "id": "111fdc72-d17e-495c-880e-cc95988f58f3",
+    "difficulty": "EASY",
+    "title": "Fibonacci Number",
+    "testCasesCount": 3,
+    "sampleInput": "0",
+    "sampleOutput": "0"
+  },
+  {
+    "id": "acfcb1b9-7bb1-4365-8453-19e954cd9bf4",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "3Sum",
+    "testCasesCount": 4,
+    "sampleInput": "6\n-1 0 1 2 -1 -4",
+    "sampleOutput": "-1 -1 2\n-1 0 1"
+  },
+  {
+    "id": "b4fd9c7d-d344-467b-b915-b4115ae35ce5",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Best Time to Buy and Sell Stock",
+    "testCasesCount": 6,
+    "sampleInput": "6\n7 1 5 3 6 4",
+    "sampleOutput": "5"
+  },
+  {
+    "id": "8d49835f-dafa-46d0-8f95-8cf4f80445d5",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Container With Most Water",
+    "testCasesCount": 5,
+    "sampleInput": "9\n1 8 6 2 5 4 8 3 7",
+    "sampleOutput": "49"
+  },
+  {
+    "id": "a77d583c-5464-4ee5-8e22-9953dad9607b",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Contains Duplicate",
+    "testCasesCount": 6,
+    "sampleInput": "4\n1 2 3 1",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "1aa7dcfd-8d6f-4675-8cfa-46df7b079c04",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Find Minimum in Rotated Sorted Array",
+    "testCasesCount": 5,
+    "sampleInput": "5\n3 4 5 1 2",
+    "sampleOutput": "1"
+  },
+  {
+    "id": "e4fa0d44-f592-433b-9f69-e9aa77020b5a",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Maximum Product Subarray",
+    "testCasesCount": 5,
+    "sampleInput": "4\n2 3 -2 4",
+    "sampleOutput": "6"
+  },
+  {
+    "id": "1d16d211-356c-4dc7-b9f8-6876b1fd725d",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Maximum Subarray",
+    "testCasesCount": 6,
+    "sampleInput": "9\n-2 1 -3 4 -1 2 1 -5 4",
+    "sampleOutput": "6"
+  },
+  {
+    "id": "c2a57a78-8737-4810-b3fa-340c09113811",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Product of Array Except Self",
+    "testCasesCount": 5,
+    "sampleInput": "4\n1 2 3 4",
+    "sampleOutput": "24 12 8 6"
+  },
+  {
+    "id": "3958d224-e921-4f8b-9109-3a0716d5437b",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Search in Rotated Sorted Array",
+    "testCasesCount": 5,
+    "sampleInput": "7\n4 5 6 7 0 1 2\n0",
+    "sampleOutput": "4"
+  },
+  {
+    "id": "ec3ba8aa-c366-4af0-9d7f-271fc87588a2",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Array",
+    "title": "Two Sum",
+    "testCasesCount": 6,
+    "sampleInput": "4\n2 7 11 15\n9",
+    "sampleOutput": "0 1"
+  },
+  {
+    "id": "fb426db2-0be2-4f4f-b587-060fa4af7462",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Binary",
+    "title": "Counting Bits",
+    "testCasesCount": 5,
+    "sampleInput": "2",
+    "sampleOutput": "0 1 1"
+  },
+  {
+    "id": "b457bd27-b8ff-413f-a03d-05c8bfe16a31",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Binary",
+    "title": "Missing Number",
+    "testCasesCount": 6,
+    "sampleInput": "3\n3 0 1",
+    "sampleOutput": "2"
+  },
+  {
+    "id": "479ab137-e184-4751-87b8-3991e9996ad7",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Binary",
+    "title": "Number of 1 Bits",
+    "testCasesCount": 6,
+    "sampleInput": "11",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "025f174b-af3f-4cf5-b8e9-9d3eb9d7c3b9",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Binary",
+    "title": "Reverse Bits",
+    "testCasesCount": 5,
+    "sampleInput": "43261596",
+    "sampleOutput": "964176192"
+  },
+  {
+    "id": "448a5d59-a14e-4de9-a133-777a30de3dbe",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Binary",
+    "title": "Sum of Two Integers",
+    "testCasesCount": 5,
+    "sampleInput": "1 2",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "7d98d2dc-7b9b-438a-a943-bd0bf878a5bf",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Heap",
+    "title": "Find Median from Data Stream",
+    "testCasesCount": 4,
+    "sampleInput": "3\n1 2 3",
+    "sampleOutput": "1.0\n1.5\n2.0"
+  },
+  {
+    "id": "29f385f6-f73c-4de8-b072-cb1e61badb6c",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Heap",
+    "title": "Kth Largest Element in an Array",
+    "testCasesCount": 6,
+    "sampleInput": "6\n3 2 1 5 6 4\n2",
+    "sampleOutput": "5"
+  },
+  {
+    "id": "3ddd9d93-d522-4cec-9cbf-cbb926873ab2",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Heap",
+    "title": "Merge K Sorted Lists",
+    "testCasesCount": 4,
+    "sampleInput": "3\n3 1 4 5\n3 1 3 4\n2 2 6",
+    "sampleOutput": "1 1 2 3 4 4 5 6"
+  },
+  {
+    "id": "b74f6332-f7e4-4803-a573-a715a804ea8f",
+    "difficulty": "EASY",
+    "parentFolder": "Easy",
+    "folder": "Heap",
+    "title": "Top K Frequent Elements",
+    "testCasesCount": 5,
+    "sampleInput": "6\n1 1 1 2 2 3\n2",
+    "sampleOutput": "1 2"
+  },
+  {
+    "id": "79bf488a-358c-4b11-a73a-55c94446a05a",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Climbing Stairs",
+    "testCasesCount": 6,
+    "sampleInput": "2",
+    "sampleOutput": "2"
+  },
+  {
+    "id": "72aea0ce-c3b7-4db7-9fbe-4fa3693ad55f",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Coin Change",
+    "testCasesCount": 6,
+    "sampleInput": "3\n1 2 5\n11",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "9dabe9c6-597e-4fb8-966d-4c99caf6a15e",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Combination Sum",
+    "testCasesCount": 4,
+    "sampleInput": "4 7\n2 3 6 7",
+    "sampleOutput": "2 2 3\n7"
+  },
+  {
+    "id": "39733e6e-f6d1-499c-8ea9-0e08641ceda7",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Decode Ways",
+    "testCasesCount": 5,
+    "sampleInput": "12",
+    "sampleOutput": "2"
+  },
+  {
+    "id": "d07f89bc-e27f-4405-874b-259188051a4f",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "House Robber",
+    "testCasesCount": 5,
+    "sampleInput": "4\n1 2 3 1",
+    "sampleOutput": "4"
+  },
+  {
+    "id": "380a12ed-d666-4e4a-966a-633df7f6ca00",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "House Robber II",
+    "testCasesCount": 4,
+    "sampleInput": "3\n2 3 2",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "abfd904a-e810-487f-9648-b3dee11f8b10",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Jump Game",
+    "testCasesCount": 4,
+    "sampleInput": "5\n2 3 1 1 4",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "9c142079-cf1d-466f-a038-4e86149e803c",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Longest Common Subsequence",
+    "testCasesCount": 6,
+    "sampleInput": "abcde\nace",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "b079789b-db19-405f-97c5-3f43e5b7c5bd",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Longest Increasing Subsequence",
+    "testCasesCount": 6,
+    "sampleInput": "8\n10 9 2 5 3 7 101 18",
+    "sampleOutput": "4"
+  },
+  {
+    "id": "d372775e-44a3-4e87-8612-cf8cc2fbaa9b",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Unique Paths",
+    "testCasesCount": 6,
+    "sampleInput": "3 7",
+    "sampleOutput": "28"
+  },
+  {
+    "id": "e7d7fc78-4409-4878-9971-2ecb6ebf8b34",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "DP",
+    "title": "Word Break",
+    "testCasesCount": 5,
+    "sampleInput": "leetcode\n2\nleet code",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "b6e1d1e0-3d6f-4661-a1cf-1c99791dd2cf",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Alien Dictionary",
+    "testCasesCount": 4,
+    "sampleInput": "5\nwrt\nwrf\ner\nett\nrftt",
+    "sampleOutput": "wertf"
+  },
+  {
+    "id": "b27d546a-a6d4-448e-9cd1-db2821ecb1ab",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Clone Graph",
+    "testCasesCount": 3,
+    "sampleInput": "4\n2 4\n1 3\n2 4\n1 3",
+    "sampleOutput": "2 4\n1 3\n2 4\n1 3"
+  },
+  {
+    "id": "47925039-5bab-4b0d-8182-e024b2583453",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Course Schedule",
+    "testCasesCount": 5,
+    "sampleInput": "2 1\n1 0",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "8ed2ff17-a925-49b8-9a57-29cea8801b0c",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Graph Valid Tree",
+    "testCasesCount": 4,
+    "sampleInput": "5 4\n0 1\n0 2\n0 3\n1 4",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "9d7654ee-7f1f-489b-aa3b-147463417910",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Longest Consecutive Sequence",
+    "testCasesCount": 5,
+    "sampleInput": "6\n100 4 200 1 3 2",
+    "sampleOutput": "4"
+  },
+  {
+    "id": "5657eb14-a97b-454f-9da0-507bd7dd8c8c",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Number of Connected Components in an Undirected Graph",
+    "testCasesCount": 4,
+    "sampleInput": "5 4\n0 1\n1 2\n3 4\n2 0",
+    "sampleOutput": "2"
+  },
+  {
+    "id": "24aa3ff9-e65e-43ef-9291-88511788e163",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Number of Islands",
+    "testCasesCount": 6,
+    "sampleInput": "4 5\n1 1 1 1 0\n1 1 0 1 0\n1 1 0 0 0\n0 0 0 0 0",
+    "sampleOutput": "1"
+  },
+  {
+    "id": "f722d05c-fa6a-4496-a1b3-6a857ef0ce79",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Graph",
+    "title": "Pacific Atlantic Water Flow",
+    "testCasesCount": 3,
+    "sampleInput": "5 5\n1 2 2 3 5\n3 2 3 4 4\n2 4 5 3 1\n6 7 1 4 5\n5 1 1 2 4",
+    "sampleOutput": "0 4\n1 3\n1 4\n2 2\n3 0\n3 1\n4 0"
+  },
+  {
+    "id": "0ca0714f-11b0-4787-8ed0-07df2fdf2fe0",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Matrix",
+    "title": "Rotate Image",
+    "testCasesCount": 4,
+    "sampleInput": "3\n1 2 3\n4 5 6\n7 8 9",
+    "sampleOutput": "7 4 1\n8 5 2\n9 6 3"
+  },
+  {
+    "id": "291ca4e1-481b-42f2-9cb3-01bae601e43d",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Matrix",
+    "title": "Search a 2D Matrix",
+    "testCasesCount": 5,
+    "sampleInput": "3 4\n1 3 5 7\n10 11 16 20\n23 30 34 60\n3",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "2481185f-6798-4772-a1d3-f9334650ba21",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Matrix",
+    "title": "Set Matrix Zeroes",
+    "testCasesCount": 6,
+    "sampleInput": "3 3\n1 1 1\n1 0 1\n1 1 1",
+    "sampleOutput": "1 0 1\n0 0 0\n1 0 1"
+  },
+  {
+    "id": "896c9d15-270e-4131-812b-5c7b01ed5ac2",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Matrix",
+    "title": "Spiral Matrix",
+    "testCasesCount": 6,
+    "sampleInput": "3 3\n1 2 3\n4 5 6\n7 8 9",
+    "sampleOutput": "1 2 3 6 9 8 7 4 5"
+  },
+  {
+    "id": "fb434674-ae3f-4fc9-b09b-2cb481205748",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Matrix",
+    "title": "Surrounded Regions",
+    "testCasesCount": 4,
+    "sampleInput": "4 4\nX X X X\nX O O X\nX X O X\nX O X X",
+    "sampleOutput": "X X X X\nX X X X\nX X X X\nX O X X"
+  },
+  {
+    "id": "ca776852-5ac9-4245-a403-16e31d9a34ff",
+    "difficulty": "HARD",
+    "parentFolder": "Hard",
+    "folder": "Matrix",
+    "title": "Word Search",
+    "testCasesCount": 5,
+    "sampleInput": "3 4\nA B C E\nS F C S\nA D E E\nABCCED",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "ac909172-84f0-4615-a9f8-4549ac7b33c2",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Intervals",
+    "title": "Insert Interval",
+    "testCasesCount": 4,
+    "sampleInput": "2\n1 3\n6 9\n2 5",
+    "sampleOutput": "1 5\n6 9"
+  },
+  {
+    "id": "623f61d1-7f09-4360-93f7-166730f769f3",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Intervals",
+    "title": "Meeting Rooms",
+    "testCasesCount": 4,
+    "sampleInput": "3\n0 30\n5 10\n15 20",
+    "sampleOutput": "false"
+  },
+  {
+    "id": "c79164ce-50a2-4dd4-b505-193cc357598b",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Intervals",
+    "title": "Meeting Rooms II",
+    "testCasesCount": 4,
+    "sampleInput": "3\n0 30\n5 10\n15 20",
+    "sampleOutput": "2"
+  },
+  {
+    "id": "a7f30ce7-34ab-4b62-845e-adafa673f1af",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Intervals",
+    "title": "Merge Intervals",
+    "testCasesCount": 5,
+    "sampleInput": "4\n1 3\n2 6\n8 10\n15 18",
+    "sampleOutput": "1 6\n8 10\n15 18"
+  },
+  {
+    "id": "d64be9e3-d407-4dde-b496-4ba81fb11d9c",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Intervals",
+    "title": "Non-overlapping Intervals",
+    "testCasesCount": 4,
+    "sampleInput": "4\n1 2\n2 3\n3 4\n1 3",
+    "sampleOutput": "1"
+  },
+  {
+    "id": "acd5630c-43e2-4e1f-98dd-8e7cd66b81fc",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Linked list",
+    "title": "Linked List Cycle",
+    "testCasesCount": 4,
+    "sampleInput": "4 1\n3 2 0 -4",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "987f6390-ad31-489f-9252-aca04da2b772",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Linked list",
+    "title": "Merge Two Sorted Lists",
+    "testCasesCount": 5,
+    "sampleInput": "3\n1 2 4\n3\n1 3 4",
+    "sampleOutput": "1 1 2 3 4 4"
+  },
+  {
+    "id": "a77c6883-a358-4063-a514-21284fb8f638",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Linked list",
+    "title": "Remove Nth Node From End of List",
+    "testCasesCount": 4,
+    "sampleInput": "5 2\n1 2 3 4 5",
+    "sampleOutput": "1 2 3 5"
+  },
+  {
+    "id": "42f77d99-d1ba-42e4-87cf-a62e06083be5",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Linked list",
+    "title": "Reorder List",
+    "testCasesCount": 4,
+    "sampleInput": "4\n1 2 3 4",
+    "sampleOutput": "1 4 2 3"
+  },
+  {
+    "id": "5c00e54a-64ef-495a-ba80-ad2286bf1553",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Linked list",
+    "title": "Reverse Linked List",
+    "testCasesCount": 5,
+    "sampleInput": "5\n1 2 3 4 5",
+    "sampleOutput": "5 4 3 2 1"
+  },
+  {
+    "id": "e52ef983-d144-4f60-86f8-09749516b26c",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Encode and Decode Strings",
+    "testCasesCount": 4,
+    "sampleInput": "2\nlint\ncode",
+    "sampleOutput": "lint\ncode"
+  },
+  {
+    "id": "b450df3e-5ffe-486d-bdda-eb569069c6d7",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Group Anagrams",
+    "testCasesCount": 4,
+    "sampleInput": "6\neat tea tan ate nat bat",
+    "sampleOutput": "bat\nnat tan\nate eat tea"
+  },
+  {
+    "id": "5591f9f4-2e37-43b6-9527-bc1e3b46093f",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Longest Palindromic Substring",
+    "testCasesCount": 5,
+    "sampleInput": "babad",
+    "sampleOutput": "bab"
+  },
+  {
+    "id": "4d5cdbe2-6b48-464d-9da8-c390c9defaee",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Longest Repeating Character Replacement",
+    "testCasesCount": 5,
+    "sampleInput": "ABAB\n2",
+    "sampleOutput": "4"
+  },
+  {
+    "id": "ad377cff-17e7-47b7-bf2b-171e6619ad07",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Longest Substring Without Repeating Characters",
+    "testCasesCount": 6,
+    "sampleInput": "abcabcbb",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "b2c01fc2-1434-4565-b3ca-6fd954509fce",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Minimum Window Substring",
+    "testCasesCount": 4,
+    "sampleInput": "ADOBECODEBANC\nABC",
+    "sampleOutput": "BANC"
+  },
+  {
+    "id": "ff09857f-47b9-40ff-96d3-9e290c0827b1",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Palindromic Substrings",
+    "testCasesCount": 5,
+    "sampleInput": "abc",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "46d4114c-2a49-4d5c-ba77-2101d0a9af20",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Valid Anagram",
+    "testCasesCount": 6,
+    "sampleInput": "anagram\nnagaram",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "2e5d039f-d54d-4b71-9ac1-0951c1484b22",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Valid Palindrome",
+    "testCasesCount": 6,
+    "sampleInput": "A man, a plan, a canal: Panama",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "60e23bf0-8810-4cd6-90ba-9ce5a24d7908",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "String",
+    "title": "Valid Parentheses",
+    "testCasesCount": 5,
+    "sampleInput": "()",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "9b7a3603-3ad9-432a-8ea0-73b1015a551b",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Binary Tree Level Order Traversal",
+    "testCasesCount": 4,
+    "sampleInput": "5\n3 9 20 15 7",
+    "sampleOutput": "3\n9 20\n15 7"
+  },
+  {
+    "id": "b6afe079-44f6-428e-a0b7-8a373bc4f424",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Binary Tree Maximum Path Sum",
+    "testCasesCount": 4,
+    "sampleInput": "3\n1 2 3",
+    "sampleOutput": "6"
+  },
+  {
+    "id": "6cd2ecff-0b0a-4ddd-979f-caa314029c82",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Construct Binary Tree from Preorder and Inorder Traversal",
+    "testCasesCount": 4,
+    "sampleInput": "5\n3 9 20 15 7\n9 3 15 20 7",
+    "sampleOutput": "3 9 20 null null 15 7"
+  },
+  {
+    "id": "69130348-711a-4e70-b777-aff420b13b24",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Invert Binary Tree",
+    "testCasesCount": 3,
+    "sampleInput": "7\n4 2 7 1 3 6 9",
+    "sampleOutput": "4 7 2 9 6 3 1"
+  },
+  {
+    "id": "ad713fe4-d227-4ea9-b70d-d52bcff99da3",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Kth Smallest Element in a BST",
+    "testCasesCount": 4,
+    "sampleInput": "4 1\n3 1 4 null 2",
+    "sampleOutput": "1"
+  },
+  {
+    "id": "e71640bd-7916-4fa3-8dea-c09050408d8b",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Lowest Common Ancestor of a BST",
+    "testCasesCount": 3,
+    "sampleInput": "9 2 8\n6 2 8 0 4 7 9 null null 3 5",
+    "sampleOutput": "6"
+  },
+  {
+    "id": "81a15523-0511-4209-b80d-50825154e250",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Maximum Depth of Binary Tree",
+    "testCasesCount": 6,
+    "sampleInput": "7\n3 9 20 null null 15 7",
+    "sampleOutput": "3"
+  },
+  {
+    "id": "6d12c16f-4fab-4ae6-a18f-ac783ebf8cea",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Same Tree",
+    "testCasesCount": 5,
+    "sampleInput": "3\n1 2 3\n3\n1 2 3",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "fd81211e-a960-4e6b-9076-b95ab27cf366",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Serialize and Deserialize Binary Tree",
+    "testCasesCount": 4,
+    "sampleInput": "1 2 3 null null 4 5",
+    "sampleOutput": "1 2 3 null null 4 5"
+  },
+  {
+    "id": "81464b31-6519-467b-abd9-56c7d49a644d",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Subtree of Another Tree",
+    "testCasesCount": 4,
+    "sampleInput": "5\n3 4 5 1 2\n3\n4 1 2",
+    "sampleOutput": "true"
+  },
+  {
+    "id": "123173e9-c8e1-4a69-ab36-ea05312a3c62",
+    "difficulty": "MEDIUM",
+    "parentFolder": "Medium",
+    "folder": "Tree",
+    "title": "Validate Binary Search Tree",
+    "testCasesCount": 5,
+    "sampleInput": "3\n2 1 3",
+    "sampleOutput": "true"
+  }
+]

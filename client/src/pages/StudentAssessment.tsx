@@ -77,7 +77,9 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
     }
 
     if (qOrder.length > 0) {
-      const sorted = [...rawQuestions].sort((a, b) => {
+      const relevant = rawQuestions.filter((q) => qOrder.includes(q.id));
+      const listToSort = relevant.length > 0 ? relevant : rawQuestions;
+      const sorted = [...listToSort].sort((a, b) => {
         const idxA = qOrder.indexOf(a.id);
         const idxB = qOrder.indexOf(b.id);
         if (idxA === -1) return 1;
@@ -151,7 +153,7 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
     if (typeof initialAttempt.remainingSeconds === "number" && initialAttempt.remainingSeconds > 0) {
       return initialAttempt.remainingSeconds;
     }
-    return (initialAssessment.durationMinutes || 60) * 60;
+    return (initialAssessment.durationMinutes || 90) * 60;
   };
 
   const initialRemaining = computeInitialRemaining();
@@ -190,14 +192,9 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
 
   const activeQuestion: Question | undefined = orderedQuestions[currentQuestionIdx];
 
-  // Allowed languages for active coding question
-  const allowedLanguagesList = activeQuestion?.allowedLanguages
-    ? activeQuestion.allowedLanguages.split(",").map((l) => l.trim().toUpperCase())
-    : ["JAVA", "C", "CPP"];
-
-  const currentLanguage = activeQuestion
-    ? selectedLanguages[activeQuestion.id] || allowedLanguagesList[0] || "JAVA"
-    : "JAVA";
+  // Fixed to Java only as required
+  const allowedLanguagesList = ["JAVA"];
+  const currentLanguage = "JAVA";
 
 const DEFAULT_BOILERPLATES: Record<string, string> = {
   JAVA: `import java.util.*;
@@ -1011,20 +1008,19 @@ int main() {
                 {/* Top Half: Multi-Language Monaco Editor */}
                 <div className="flex-[3] flex flex-col min-h-0">
                   <div className="flex items-center justify-between px-3 py-2 bg-slate-900 border border-slate-800 rounded-t-xl text-xs">
-                    {/* Language Selector Dropdown */}
+                    {/* Fixed Java Language Indicator & Editor Color Legend */}
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-semibold">Language:</span>
-                      <select
-                        value={currentLanguage}
-                        onChange={(e) => handleLanguageChange(e.target.value)}
-                        className="bg-slate-950 text-emerald-400 font-bold border border-slate-700 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-emerald-500"
-                      >
-                        {allowedLanguagesList.map((lang) => (
-                          <option key={lang} value={lang}>
-                            {lang === "CPP" ? "C++ (C++17)" : lang === "C" ? "C (C11)" : "Java (JDK 21)"}
-                          </option>
-                        ))}
-                      </select>
+                      <span className="bg-slate-950 text-emerald-400 font-bold border border-slate-700 rounded-lg px-2.5 py-1 text-xs">
+                        Java (JDK 21)
+                      </span>
+                      <div className="hidden md:flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50"></span>
+                        <span className="text-slate-200 font-medium">Bright:</span> Your Solution
+                        <span className="text-slate-600 mx-0.5">•</span>
+                        <span className="w-2 h-2 rounded-full bg-slate-500 inline-block opacity-50"></span>
+                        <span className="text-slate-400">Dimmed:</span> Boilerplate
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">

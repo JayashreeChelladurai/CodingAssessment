@@ -207,6 +207,19 @@ export const api = {
     }
   },
 
+  registerStudent: async (rollNo: string, name: string, password: string) => {
+    const res = await fetch(`${API_BASE}/student/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rollNo, name, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Registration failed" }));
+      throw new Error(err.error || "Registration failed");
+    }
+    return res.json();
+  },
+
   getAssessmentInfo: async (code: string) => {
     const sebToken = getSebToken(code);
     const query = sebToken ? `?sebToken=${encodeURIComponent(sebToken)}` : "";
@@ -252,6 +265,31 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "Failed to reset student password" }));
       throw new Error(err.error || "Failed to reset student password");
+    }
+    return res.json();
+  },
+
+  createStudent: async (rollNo: string, name: string, password: string) => {
+    const res = await fetch(`${API_BASE}/assessments/admin/students`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ rollNo, name, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to create student" }));
+      throw new Error(err.error || "Failed to create student");
+    }
+    return res.json();
+  },
+
+  deleteStudent: async (rollNo: string) => {
+    const res = await fetch(`${API_BASE}/assessments/admin/students/${encodeURIComponent(rollNo)}`, {
+      method: "DELETE",
+      headers: adminHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to delete student" }));
+      throw new Error(err.error || "Failed to delete student");
     }
     return res.json();
   },
@@ -420,6 +458,120 @@ export const api = {
   getAttemptStatus: async (attemptId: string, attemptToken?: string) => {
     const res = await fetch(`${API_BASE}/student/attempt-status/${attemptId}`, {
       headers: studentHeaders(attemptToken),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  // Question Bank API
+  getQuestionFolders: async () => {
+    const res = await fetch(`${API_BASE}/question-bank/folders`, {
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  createQuestionFolder: async (data: { name: string; parentId?: string | null; description?: string; order?: number }) => {
+    const res = await fetch(`${API_BASE}/question-bank/folders`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  updateQuestionFolder: async (id: string, data: { name?: string; parentId?: string | null; description?: string; order?: number }) => {
+    const res = await fetch(`${API_BASE}/question-bank/folders/${id}`, {
+      method: "PUT",
+      headers: adminHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  deleteQuestionFolder: async (id: string) => {
+    const res = await fetch(`${API_BASE}/question-bank/folders/${id}`, {
+      method: "DELETE",
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  getBankQuestions: async (params?: { folderId?: string; type?: string; difficulty?: string; search?: string; includeSubfolders?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.folderId) query.set("folderId", params.folderId);
+    if (params?.type) query.set("type", params.type);
+    if (params?.difficulty) query.set("difficulty", params.difficulty);
+    if (params?.search) query.set("search", params.search);
+    if (params?.includeSubfolders) query.set("includeSubfolders", "true");
+
+    const qs = query.toString() ? `?${query.toString()}` : "";
+    const res = await fetch(`${API_BASE}/question-bank/questions${qs}`, {
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  getBankQuestion: async (id: string) => {
+    const res = await fetch(`${API_BASE}/question-bank/questions/${id}`, {
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  createBankQuestion: async (data: any) => {
+    const res = await fetch(`${API_BASE}/question-bank/questions`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  updateBankQuestion: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/question-bank/questions/${id}`, {
+      method: "PUT",
+      headers: adminHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  deleteBankQuestion: async (id: string) => {
+    const res = await fetch(`${API_BASE}/question-bank/questions/${id}`, {
+      method: "DELETE",
+      headers: adminHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  bulkUploadBankQuestions: async (folderId: string | null, questions: any[]) => {
+    const res = await fetch(`${API_BASE}/question-bank/questions/bulk-upload`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ folderId, questions }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to upload questions" }));
+      throw new Error(err.error || "Failed to upload questions");
+    }
+    return res.json();
+  },
+
+  moveBankQuestions: async (questionIds: string[], targetFolderId: string | null) => {
+    const res = await fetch(`${API_BASE}/question-bank/questions/move`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ questionIds, targetFolderId }),
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
