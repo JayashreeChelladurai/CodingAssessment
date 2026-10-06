@@ -19,7 +19,9 @@ import {
   Layers,
   HelpCircle,
   Lock,
-  Unlock
+  Unlock,
+  BookOpen,
+  Check
 } from "lucide-react";
 import { StudentManagementModal } from "../components/admin/StudentManagementModal";
 
@@ -93,6 +95,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       } catch (err: any) {
         alert(err.message || "Failed to delete assessment");
       }
+    }
+  };
+
+  const handleToggleReview = async (id: string, currentStatus: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await api.toggleReviewMode(id, !currentStatus);
+      await loadAssessments();
+    } catch (err: any) {
+      alert(err.message || "Failed to update review mode");
     }
   };
 
@@ -331,6 +343,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <Download className="w-3.5 h-3.5 text-rose-400" />
                         <span>Download .{ass.code}.seb Config Launcher</span>
                       </a>
+
+                      {/* Post-Assessment Student Review Toggle */}
+                      <button
+                        onClick={(e) => handleToggleReview(ass.id, !!ass.isReviewUnlocked, e)}
+                        className={`w-full flex items-center justify-center gap-2 text-xs font-semibold py-2 px-3 rounded-xl transition border ${
+                          ass.isReviewUnlocked
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+                            : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white"
+                        }`}
+                        title={ass.isReviewUnlocked ? "Review Mode Active for Students (Click to Disable)" : "Enable Review Mode for Attended Students"}
+                      >
+                        {ass.isReviewUnlocked ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <BookOpen className="w-3.5 h-3.5 text-slate-400" />}
+                        <span>{ass.isReviewUnlocked ? "Review Mode Active (Open to Students)" : "Enable Review for Attended Students"}</span>
+                      </button>
                     </div>
                   </div>
                 );

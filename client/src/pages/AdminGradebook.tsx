@@ -110,7 +110,11 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
 
   const openCodeInspector = (student: any, questionId?: string) => {
     setInspectStudent(student);
-    const targetQId = questionId || data?.assessment?.questions?.[0]?.id || "";
+    const assignedIds = student.assignedQuestionIds || [];
+    const targetQId =
+      questionId ||
+      (assignedIds.length > 0 ? assignedIds[0] : data?.assessment?.questions?.[0]?.id) ||
+      "";
     setActiveQuestionId(targetQId);
     setCopiedCode(false);
   };
@@ -274,12 +278,16 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                     <th className="p-3">Status</th>
                     <th className="p-3 text-center">MCQ Score</th>
                     <th className="p-3 text-center">Coding Score</th>
-                    {data.assessment.questions.map((q: any, idx: number) => (
-                      <th key={q.id} className="p-3 text-center">
-                        <span className="block text-[10px] text-slate-500">{q.type}</span>
-                        <span>Q{idx + 1} ({q.marks}m)</span>
-                      </th>
-                    ))}
+                    {data.assessment.isRandomized ? (
+                      <th className="p-3 text-center">Assigned Problems & Submissions</th>
+                    ) : (
+                      data.assessment.questions.map((q: any, idx: number) => (
+                        <th key={q.id} className="p-3 text-center">
+                          <span className="block text-[10px] text-slate-500">{q.type}</span>
+                          <span>Q{idx + 1} ({q.marks}m)</span>
+                        </th>
+                      ))
+                    )}
                     <th className="p-3 text-right">Total Marks</th>
                     <th className="p-3 text-right">Percentage</th>
                     <th className="p-3 text-center">Action</th>
@@ -319,33 +327,76 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                         {st.codingScore}
                       </td>
 
-                      {data.assessment.questions.map((q: any) => {
-                        const qInfo = st.questionScores[q.id] || { score: 0, status: "NOT_SUBMITTED" };
-                        const hasSubmission = !!qInfo.submissionId || (st.submissions && st.submissions.some((s: any) => s.questionId === q.id));
+                      {data.assessment.isRandomized ? (
+                        <td className="p-3 text-center">
+                          <div className="flex flex-wrap items-center justify-center gap-1.5">
+                            {(() => {
+                              const assignedIds = st.assignedQuestionIds || [];
+                              const studentQs = assignedIds.length > 0
+                                ? data.assessment.questions.filter((q: any) => assignedIds.includes(q.id))
+                                : [];
+                              if (studentQs.length === 0) {
+                                return <span className="text-slate-500 text-[11px]">No questions allocated</span>;
+                              }
+                              return studentQs.map((q: any) => {
+                                const qInfo = st.questionScores?.[q.id] || { score: 0, status: "NOT_SUBMITTED" };
+                                const isFull = qInfo.score === q.marks;
+                                const isPartial = qInfo.score > 0 && !isFull;
+                                const hasCode = st.submissions && st.submissions.some((s: any) => s.questionId === q.id && s.code);
+                                return (
+                                  <button
+                                    key={q.id}
+                                    onClick={() => openCodeInspector(st, q.id)}
+                                    className={`px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
+                                      isFull
+                                        ? "bg-emerald-950/40 text-emerald-300 border-emerald-800/60 hover:bg-emerald-900/60"
+                                        : isPartial
+                                        ? "bg-amber-950/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/60"
+                                        : hasCode
+                                        ? "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800"
+                                        : "bg-slate-950/40 text-slate-500 border-slate-800 hover:bg-slate-800"
+                                    }`}
+                                    title={`Click to inspect student code for "${q.title}"`}
+                                  >
+                                    <span className="truncate max-w-[150px]">{q.title}</span>
+                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/40">
+                                      {qInfo.score}/{q.marks}m
+                                    </span>
+                                  </button>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </td>
+                      ) : (
+                        data.assessment.questions.map((q: any) => {
+                          const qInfo = st.questionScores[q.id] || { score: 0, status: "NOT_SUBMITTED" };
+                          const hasSubmission = !!qInfo.submissionId || (st.submissions && st.submissions.some((s: any) => s.questionId === q.id));
 
-                        return (
-                          <td key={q.id} className="p-3 text-center font-mono">
-                            <button
-                              onClick={() => openCodeInspector(st, q.id)}
-                              className={`px-2 py-1 rounded-lg border transition text-xs font-semibold ${
-                                qInfo.score === q.marks
-                                  ? "bg-emerald-950/40 text-emerald-300 border-emerald-800/50 hover:bg-emerald-900/60"
-                                  : qInfo.score > 0
-                                  ? "bg-amber-950/40 text-amber-300 border-amber-800/50 hover:bg-amber-900/60"
-                                  : qInfo.score < 0
-                                  ? "bg-rose-950/40 text-rose-300 border-rose-800/50 hover:bg-rose-900/60"
-                                  : hasSubmission
-                                  ? "bg-slate-950/60 text-slate-400 border-slate-800 hover:bg-slate-800"
-                                  : "bg-slate-950/20 text-slate-600 border-transparent hover:border-slate-800"
-                              }`}
-                              title="Click to inspect student's code and test case results"
-                            >
-                              <span>{qInfo.score}</span>
-                              <span className="text-[10px] text-slate-500">/{q.marks}</span>
-                            </button>
-                          </td>
-                        );
-                      })}
+                          return (
+                            <td key={q.id} className="p-3 text-center font-mono">
+                              <button
+                                onClick={() => openCodeInspector(st, q.id)}
+                                className={`px-2 py-1 rounded-lg border transition text-xs font-semibold ${
+                                  qInfo.score === q.marks
+                                    ? "bg-emerald-950/40 text-emerald-300 border-emerald-800/50 hover:bg-emerald-900/60"
+                                    : qInfo.score > 0
+                                    ? "bg-amber-950/40 text-amber-300 border-amber-800/50 hover:bg-amber-900/60"
+                                    : qInfo.score < 0
+                                    ? "bg-rose-950/40 text-rose-300 border-rose-800/50 hover:bg-rose-900/60"
+                                    : hasSubmission
+                                    ? "bg-slate-950/60 text-slate-400 border-slate-800 hover:bg-slate-800"
+                                    : "bg-slate-950/20 text-slate-600 border-transparent hover:border-slate-800"
+                                }`}
+                                title="Click to inspect student's code and test case results"
+                              >
+                                <span>{qInfo.score}</span>
+                                <span className="text-[10px] text-slate-500">/{q.marks}</span>
+                              </button>
+                            </td>
+                          );
+                        })
+                      )}
 
                       <td className="p-3 text-right font-mono font-bold text-emerald-400 text-sm">
                         {st.totalScore} <span className="text-[11px] text-slate-500 font-normal">/ {st.maxScore}</span>
@@ -415,40 +466,47 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
 
             {/* Question Selector Tabs */}
             <div className="px-6 py-3 bg-slate-900/90 border-b border-slate-800 flex gap-2 overflow-x-auto shrink-0">
-              {data?.assessment?.questions?.map((q: any, idx: number) => {
-                const qScore = inspectStudent.questionScores?.[q.id] || { score: 0, status: "NONE" };
-                const isSelected = activeQuestionId === q.id;
+              {(() => {
+                const assignedIds = inspectStudent.assignedQuestionIds || [];
+                const questionsToShow = assignedIds.length > 0
+                  ? data?.assessment?.questions?.filter((q: any) => assignedIds.includes(q.id))
+                  : data?.assessment?.questions || [];
 
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => {
-                      setActiveQuestionId(q.id);
-                      setCopiedCode(false);
-                    }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
-                      isSelected
-                        ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-950/50"
-                        : "bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-800"
-                    }`}
-                  >
-                    <span>Q{idx + 1}: {q.title}</span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                return questionsToShow.map((q: any, idx: number) => {
+                  const qScore = inspectStudent.questionScores?.[q.id] || { score: 0, status: "NONE" };
+                  const isSelected = activeQuestionId === q.id;
+
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => {
+                        setActiveQuestionId(q.id);
+                        setCopiedCode(false);
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
                         isSelected
-                          ? "bg-emerald-700 text-white"
-                          : qScore.score === q.marks
-                          ? "bg-emerald-950 text-emerald-400"
-                          : qScore.score > 0
-                          ? "bg-amber-950 text-amber-300"
-                          : "bg-slate-800 text-slate-400"
+                          ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-950/50"
+                          : "bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-800"
                       }`}
                     >
-                      {qScore.score}/{q.marks}m
-                    </span>
-                  </button>
-                );
-              })}
+                      <span>Q{idx + 1}: {q.title}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                          isSelected
+                            ? "bg-emerald-700 text-white"
+                            : qScore.score === q.marks
+                            ? "bg-emerald-950 text-emerald-400"
+                            : qScore.score > 0
+                            ? "bg-amber-950 text-amber-300"
+                            : "bg-slate-800 text-slate-400"
+                        }`}
+                      >
+                        {qScore.score}/{q.marks}m
+                      </span>
+                    </button>
+                  );
+                });
+              })()}
             </div>
 
             {/* Modal Body */}

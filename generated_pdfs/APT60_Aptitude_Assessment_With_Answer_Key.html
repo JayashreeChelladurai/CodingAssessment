@@ -1,0 +1,2506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Aptitude &amp; Logical Reasoning Assessment (APT60) - Solutions Key</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm 12mm 14mm;
+    }
+    *, *:before, *:after {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+    }
+    .header-container {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .college-header {
+      font-size: 11pt;
+      font-weight: 800;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .dept-header {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+    .header-left h1 {
+      font-size: 14pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 2px 0;
+      letter-spacing: -0.5px;
+    }
+    .header-left h2 {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #047857;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .header-right {
+      text-align: right;
+      font-size: 9pt;
+      color: #334155;
+      line-height: 1.35;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 8pt;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .badge-solutions {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+    .badge-paper {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .answer-key-card {
+      page-break-inside: avoid;
+      background: #f8fafc;
+      border: 1.5px solid #0f172a;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+    .answer-key-title {
+      font-size: 9.5pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .key-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+    }
+    .key-cell {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 3px 2px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .key-q {
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .key-ans {
+      font-size: 9pt;
+      font-weight: 800;
+      color: #047857;
+    }
+    .student-info-bar {
+      display: none;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin-bottom: 12px;
+      font-size: 8.5pt;
+      color: #475569;
+    }
+    .student-field {
+      border-bottom: 1px solid #94a3b8;
+      display: inline-block;
+      min-width: 140px;
+      height: 14px;
+    }
+    .question-card {
+      page-break-inside: avoid;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 9px;
+    }
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .question-number {
+      font-weight: 700;
+      font-size: 9pt;
+      color: #0f172a;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .question-marks {
+      font-size: 8pt;
+      font-weight: 600;
+      color: #dc2626;
+    }
+    .question-text {
+      font-size: 9.5pt;
+      font-weight: 500;
+      color: #1e293b;
+      margin-bottom: 6px;
+      white-space: pre-wrap;
+    }
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 10px;
+      margin-bottom: 4px;
+    }
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 8.5pt;
+    }
+    .option-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      color: #334155;
+      font-weight: 700;
+      font-size: 7.5pt;
+      flex-shrink: 0;
+    }
+    .option-text {
+      flex: 1;
+      color: #334155;
+    }
+    .correct-option {
+      background: #ecfdf5;
+      border-color: #10b981;
+    }
+    .correct-letter {
+      background: #10b981;
+      color: #ffffff;
+    }
+    .correct-badge {
+      font-size: 7pt;
+      font-weight: 700;
+      color: #059669;
+      background: #ffffff;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid #a7f3d0;
+      white-space: nowrap;
+    }
+    .explanation-box {
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: #f0fdf4;
+      border-left: 3px solid #10b981;
+      border-radius: 0 4px 4px 0;
+      font-size: 8.5pt;
+      color: #166534;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-container">
+    <div class="header-left">
+      <div class="college-header">Dr. Mahalingam College of Engineering and Technology</div>
+      <div class="dept-header">Department of Career Planning and Guidance</div>
+      <h1>Aptitude &amp; Logical Reasoning Assessment (APT60)</h1>
+      <h2>Official Solution Key & Explanations</h2>
+    </div>
+    <div class="header-right">
+      <span class="badge badge-solutions">
+        OFFICIAL ANSWER KEY
+      </span><br>
+      <strong>Assessment Code:</strong> APT60<br>
+      <strong>Duration:</strong> 60 Minutes<br>
+      <strong>Total Questions:</strong> 60 MCQs<br>
+      <strong>Marking:</strong> +1.0 Mark | -1.0 Negative Mark
+    </div>
+  </div>
+
+  <div class="student-info-bar">
+    <div><strong>Student Name:</strong> <span class="student-field"></span></div>
+    <div><strong>Roll Number:</strong> <span class="student-field"></span></div>
+    <div><strong>Date:</strong> <span class="student-field" style="min-width: 90px;"></span></div>
+  </div>
+
+  
+      <div class="answer-key-card">
+        <div class="answer-key-title">⚡ Quick Reference Answer Key (Questions 1 – 60)</div>
+        <div class="key-grid">
+          <div class="key-cell"><span class="key-q">Q1</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q2</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q3</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q4</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q5</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q6</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q7</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q8</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q9</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q10</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q11</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q12</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q13</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q14</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q15</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q16</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q17</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q18</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q19</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q20</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q21</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q22</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q23</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q24</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q25</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q26</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q27</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q28</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q29</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q30</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q31</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q32</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q33</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q34</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q35</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q36</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q37</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q38</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q39</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q40</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q41</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q42</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q43</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q44</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q45</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q46</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q47</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q48</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q49</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q50</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q51</span><span class="key-ans">D</span></div><div class="key-cell"><span class="key-q">Q52</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q53</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q54</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q55</span><span class="key-ans">B</span></div><div class="key-cell"><span class="key-q">Q56</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q57</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q58</span><span class="key-ans">C</span></div><div class="key-cell"><span class="key-q">Q59</span><span class="key-ans">A</span></div><div class="key-cell"><span class="key-q">Q60</span><span class="key-ans">B</span></div>
+        </div>
+      </div>
+    
+
+  <div class="questions-container">
+    
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 1</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Three numbers are in the ratio of 3 : 4 : 5 and their L.C.M. is 2400. Their H.C.F. is:</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">40</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">80</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">120</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">200</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let the numbers be 3x, 4x, and 5x. Their LCM is 60x = 2400 =&gt; x = 40. The HCF of 3x, 4x, 5x is x, which is 40.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 2</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The ratio of two numbers is 3 : 4 and their H.C.F. is 4. Their L.C.M. is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">12</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">16</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">24</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">48</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> The numbers are 3 * 4 = 12 and 4 * 4 = 16. LCM(12, 16) = 48.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 3</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The L.C.M. of two numbers is 48. The numbers are in the ratio 2 : 3. Then the sum of the numbers is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">28</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">32</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">40</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">64</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let the numbers be 2x and 3x. Their LCM is 6x = 48 =&gt; x = 8. The numbers are 16 and 24. Sum = 16 + 24 = 40.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 4</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">If one-third of one-fourth of a number is 15, then three-tenth of that number is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">35</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">36</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">45</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">54</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> (1/3) * (1/4) * N = 15 =&gt; N / 12 = 15 =&gt; N = 180. Therefore, (3/10) * 180 = 54.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 5</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Three times the first of three consecutive odd integers is 3 more than twice the third. The third integer is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">9</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">11</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">13</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">15</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let the integers be x, x + 2, x + 4. 3x = 2(x + 4) + 3 =&gt; 3x = 2x + 11 =&gt; x = 11. The third integer is 11 + 4 = 15.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 6</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The difference between a two-digit number and the number obtained by interchanging the positions of its digits is 36. What is the difference between the two digits of that number?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">3</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">4</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">9</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Cannot be determined</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Difference = (10x + y) - (10y + x) = 9(x - y) = 36 =&gt; x - y = 4.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 7</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A two-digit number is such that the product of the digits is 8. When 18 is added to the number, then the digits are reversed. The number is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">18</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">24</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">42</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">81</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let the number be 10x + y. xy = 8. Adding 18 reverses digits: 10x + y + 18 = 10y + x =&gt; 9(y - x) = 18 =&gt; y - x = 2. With xy = 8 and y - x = 2, we get x = 2, y = 4. The number is 24.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 8</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">If the number 481 * 673 is completely divisible by 9, then the smallest whole number in place of * will be:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">2</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">5</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">6</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">7</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Sum of digits = 4 + 8 + 1 + * + 6 + 7 + 3 = 29 + *. The nearest multiple of 9 greater than or equal to 29 is 36. Thus, * = 36 - 29 = 7.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 9</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The value of a washing machine depreciates at the rate of 10% every year. If its present value is Rs. 8,748, then what was the price of the washing machine three years ago?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 10,000</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">Rs. 11,000</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">Rs. 12,000</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Rs. 15,000</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> P * (1 - 0.10)^3 = 8748 =&gt; P * 0.729 = 8748 =&gt; P = 8748 / 0.729 = Rs. 12,000.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 10</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A student erroneously multiplied a number by 2/5 instead of 5/2. What is the percentage error in the calculation?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">24%</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">54%</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">74%</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">84%</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Error = (5/2 - 2/5) / (5/2) * 100 = (21/10) * (2/5) * 100 = (21/25) * 100 = 84%.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 11</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Ram spends 70% of his salary and deposits 15% of his salary in the bank. If he is left with Rs. 1,500, what is his monthly salary?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 9,000</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">Rs. 9,500</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">Rs. 10,000</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Rs. 10,500</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Remaining percentage = 100% - (70% + 15%) = 15%. 15% of salary = Rs. 1,500 =&gt; Salary = 1500 / 0.15 = Rs. 10,000.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 12</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A fruit seller had some apples. He sells 40% apples and still has 420 apples. Originally, he had:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">588 apples</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">600 apples</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">672 apples</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">700 apples</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Remaining apples = 100% - 40% = 60%. 60% of Total = 420 =&gt; Total = 420 / 0.60 = 700 apples.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 13</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The price of an article was first decreased by 20% and then increased by 15%. What was the overall percent decrease or increase?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">8% increase</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">8% decrease</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">2% decrease</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">2% increase</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Net factor = (1 - 0.20) * (1 + 0.15) = 0.80 * 1.15 = 0.92 =&gt; 1 - 0.92 = 0.08 = 8% decrease.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 14</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A train travelled a certain distance at a uniform speed. Had the speed been 6 km/h more, it would have needed 4 hours less. Had the speed been 6 km/h less, it would have needed 6 hours more. The distance, in km, travelled by the train is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">620 km</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">720 km</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">540 km</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">840 km</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Using D = s*(s+6)*4/6 = s*(s-6)*6/6 =&gt; 4(s+6) = 6(s-6) =&gt; 4s + 24 = 6s - 36 =&gt; 2s = 60 =&gt; s = 30 km/h. Distance D = 30 * 36 * 4 / 6 = 720 km.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 15</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A boat&#039;s speed in still water is 22 km/h, while the river is flowing with a speed of 8 km/h. The time taken to cover a certain distance upstream is 4 hours more than the time taken to cover the same distance downstream. Find the distance.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">100 km</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">105 km</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">110 km</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">115 km</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Downstream speed = 22 + 8 = 30 km/h. Upstream speed = 22 - 8 = 14 km/h. D/14 - D/30 = 4 =&gt; D * (16 / 420) = 4 =&gt; D = 4 * 420 / 16 = 105 km.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 16</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A boat goes 20 km upstream and 44 km downstream in 8 hours. In 5 hours, it goes 15 km upstream and 22 km downstream. Determine the speed of the boat in still water.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">5 km/h</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">8 km/h</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">10 km/h</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">12 km/h</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let 1/u = x and 1/v = y. 20x + 44y = 8 and 15x + 22y = 5 =&gt; 30x + 44y = 10. Subtracting gives 10x = 2 =&gt; x = 1/5 (upstream = 5 km/h) and y = 1/11 (downstream = 11 km/h). Speed in still water = (5 + 11)/2 = 8 km/h.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 17</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A can do a work in 15 days and B in 20 days. If they work on it together for 4 days, then the fraction of the work that is left is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">5/7</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">8/15</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">9/16</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">3/10</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> A&#039;s 1-day work = 1/15, B&#039;s 1-day work = 1/20. Together in 1 day = 1/15 + 1/20 = 7/60. In 4 days = 4 * 7/60 = 7/15. Work left = 1 - 7/15 = 8/15.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 18</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A, B and C can do a piece of work in 20, 30 and 60 days respectively. In how many days can A do the work if he is assisted by B and C on every third day?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">5 days</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">10 days</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">15 days</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">20 days</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Day 1 (A) = 1/20. Day 2 (A) = 1/20. Day 3 (A+B+C) = 1/20 + 1/30 + 1/60 = 6/60 = 1/10. Work in 3 days = 1/20 + 1/20 + 1/10 = 1/5. Entire work completes in 5 * 3 = 15 days.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 19</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A:B is 1:2; B:C is 3:2 and C:D is 1:3. Find A:B:C:D.</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">3:6:4:12</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">2:3:5:7</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">3:5:7:6</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">2:1:6:13</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> A:B = 1:2 = 3:6. B:C = 3:2 = 6:4. Thus A:B:C = 3:6:4. C:D = 1:3 = 4:12. Thus A:B:C:D = 3:6:4:12.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 20</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The ratio of two numbers is 11 : 12. If the sum of the numbers is 253, find the difference between the numbers.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">10</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">11</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">12</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">21</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> 11x + 12x = 23x = 253 =&gt; x = 11. Difference = 12x - 11x = x = 11.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 21</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A sum of money is to be distributed among A, B, C, D in the proportion of 5 : 2 : 4 : 3. If C gets Rs. 1,000 more than D, what is B&#039;s share?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 500</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">Rs. 1,500</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">Rs. 2,000</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">None of these</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> C&#039;s share - D&#039;s share = 4x - 3x = x = Rs. 1,000. B&#039;s share = 2x = 2 * 1,000 = Rs. 2,000.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 22</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The average weight of A, B and C is 45 kg. If the average weight of A and B be 40 kg and that of B and C be 43 kg, then the weight of B is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">30 kg</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">31 kg</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">32 kg</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">33 kg</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> A + B + C = 45 * 3 = 135 kg. A + B = 80 kg =&gt; C = 135 - 80 = 55 kg. B + C = 86 kg =&gt; B = 86 - 55 = 31 kg.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 23</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The average weight of 36 men is 50 kg. It was found later that the figure of 37 kg was misread as 73 kg. What is the correct average?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">40 kg</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">45 kg</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">49 kg</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">50 kg</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Total weight miscalculated by (73 - 37) = +36 kg. Correct average = 50 - (36 / 36) = 50 - 1 = 49 kg.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 24</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The average age of 30 students is 9 years. If the teacher is included the average becomes 10 years. What is the age of the teacher?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">30 years</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">35 years</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">40 years</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">45 years</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Total age of 30 students = 270. Total age with teacher (31 people) = 31 * 10 = 310. Teacher&#039;s age = 310 - 270 = 40 years.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 25</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Five years ago, the ages of A and B were 1 : 2. At present the ratio is 3 : 4. Find the present age of A.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">5 years</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">6 years</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">7.5 years</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">8 years</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let present ages be 3x and 4x. (3x - 5) / (4x - 5) = 1/2 =&gt; 6x - 10 = 4x - 5 =&gt; 2x = 5 =&gt; x = 2.5. A&#039;s present age = 3 * 2.5 = 7.5 years.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 26</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Present ages of Sam and Anand are in the ratio of 5 : 4 respectively. Three years hence, the ratio of their ages will become 11 : 9 respectively. What is Anand&#039;s present age in years?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">15 years</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">24 years</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">30 years</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">32 years</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> (5x + 3) / (4x + 3) = 11/9 =&gt; 45x + 27 = 44x + 33 =&gt; x = 6. Anand&#039;s present age = 4x = 24 years.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 27</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A father said to his son, &#039;I was as old as you are at the present at the time of your birth&#039;. If the father&#039;s age is 38 years now, the son&#039;s age five years back was:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">12 years</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">14 years</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">15 years</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">20 years</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Father&#039;s age at son&#039;s birth = 38 - x = x =&gt; 2x = 38 =&gt; x = 19 years. Five years back, son&#039;s age = 19 - 5 = 14 years.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 28</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A bank offers 5% compound interest calculated on half-yearly basis. A customer deposits Rs. 1,600 each on 1st January and 1st July of a year. At the end of the year, the amount he would have gained by way of interest is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 80</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Rs. 121</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Rs. 145</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Rs. 189</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Half-yearly rate = 2.5%. Amount = 1600 * (1 + 0.025)^2 + 1600 * (1 + 0.025) = 1681 + 1640 = 3321. Total deposited = 3200. Interest = 3321 - 3200 = Rs. 121.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 29</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The difference between simple and compound interests compounded annually on a certain sum of money for 2 years at 4% per annum is Re. 1. The sum (in Rs.) is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 597</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Rs. 625</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Rs. 720</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Rs. 856</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Difference = P * (R/100)^2 =&gt; 1 = P * (4/100)^2 = P * (1/625) =&gt; P = Rs. 625.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 30</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A card is drawn from a pack of 52 cards. The probability of getting a queen of club or a king of heart is:</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">1/26</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">2/35</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">2/67</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">3/65</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Total cards = 52. Queen of club = 1 card, King of heart = 1 card. Total favorable outcomes = 2. Probability = 2/52 = 1/26.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 31</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">From a group of 7 men and 6 women, five persons are to be selected to form a committee so that at least 3 men are there on the committee. In how many ways can it be done?</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">756</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">748</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">789</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">800</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Ways = (7C3 * 6C2) + (7C4 * 6C1) + (7C5 * 6C0) = (35 * 15) + (35 * 6) + (21 * 1) = 525 + 210 + 21 = 756 ways.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 32</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">In how many different ways can the letters of the word &#039;LEADING&#039; be arranged in such a way that the vowels always come together?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">625</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">720</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">840</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">960</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Vowels: E, A, I (3 vowels). Consonants: L, D, N, G (4 consonants). Treating vowels as 1 single block yields 5 units, arranged in 5! = 120 ways. The 3 vowels arrange internally in 3! = 6 ways. Total = 120 * 6 = 720.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 33</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Rajeev&#039;s age after 15 years will be 5 times his age 5 years back. What is the present age of Rajeev?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">5 years</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">10 years</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">15 years</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">20 years</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> R + 15 = 5(R - 5) =&gt; R + 15 = 5R - 25 =&gt; 4R = 40 =&gt; R = 10 years.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 34</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The ratio of father&#039;s age to son&#039;s age is 4 : 1. The product of their ages is 196. What will be the ratio of their ages after 5 years?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">5:11</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">11:6</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">11:4</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">11:7</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> (4x) * (x) = 196 =&gt; 4x^2 = 196 =&gt; x^2 = 49 =&gt; x = 7. Father = 28, Son = 7. After 5 years: Father = 33, Son = 12. Ratio = 33:12 = 11:4.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 35</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A and B invest in a business in the ratio 3 : 2. If 5% of the total profit goes to charity and A&#039;s share is Rs. 855, the total profit is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 1,425</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Rs. 1,500</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Rs. 1,537.50</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Rs. 1,576</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let total profit be P. Remaining after charity = 0.95P. A&#039;s share = (3/5) * 0.95P = 0.57P = 855 =&gt; P = 855 / 0.57 = Rs. 1,500.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 36</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A starts business with Rs. 3,500 and after 5 months, B joins with A as his partner. After a year, the profit is divided in the ratio 2 : 3. What is B&#039;s contribution in the capital?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 7,500</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">Rs. 8,000</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Rs. 8,500</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">Rs. 9,000</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Ratio of investments = (3500 * 12) / (B * 7) = 42000 / 7B = 6000 / B. Given 6000 / B = 2/3 =&gt; 2B = 18000 =&gt; B = Rs. 9,000.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 37</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">In what ratio should two varieties of sugar of Rs. 18 per kg and Rs. 24 per kg be mixed together to get a mixture whose cost is Rs. 20 per kg?</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">2 : 1</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">3 : 1</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">4 : 1</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">5 : 1</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> By rule of alligation: (24 - 20) : (20 - 18) = 4 : 2 = 2 : 1.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 38</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Two vessels A and B contain spirit and water in the ratio 5 : 2 and 7 : 6 respectively. Find the ratio in which this mixture be mixed to obtain a new mixture in the vessel C containing spirit and water in the ratio 8 : 5?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">5 : 7</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">6 : 7</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">7 : 9</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">7 : 3</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Fraction of spirit: A = 5/7, B = 7/13, Mean C = 8/13. Ratio = (8/13 - 7/13) : (5/7 - 8/13) = (1/13) : (9/91) = (7/91) : (9/91) = 7 : 9.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 39</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A dishonest milkman professes to sell his milk at cost price but he mixes it with water and thereby gains 25%. The percentage of water in the mixture is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">10%</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">20%</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">30%</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">40%</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Let CP of 1 litre milk be Rs. 1. SP of 1 litre mixture = Rs. 1. Gain = 25% =&gt; CP of mixture = 1 / 1.25 = Rs. 0.80. Quantity of milk = 0.80 L, water = 0.20 L. Water percentage = (0.20 / 1.00) * 100 = 20%.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 40</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">In a 729 litre mixture of milk and water, the ratio of milk to water is 7 : 2. To get a new mixture containing milk and water in the ratio 7 : 3, the amount of water to be added is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">50 L</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">65 L</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">80 L</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">81 L</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Milk = (7/9) * 729 = 567 L. Water = (2/9) * 729 = 162 L. In new ratio 7:3 with 567 L milk, required water = (3/7) * 567 = 243 L. Water to add = 243 - 162 = 81 L.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 41</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">At what rate percent per annum will a sum of money double in 20 years?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">1.2%</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">2%</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">4%</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">5%</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> SI = P. Rate R = (SI * 100) / (P * T) = (P * 100) / (P * 20) = 5% per annum.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 42</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A sum of money at simple interest amounts to Rs. 815 in 3 years and to Rs. 854 in 4 years. The sum is:</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 650</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">Rs. 690</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">Rs. 698</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Rs. 700</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> SI for 1 year = 854 - 815 = Rs. 39. SI for 3 years = 39 * 3 = Rs. 117. Principal = 815 - 117 = Rs. 698.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 43</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">A shopkeeper sells an article for Rs. 200 with a loss of 20%. Find the cost price of the article.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Rs. 220</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Rs. 250</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Rs. 280</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Rs. 260</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> SP = 0.80 * CP =&gt; CP = 200 / 0.80 = Rs. 250.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 44</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">S.P. of 10 candles is the same as C.P. of 12 candles. Find the gain percent.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">11%</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">15%</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">20%</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">25%</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Gain% = (12 - 10) / 10 * 100 = (2/10) * 100 = 20%.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 45</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">If a retailer marks up his price by 30% and then allows a 30% discount, what is his percentage profit or loss?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">9% gain</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">8% gain</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">8% loss</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">9% loss</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Net change = 30 - 30 - (30 * 30)/100 = -9% =&gt; 9% loss.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 46</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Look at this series: 2, 6, 18, 54, ... What number should come next?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">98</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">162</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">195</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">324</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Each number is multiplied by 3: 2 * 3 = 6, 6 * 3 = 18, 18 * 3 = 54, 54 * 3 = 162.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 47</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Look at this series: 22, 21, 23, 22, 24, 23, ... What number should come next?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">20</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">25</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">30</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">45</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> The pattern alternates between -1 and +2: 22 - 1 = 21, 21 + 2 = 23, 23 - 1 = 22, 22 + 2 = 24, 24 - 1 = 23, 23 + 2 = 25.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 48</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Find the next number in the series: 3, 8, 18, 38, 78, ?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">148</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">156</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">158</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">160</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Differences are: 5, 10, 20, 40, ... Next difference is 80 =&gt; 78 + 80 = 158.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 49</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">One morning Udai and Vishal were talking to each other face to face at a crossing. If Vishal&#039;s shadow was exactly to the left of Udai, which direction was Udai facing?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">East</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">West</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">North</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">South</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> In the morning, the sun rises in the East and shadows fall toward the West. Vishal&#039;s shadow falls to the West. Since this shadow is to the left of Udai, Udai&#039;s left points West, meaning Udai is facing North.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 50</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">From his house, Lokesh went 15 km to the North. Then he turned West and covered 10 km. Then he turned South and covered 5 km. Finally turning to the East, he covered 10 km. In which direction is he from his house?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">East</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">West</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">North</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">South</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> East and West movements cancel out (10 km West then 10 km East). Net North-South displacement = 15 km North - 5 km South = 10 km North. He is North of his house.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 51</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Rasik walked 20 m towards North. Then he turned right and walks 30 m. Then he turns right and walks 35 m. Then he turns left and walks 15 m. Finally he turns left and walks 15 m. In which direction and how many metres is he from the starting position?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">15 m West</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">30 m East</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">30 m West</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">D</span>
+                <span class="option-text">45 m East</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> North-South: +20 - 35 + 15 = 0 m. East-West: +30 + 15 = 45 m East. He is 45 m East of the starting position.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 52</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Pointing to a photograph of a boy Suresh said, &#039;He is the son of the only son of my mother.&#039; How is Suresh related to that boy?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Brother</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Father</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Uncle</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Cousin</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> The only son of Suresh&#039;s mother is Suresh himself. The boy is the son of Suresh, so Suresh is the father.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 53</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">M is the son of N. N is the sister of O. O is the father of P. How is M related to P?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Brother</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Cousin</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Nephew</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Uncle</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> N and O are brother and sister. M is N&#039;s son and P is O&#039;s child. Children of siblings are first cousins.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 54</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Statements: All the windows are doors. No door is a wall.
+Conclusions:
+(I) Some windows are walls.
+(II) No wall is a door.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Only I follows</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Only II follows</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">None follows</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Both follow</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> All windows are doors and no door is a wall =&gt; No window is a wall, so (I) is false. Since &#039;No door is a wall&#039; converts directly to &#039;No wall is a door&#039;, conclusion (II) definitely follows.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 55</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Statements: All cups are books. All books are shirts.
+Conclusions:
+(I) Some cups are not shirts.
+(II) Some shirts are cups.</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">Only I follows</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">Only II follows</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">None follows</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Both follow</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> All cups are books + All books are shirts =&gt; All cups are shirts. Therefore, &#039;Some shirts are cups&#039; follows by conversion, and &#039;Some cups are not shirts&#039; is false.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 56</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Statements: No vehicle is a bicycle. Some bicycles are electric. All electric things require power.
+Conclusions:
+(I) Some things requiring power are bicycles.
+(II) No vehicle requires power.</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">Only conclusion I follows</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">Only conclusion II follows</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">Both conclusions follow</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">Neither conclusion follows</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Since some bicycles are electric and all electric things require power, some bicycles require power =&gt; &#039;Some things requiring power are bicycles&#039; follows. Conclusion II is unsupported.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 57</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">P, Q, R, S, T, U and V are seven friends sitting in a circle facing the center. V is second to the left of S and is the neighbor of T and U. S is not a neighbor of R or T. P is a neighbor of Q and R. Which of the following is correct?</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">Q is between P and S</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">S is between U and P</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">T is to the immediate right of V</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">U is to the immediate left of V</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Arranging clockwise: S, U, V, T, R, P, Q. In this layout, Q is placed right between P and S.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 58</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">Six files A, B, C, D, E and F are arranged by size. A is larger than C but smaller than E. B is smaller than D but larger than F. C is larger than D. Which file is the largest?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">A</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">B</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">C</span>
+                <span class="option-text">E</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">D</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> From the given conditions: E &gt; A &gt; C, D &gt; B &gt; F, and C &gt; D. Combining these inequalities gives the unique ranking: E &gt; A &gt; C &gt; D &gt; B &gt; F. Therefore, File E is the largest.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 59</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">If DELHI is represented by its alphabetical positions as 4-5-12-8-9, how will CHENNAI be represented?</div>
+          <div class="options-grid">
+            
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">A</span>
+                <span class="option-text">3-8-5-14-14-1-9</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">B</span>
+              <span class="option-text">3-8-5-13-13-1-9</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">3-7-5-14-14-1-9</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">2-8-5-14-14-1-9</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> C = 3, H = 8, E = 5, N = 14, N = 14, A = 1, I = 9 =&gt; 3-8-5-14-14-1-9.
+            </div>
+          
+        </div>
+      
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-number">Question 60</span>
+            <span class="question-marks">[+1 Mark, -1 Negative Mark]</span>
+          </div>
+          <div class="question-text">The HCF of two numbers is 18 and their LCM is 1260. If one number is 90, what is the other number?</div>
+          <div class="options-grid">
+            
+            <div class="option-item">
+              <span class="option-letter">A</span>
+              <span class="option-text">216</span>
+            </div>
+          
+              <div class="option-item correct-option">
+                <span class="option-letter correct-letter">B</span>
+                <span class="option-text">252</span>
+                <span class="correct-badge">&#10003; Correct Answer</span>
+              </div>
+            
+            <div class="option-item">
+              <span class="option-letter">C</span>
+              <span class="option-text">270</span>
+            </div>
+          
+            <div class="option-item">
+              <span class="option-letter">D</span>
+              <span class="option-text">280</span>
+            </div>
+          
+          </div>
+          
+            <div class="explanation-box">
+              <strong>Step-by-Step Solution:</strong> Product of two numbers = HCF * LCM =&gt; 90 * Other = 18 * 1260 =&gt; Other = (18 * 1260) / 90 = 252.
+            </div>
+          
+        </div>
+      
+  </div>
+</body>
+</html>

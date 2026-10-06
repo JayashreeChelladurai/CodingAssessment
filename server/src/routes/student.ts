@@ -225,10 +225,90 @@ studentRouter.get("/info/:code", async (req, res) => {
   }
 });
 
+// Helper function to extract all bank question IDs and titles seen by a student across prior assessments
+export async function getStudentPreviouslySeenQuestionKeys(
+  studentRollNo?: string | null,
+  currentAssessmentId?: string | null
+): Promise<{ seenBankQuestionIds: Set<string>; seenTitles: Set<string> }> {
+  const seenBankQuestionIds = new Set<string>();
+  const seenTitles = new Set<string>();
+
+  if (!studentRollNo) {
+    return { seenBankQuestionIds, seenTitles };
+  }
+
+  const cleanRollNo = studentRollNo.trim().toUpperCase();
+
+  // Query all prior attempts by this student in other assessments (e.g., BLIND75-RANDOM)
+  const priorAttempts = await prisma.studentAttempt.findMany({
+    where: {
+      rollNo: cleanRollNo,
+      ...(currentAssessmentId ? { assessmentId: { not: currentAssessmentId } } : {}),
+    },
+    include: {
+      submissions: { select: { questionId: true } },
+    },
+  });
+
+  const questionIdsToFetch = new Set<string>();
+  for (const att of priorAttempts) {
+    // 1. From questionOrder
+    try {
+      const qIds = JSON.parse(att.questionOrder || "[]");
+      if (Array.isArray(qIds)) {
+        for (const qId of qIds) {
+          if (typeof qId === "string" && qId) questionIdsToFetch.add(qId);
+        }
+      }
+    } catch {}
+
+    // 2. From submissions
+    for (const sub of att.submissions) {
+      if (sub.questionId) questionIdsToFetch.add(sub.questionId);
+    }
+  }
+
+  if (questionIdsToFetch.size > 0) {
+    const questions = await prisma.question.findMany({
+      where: { id: { in: Array.from(questionIdsToFetch) } },
+      select: { bankQuestionId: true, title: true },
+    });
+
+    const candidateTitlesToLookup: string[] = [];
+    for (const q of questions) {
+      if (q.bankQuestionId) {
+        seenBankQuestionIds.add(q.bankQuestionId);
+      }
+      if (q.title) {
+        seenTitles.add(q.title.trim().toLowerCase());
+        candidateTitlesToLookup.push(q.title.trim());
+      }
+    }
+
+    // Also match BankQuestion records by title in case bankQuestionId was null
+    if (candidateTitlesToLookup.length > 0) {
+      const matchedBankQuestions = await prisma.bankQuestion.findMany({
+        where: {
+          title: { in: candidateTitlesToLookup },
+        },
+        select: { id: true, title: true },
+      });
+
+      for (const bq of matchedBankQuestions) {
+        seenBankQuestionIds.add(bq.id);
+        seenTitles.add(bq.title.trim().toLowerCase());
+      }
+    }
+  }
+
+  return { seenBankQuestionIds, seenTitles };
+}
+
 // Helper function to allocate randomized questions from Question Bank
 export async function populateRandomQuestionsForAssessment(
   assessmentId: string,
-  randomConfigStr?: string | null
+  randomConfigStr?: string | null,
+  studentRollNo?: string | null
 ): Promise<{ questionOrder: string[]; optionOrders: Record<string, string[]> }> {
   let cfg: any = {};
   try {
@@ -272,9 +352,29 @@ export async function populateRandomQuestionsForAssessment(
     },
   });
 
-  const easyPool = bankQuestions.filter((q) => q.difficulty === "EASY");
-  const mediumPool = bankQuestions.filter((q) => q.difficulty === "MEDIUM");
-  const hardPool = bankQuestions.filter((q) => q.difficulty === "HARD");
+  // Cross-assessment deduplication (exclude questions seen in prior assessments like BLIND75-RANDOM)
+  const { seenBankQuestionIds, seenTitles } = await getStudentPreviouslySeenQuestionKeys(
+    studentRollNo,
+    assessmentId
+  );
+
+  const isQuestionSeen = (q: any) =>
+    seenBankQuestionIds.has(q.id) || seenTitles.has(q.title.trim().toLowerCase());
+
+  let easyPool = bankQuestions.filter((q) => q.difficulty === "EASY" && !isQuestionSeen(q));
+  if (easyPool.length === 0) {
+    easyPool = bankQuestions.filter((q) => q.difficulty === "EASY");
+  }
+
+  let mediumPool = bankQuestions.filter((q) => q.difficulty === "MEDIUM" && !isQuestionSeen(q));
+  if (mediumPool.length === 0) {
+    mediumPool = bankQuestions.filter((q) => q.difficulty === "MEDIUM");
+  }
+
+  let hardPool = bankQuestions.filter((q) => q.difficulty === "HARD" && !isQuestionSeen(q));
+  if (hardPool.length === 0) {
+    hardPool = bankQuestions.filter((q) => q.difficulty === "HARD");
+  }
 
   const pickedEasy = shuffleArray(easyPool).slice(0, easyCount);
   const pickedMedium = shuffleArray(mediumPool).slice(0, mediumCount);
@@ -306,6 +406,7 @@ export async function populateRandomQuestionsForAssessment(
       qRecord = await prisma.question.create({
         data: {
           assessmentId,
+          bankQuestionId: bq.id,
           type: bq.type,
           title: bq.title,
           description: bq.description,
@@ -338,10 +439,10 @@ export async function populateRandomQuestionsForAssessment(
           },
         },
       });
-    } else if (qRecord.marks !== expectedMarks) {
+    } else if (qRecord.marks !== expectedMarks || !qRecord.bankQuestionId) {
       qRecord = await prisma.question.update({
         where: { id: qRecord.id },
-        data: { marks: expectedMarks },
+        data: { marks: expectedMarks, bankQuestionId: bq.id },
         include: {
           testCases: {
             where: { isPublic: true },
@@ -428,7 +529,10 @@ export function allocateStandardQuestions(assessment: any): {
 }
 
 // Comprehensive helper function to allocate questions per student attempt, supporting question-level folder random allocation
-export async function allocateQuestionsForStudentAttempt(assessmentId: string): Promise<{
+export async function allocateQuestionsForStudentAttempt(
+  assessmentId: string,
+  studentRollNo?: string | null
+): Promise<{
   questionOrder: string[];
   optionOrders: Record<string, string[]>;
 }> {
@@ -450,10 +554,17 @@ export async function allocateQuestionsForStudentAttempt(assessmentId: string): 
     return { questionOrder: [], optionOrders: {} };
   }
 
-  // Fallback to legacy random allocation if no template questions exist but isRandomized is set
-  if (assessment.questions.length === 0 && assessment.isRandomized) {
-    return populateRandomQuestionsForAssessment(assessment.id, assessment.randomConfig);
+  // Fallback to legacy random allocation if no template questions exist OR if assessment is randomized without slot templates
+  const hasRandomSlots = assessment.questions.some((q) => q.isRandom);
+  if (assessment.isRandomized && (!hasRandomSlots || assessment.questions.length === 0)) {
+    return populateRandomQuestionsForAssessment(assessment.id, assessment.randomConfig, studentRollNo);
   }
+
+  // Cross-assessment deduplication (exclude questions seen in prior assessments like BLIND75-RANDOM)
+  const { seenBankQuestionIds, seenTitles } = await getStudentPreviouslySeenQuestionKeys(
+    studentRollNo,
+    assessment.id
+  );
 
   const sections =
     assessment.sections && assessment.sections.length > 0
@@ -532,8 +643,18 @@ export async function allocateQuestionsForStudentAttempt(assessmentId: string): 
       return slot.id;
     }
 
-    // Exclude questions already assigned to earlier slots for this student
-    let availableCandidates = candidates.filter((bq) => !assignedBankQuestionIds.has(bq.id));
+    // Exclude questions already assigned in this attempt OR previously seen in prior assessments (e.g. BLIND75-RANDOM)
+    let availableCandidates = candidates.filter(
+      (bq) =>
+        !assignedBankQuestionIds.has(bq.id) &&
+        !seenBankQuestionIds.has(bq.id) &&
+        !seenTitles.has(bq.title.trim().toLowerCase())
+    );
+
+    // If candidate pool exhausted by exclusion, relax cross-assessment deduplication but keep intra-attempt deduplication
+    if (availableCandidates.length === 0) {
+      availableCandidates = candidates.filter((bq) => !assignedBankQuestionIds.has(bq.id));
+    }
     if (availableCandidates.length === 0) {
       availableCandidates = candidates;
     }
@@ -800,7 +921,7 @@ studentRouter.post("/start", async (req, res) => {
       }
 
       if (needsQuestions) {
-        const alloc = await allocateQuestionsForStudentAttempt(assessment.id);
+        const alloc = await allocateQuestionsForStudentAttempt(assessment.id, cleanRollNo);
         questionOrder = alloc.questionOrder;
         optionOrders = alloc.optionOrders;
       }
@@ -831,7 +952,7 @@ studentRouter.post("/start", async (req, res) => {
       let questionOrder: string[] = [];
       let optionOrders: Record<string, string[]> = {};
 
-      const alloc = await allocateQuestionsForStudentAttempt(assessment.id);
+      const alloc = await allocateQuestionsForStudentAttempt(assessment.id, cleanRollNo);
       questionOrder = alloc.questionOrder;
       optionOrders = alloc.optionOrders;
 
