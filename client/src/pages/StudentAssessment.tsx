@@ -7,8 +7,12 @@ import { LockoutScreen } from "../components/proctor/LockoutScreen";
 import { MonacoCodeEditor } from "../components/editor/MonacoCodeEditor";
 import { TestResultViewer } from "../components/editor/TestResultViewer";
 import { McqView } from "../components/mcq/McqView";
+import { FibView } from "../components/fib/FibView";
 import { QuestionPalette } from "../components/palette/QuestionPalette";
 import { MarkdownView } from "../components/common/MarkdownView";
+import { SchemaViewer } from "../components/common/SchemaViewer";
+import { SqlMonacoEditor } from "../components/editor/SqlMonacoEditor";
+import { SqlResultViewer } from "../components/editor/SqlResultViewer";
 import {
   Clock,
   Play,
@@ -22,7 +26,8 @@ import {
   Layers,
   ChevronRight,
   BookOpen,
-  LogOut
+  LogOut,
+  Database
 } from "lucide-react";
 
 interface StudentAssessmentProps {
@@ -189,6 +194,8 @@ export const StudentAssessment: React.FC<StudentAssessmentProps> = ({
   const [showExitModal, setShowExitModal] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<string>("All changes saved");
   const [submitToast, setSubmitToast] = useState<string | null>(null);
+  const [sqlResult, setSqlResult] = useState<any | null>(null);
+  const [sqlLeftTab, setSqlLeftTab] = useState<"problem" | "schema">("problem");
 
   const activeQuestion: Question | undefined = orderedQuestions[currentQuestionIdx];
 
@@ -469,6 +476,8 @@ int main() {
     setCodingResult(null);
     setCustomResult(null);
     setCustomInput("");
+    setSqlResult(null);
+    setSqlLeftTab("problem");
   }, [currentQuestionIdx]);
 
   const handleEnterFullscreen = async () => {
@@ -589,6 +598,32 @@ int main() {
     api.submitMcq(attempt.id, questionId, [], attemptToken || undefined).catch(() => {});
     setSaveStatus("Choice cleared");
     setTimeout(() => setSaveStatus("All changes saved"), 800);
+  };
+
+  // Handle Fill in the Blanks answer changes
+  const fibDebounceRef = useRef<Record<string, any>>({});
+  const handleUpdateFibAnswer = (questionId: string, blankIndex: number, value: string) => {
+    const prev = mcqResponses[questionId] || [];
+    const next = [...prev];
+    next[blankIndex] = value;
+
+    setMcqResponses((old) => {
+      const updated = {
+        ...old,
+        [questionId]: next,
+      };
+      mcqResponsesRef.current = updated;
+      return updated;
+    });
+
+    setSaveStatus("Saving answer...");
+    if (fibDebounceRef.current[questionId]) {
+      clearTimeout(fibDebounceRef.current[questionId]);
+    }
+    fibDebounceRef.current[questionId] = setTimeout(() => {
+      api.submitMcq(attempt.id, questionId, next, attemptToken || undefined).catch(() => {});
+      setSaveStatus("All changes saved");
+    }, 600);
   };
 
   // Toggle Mark for Review
@@ -727,6 +762,114 @@ int main() {
       setTimeout(() => setSubmitToast(null), 3000);
     } catch (err: any) {
       alert(err.message || "Failed to submit solution");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Retrieve or initialize active SQL query
+  const getSqlCode = () => {
+    if (!activeQuestion) return "";
+    const savedDraft = getDraftFor(activeQuestion.id, "SQL") || (typeof drafts[activeQuestion.id] === "string" ? drafts[activeQuestion.id] : undefined);
+    if (savedDraft !== undefined && savedDraft.trim().length > 0) {
+      return savedDraft;
+    }
+    return activeQuestion.starterCode || "-- Write your SQL query here\nSELECT * FROM ...;\n";
+  };
+
+  // Handle SQL query change with local persistence and debounced sync
+  const handleSqlCodeChange = (newCode: string) => {
+    if (!activeQuestion) return;
+    const qId = activeQuestion.id;
+    const langKey = `${qId}_SQL`;
+
+    setDrafts((prev: Record<string, any>) => {
+      const prevQ = prev[qId];
+      const prevObj = typeof prevQ === "object" && prevQ !== null ? (prevQ as Record<string, string>) : {};
+      const updated = {
+        ...prev,
+        [langKey]: newCode,
+        [qId]: typeof prevQ === "string" ? newCode : {
+          ...prevObj,
+          SQL: newCode,
+        },
+      };
+
+      try {
+        localStorage.setItem(`drafts_${attempt.id}`, JSON.stringify(updated));
+        localStorage.setItem(`drafts_${assessment.code}_${attempt.rollNo}`, JSON.stringify(updated));
+      } catch {}
+
+      draftsRef.current = updated;
+      return updated;
+    });
+
+    setSaveStatus("Saving locally...");
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      api.saveDraft(
+        attempt.id,
+        undefined,
+        draftsRef.current,
+        mcqResponsesRef.current,
+        flaggedQuestionsRef.current,
+        remainingSecondsRef.current
+      ).catch(() => {});
+      setSaveStatus("All changes saved");
+    }, 10000);
+  };
+
+  // Run SQL query against sample/public test cases
+  const handleRunSql = async () => {
+    if (!activeQuestion || isRunning) return;
+    try {
+      setIsRunning(true);
+      setSqlResult(null);
+      const res = await api.runCode(
+        "SQL",
+        getSqlCode(),
+        activeQuestion.id,
+        attempt.id,
+        undefined,
+        attemptToken || undefined
+      );
+      setSqlResult(res.grading);
+    } catch (err: any) {
+      alert(err.message || "Failed to execute SQL query");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  // Submit SQL solution against all test cases
+  const handleSubmitSql = async () => {
+    if (!activeQuestion || isSubmitting) return;
+    try {
+      setIsSubmitting(true);
+      const res = await api.submitCode(
+        "SQL",
+        getSqlCode(),
+        activeQuestion.id,
+        attempt.id,
+        attemptToken || undefined
+      );
+      setSqlResult(res.grading);
+
+      setAttempt((prev) => {
+        const otherSubs = (prev.submissions || []).filter((s) => s.questionId !== activeQuestion.id);
+        return {
+          ...prev,
+          submissions: [...otherSubs, res.submission],
+        };
+      });
+
+      setSubmitToast("SQL Query Submitted Successfully!");
+      setTimeout(() => setSubmitToast(null), 3000);
+    } catch (err: any) {
+      alert(err.message || "Failed to submit SQL solution");
     } finally {
       setIsSubmitting(false);
     }
@@ -967,6 +1110,191 @@ int main() {
               onSelectOption={handleSelectMcqOption}
               onClearResponse={() => handleClearMcqResponse(activeQuestion.id)}
             />
+          ) : activeQuestion?.type === "FIB" ? (
+            /* Fill in the Blanks Question View */
+            <FibView
+              question={activeQuestion}
+              studentAnswers={mcqResponses[activeQuestion.id] || []}
+              onChangeAnswer={(blankIdx, val) => handleUpdateFibAnswer(activeQuestion.id, blankIdx, val)}
+              onClearResponse={() => handleClearMcqResponse(activeQuestion.id)}
+            />
+          ) : activeQuestion?.type === "SQL" ? (
+            /* SQL Assessment View (Split: Schema & Problem on Left, SQL Monaco & Result on Right) */
+            <div className="flex-1 flex flex-col lg:flex-row gap-2 overflow-hidden">
+              {/* Left Column: Problem & Schema Browser */}
+              <section className="lg:w-2/5 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-inner exam-protected select-none">
+                {/* Header with Problem & Schema Tabs */}
+                <div className="px-3 py-2 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setSqlLeftTab("problem")}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                        sqlLeftTab === "problem"
+                          ? "bg-sky-600/30 text-sky-300 border border-sky-500/40"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                      }`}
+                    >
+                      <FileCode className="w-3.5 h-3.5" />
+                      <span>Problem</span>
+                    </button>
+                    <button
+                      onClick={() => setSqlLeftTab("schema")}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                        sqlLeftTab === "schema"
+                          ? "bg-sky-600/30 text-sky-300 border border-sky-500/40"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                      }`}
+                    >
+                      <Database className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Database Schema</span>
+                      {activeQuestion.schemaOverview && activeQuestion.schemaOverview.length > 0 && (
+                        <span className="bg-sky-950 text-sky-300 text-[10px] px-1.5 py-0.2 rounded-full border border-sky-700/50">
+                          {activeQuestion.schemaOverview.length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                  <span className="text-xs bg-sky-950/60 text-sky-300 font-semibold px-2.5 py-0.5 rounded-full border border-sky-800/40">
+                    {activeQuestion.marks} Marks
+                  </span>
+                </div>
+
+                {/* Left Body */}
+                <div className="flex-1 p-4 overflow-y-auto space-y-4 text-slate-300 text-xs leading-relaxed">
+                  {sqlLeftTab === "problem" ? (
+                    <>
+                      <div>
+                        <h2 className="text-base font-bold text-white mb-2">{activeQuestion.title}</h2>
+                        <MarkdownView content={activeQuestion.description} />
+                      </div>
+
+                      {/* Order Sensitive / Evaluation rule note */}
+                      <div className="bg-slate-950/70 rounded-xl p-3 border border-slate-800 space-y-1.5">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Evaluation Mode
+                        </span>
+                        <div className="text-slate-400 text-xs">
+                          {activeQuestion.orderSensitive ? (
+                            <span className="text-amber-400 flex items-center gap-1.5">
+                              <span>⚠️</span>
+                              <span><strong>Order-Sensitive:</strong> Row ordering matters. Include appropriate <code>ORDER BY</code> clause.</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 flex items-center gap-1.5">
+                              <span>ℹ️</span>
+                              <span><strong>Order-Agnostic:</strong> Rows can appear in any order. The grader sorts rows before matching.</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quick Schema Tables Summary */}
+                      {activeQuestion.schemaOverview && activeQuestion.schemaOverview.length > 0 && (
+                        <div className="bg-slate-950/70 rounded-xl p-3 border border-slate-800 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                              Available Tables
+                            </span>
+                            <button
+                              onClick={() => setSqlLeftTab("schema")}
+                              className="text-[11px] text-sky-400 hover:text-sky-300 underline font-medium"
+                            >
+                              Explore Schema →
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {activeQuestion.schemaOverview.map((t, idx) => (
+                              <span
+                                key={idx}
+                                className="bg-slate-900 border border-slate-700/80 px-2 py-0.5 rounded text-[11px] font-mono text-sky-300"
+                              >
+                                {t.tableName} ({t.columns.length} cols)
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="space-y-3">
+                      <SchemaViewer tables={activeQuestion.schemaOverview || []} />
+                      {activeQuestion.schemaDdl && (
+                        <div className="mt-3">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                            DDL Definition
+                          </span>
+                          <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre">
+                            {activeQuestion.schemaDdl}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Right Column: SQL Editor & Evaluation Console */}
+              <section className="flex-1 flex flex-col gap-2 overflow-hidden h-full min-h-0">
+                {/* Editor Container - Spacious & Responsive */}
+                <div className={`${sqlResult ? "flex-[3]" : "flex-[4]"} flex flex-col min-h-[360px] bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-inner transition-all`}>
+                  <div className="flex items-center justify-between px-3.5 py-2 bg-slate-950 border-b border-slate-800 text-xs shrink-0">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-3.5 h-3.5 text-sky-400" />
+                      <span className="bg-slate-900 text-sky-400 font-bold border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono">
+                        SQL (SQLite Engine)
+                      </span>
+                      <span className="text-slate-500 text-[11px] hidden sm:inline">
+                        Auto-completion active for schema tables & columns • (Ctrl+Enter to Run)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleRunSql}
+                        disabled={isRunning || isSubmitting}
+                        className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 px-3 py-1 rounded-lg text-xs font-semibold transition border border-slate-700"
+                        title="Run query against sample test cases (Ctrl+Enter)"
+                      >
+                        <Play className="w-3 h-3 text-sky-400" />
+                        <span>Run Query</span>
+                      </button>
+
+                      <button
+                        onClick={handleSubmitSql}
+                        disabled={isRunning || isSubmitting}
+                        className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-3 py-1 rounded-lg text-xs font-semibold transition shadow-md shadow-emerald-950/40"
+                        title="Submit query for grading"
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                        <span>{isSubmitting ? "Grading..." : "Submit Query"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-h-[300px] h-full relative">
+                    <SqlMonacoEditor
+                      value={getSqlCode()}
+                      onChange={handleSqlCodeChange}
+                      schemaTables={activeQuestion.schemaOverview || []}
+                      starterCode={activeQuestion.starterCode}
+                      height="100%"
+                      questionId={activeQuestion.id}
+                      onRunQuery={handleRunSql}
+                    />
+                  </div>
+                </div>
+
+                {/* Bottom Console: SQL Results / Diff */}
+                <div className={`${sqlResult ? "flex-[2]" : "flex-1"} min-h-[160px] bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition-all`}>
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    <SqlResultViewer
+                      result={sqlResult}
+                      isRunning={isRunning}
+                    />
+                  </div>
+                </div>
+              </section>
+            </div>
           ) : (
             /* Coding Problem View (Split: Problem on left/top, Editor on right/bottom) */
             <div className="flex-1 flex flex-col lg:flex-row gap-2 overflow-hidden">

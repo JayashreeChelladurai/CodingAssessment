@@ -13,21 +13,23 @@ interface MarkdownViewProps {
 export const MarkdownView: React.FC<MarkdownViewProps> = ({ content, className = "" }) => {
   if (!content) return null;
 
-  // Pre-clean LaTeX math notations: e.g. $1 \le n \le 1000$ -> 1 <= n <= 1000
-  const sanitized = content
-    .replace(/\$\\text\{([^}]+)\}\$/g, "$1")
-    .replace(/\$([^$]+)\$/g, (_, math) => {
-      return math
-        .replace(/\\le/g, "<=")
-        .replace(/\\ge/g, ">=")
-        .replace(/\\ne/g, "!=")
-        .replace(/\\text\{([^}]+)\}/g, "$1")
-        .replace(/\\times/g, "x")
-        .replace(/\\cdot/g, "·")
-        .replace(/\\/g, "");
-    });
+  // Math sanitizer function applied ONLY to non-code text (protects code blocks and escape sequences)
+  const cleanMath = (text: string): string => {
+    return text
+      .replace(/\$\\text\{([^}]+)\}\$/g, "$1")
+      .replace(/\$([^$]+)\$/g, (_, math) => {
+        return math
+          .replace(/\\le/g, "<=")
+          .replace(/\\ge/g, ">=")
+          .replace(/\\ne/g, "!=")
+          .replace(/\\text\{([^}]+)\}/g, "$1")
+          .replace(/\\times/g, "x")
+          .replace(/\\cdot/g, "·")
+          .replace(/\\/g, "");
+      });
+  };
 
-  const lines = sanitized.split("\n");
+  const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
   let inCodeBlock = false;
   let codeBuffer: string[] = [];
@@ -93,7 +95,7 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({ content, className =
 
   for (let i = 0; i < lines.length; i++) {
     const rawLine = lines[i];
-    const trimmed = rawLine.trim();
+    let trimmed = rawLine.trim();
 
     // 1. Code Fence (```)
     if (trimmed.startsWith("```")) {
@@ -121,6 +123,9 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({ content, className =
       codeBuffer.push(rawLine);
       continue;
     }
+
+    const cleanedLine = cleanMath(rawLine);
+    trimmed = cleanedLine.trim();
 
     // 2. Horizontal Rule (--- or ***)
     if (trimmed === "---" || trimmed === "***" || trimmed === "___") {

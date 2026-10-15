@@ -21,7 +21,11 @@ import {
   CheckCircle,
   Check,
   Lock,
+  Database,
+  Play,
+  Edit3,
 } from "lucide-react";
+import { TableGrid } from "../components/common/TableGrid";
 
 interface AdminAssessmentEditorProps {
   initialAssessment?: Assessment | null;
@@ -198,26 +202,36 @@ int main() {
       randomType: q.randomType || "ANY",
       title: q.title || (isRandom ? `Random Question ${idx + 1}` : `Question ${idx + 1}`),
       description: q.description || "",
-      marks: q.marks !== undefined ? Number(q.marks) : (q.type === "MCQ" ? 2 : 48),
+      marks: q.marks !== undefined ? Number(q.marks) : (q.type === "MCQ" || q.type === "FIB" ? 2 : q.type === "SQL" ? 30 : 48),
       negativeMarks: q.negativeMarks !== undefined ? Number(q.negativeMarks) : 0,
       order: idx,
+      // SQL fields
+      schemaDdl: q.schemaDdl || "",
+      solutionSql: q.solutionSql || "",
+      orderSensitive: Boolean(q.orderSensitive ?? false),
       mcqType: q.mcqType || "SINGLE",
-      options: options.length > 0 ? options : [
+      options: options.length > 0 ? options : (q.type === "FIB" ? [
+        { id: "blank-1", label: "Blank 1", acceptedAnswers: [""] }
+      ] : [
         { id: "opt-1", text: "Option A" },
         { id: "opt-2", text: "Option B" },
         { id: "opt-3", text: "Option C" },
         { id: "opt-4", text: "Option D" },
-      ],
-      correctAnswers: correctAnswers.length > 0 ? correctAnswers : ["opt-1"],
+      ]),
+      correctAnswers: correctAnswers.length > 0 ? correctAnswers : (q.type === "FIB" ? [""] : ["opt-1"]),
       explanation: q.explanation || "",
       allowedLanguages: q.allowedLanguages || "JAVA",
       starterCodes,
-      starterCode: q.starterCode || starterCodes.JAVA,
+      starterCode: q.starterCode || (q.type === "SQL" ? "-- Write your SQL query here\nSELECT * FROM ...;\n" : starterCodes.JAVA),
       timeLimitSeconds: Number(q.timeLimitSeconds) || 3,
       memoryLimitMb: Number(q.memoryLimitMb) || 256,
       testCases: (q.testCases || []).map((tc: any, tcIdx: number) => ({
+        id: tc.id || `tc-${tcIdx}`,
+        title: tc.title || `Test Case ${tcIdx + 1}`,
         input: tc.input || "",
         expectedOutput: tc.expectedOutput || "",
+        seedData: tc.seedData || "",
+        orderSensitive: tc.orderSensitive ?? q.orderSensitive ?? false,
         isPublic: tc.isPublic ?? true,
         weight: Number(tc.weight) || 1.0,
         order: tcIdx,
@@ -310,6 +324,37 @@ int main() {
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [testingSqlCase, setTestingSqlCase] = useState<string | null>(null);
+  const [sqlPreviewResult, setSqlPreviewResult] = useState<Record<string, any>>({});
+
+  const handleTestSql = async (secIdx: number, qIdx: number, tcIdx: number) => {
+    const q = sections[secIdx]?.questions?.[qIdx];
+    const tc = q?.testCases?.[tcIdx];
+    if (!q || !tc) return;
+
+    const testKey = `${secIdx}-${qIdx}-${tcIdx}`;
+    setTestingSqlCase(testKey);
+    try {
+      const res = await api.testSql({
+        schemaDdl: q.schemaDdl || "",
+        seedData: tc.seedData || "",
+        querySql: q.solutionSql || "",
+        solutionSql: q.solutionSql || "",
+        orderSensitive: q.orderSensitive ?? false,
+      });
+      setSqlPreviewResult((prev) => ({
+        ...prev,
+        [testKey]: res,
+      }));
+    } catch (err: any) {
+      setSqlPreviewResult((prev) => ({
+        ...prev,
+        [testKey]: { success: false, error: err.message || "Failed to execute SQL query" },
+      }));
+    } finally {
+      setTestingSqlCase(null);
+    }
+  };
 
   // Pure Immutable Section & Question Handlers
   const handleAddSection = () => {
@@ -355,7 +400,7 @@ int main() {
     }
   };
 
-  const handleAddQuestion = (secIdx: number, type: "MCQ" | "CODING") => {
+  const handleAddQuestion = (secIdx: number, type: "MCQ" | "CODING" | "SQL" | "FIB") => {
     const newQ = type === "MCQ" ? {
       id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       type: "MCQ",
@@ -372,6 +417,52 @@ int main() {
       ],
       correctAnswers: [`opt-${Date.now()}-1`],
       explanation: "",
+    } : type === "FIB" ? {
+      id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type: "FIB",
+      title: `Fill in the Blanks Question`,
+      description: "Consider the code snippet below and fill in the missing output or expression:\n\n```c\nvoid main()\n{\n   int a = 511;\n   // ...\n}\n```\n\nThe output is `_____`.",
+      marks: 2,
+      negativeMarks: 0,
+      options: [
+        { id: `blank-${Date.now()}-1`, label: "Blank 1", acceptedAnswers: [""] },
+      ],
+      correctAnswers: [""],
+      explanation: "",
+    } : type === "SQL" ? {
+      id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type: "SQL",
+      title: `SQL Query Problem`,
+      description: "Write an SQL query to retrieve data matching the required schema specification...",
+      marks: 30,
+      negativeMarks: 0,
+      schemaDdl: `CREATE TABLE employees (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    department TEXT NOT NULL,
+    salary INTEGER NOT NULL
+);`,
+      starterCode: `-- Write your SQL query here
+SELECT * FROM employees;
+`,
+      solutionSql: `SELECT department, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department
+ORDER BY department ASC;`,
+      orderSensitive: false,
+      testCases: [
+        {
+          id: `tc-${Date.now()}-1`,
+          title: "Sample Dataset",
+          seedData: `INSERT INTO employees VALUES (1, 'Alice', 'Engineering', 90000);
+INSERT INTO employees VALUES (2, 'Bob', 'Engineering', 80000);
+INSERT INTO employees VALUES (3, 'Charlie', 'HR', 60000);`,
+          input: "",
+          expectedOutput: "",
+          isPublic: true,
+          weight: 1,
+        },
+      ],
     } : {
       id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       type: "CODING",
@@ -472,8 +563,11 @@ int main() {
 
       const clonedTestCases = (bq.testCases || []).map((tc, tcIdx) => ({
         id: `tc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${tcIdx}`,
+        title: tc.title || `Test Case ${tcIdx + 1}`,
         input: tc.input || "",
         expectedOutput: tc.expectedOutput || "",
+        seedData: tc.seedData || "",
+        orderSensitive: tc.orderSensitive ?? bq.orderSensitive ?? false,
         isPublic: tc.isPublic !== false,
         weight: tc.weight || 1,
         order: tc.order ?? tcIdx,
@@ -487,6 +581,10 @@ int main() {
         marks: bq.marks || 10,
         negativeMarks: bq.negativeMarks || 0,
         order: 0,
+        // SQL
+        schemaDdl: bq.schemaDdl || "",
+        solutionSql: bq.solutionSql || "",
+        orderSensitive: bq.orderSensitive ?? false,
         // MCQ
         mcqType: bq.mcqType || "SINGLE",
         options: parsedOptions,
@@ -667,6 +765,107 @@ int main() {
     }
   };
 
+  const handleAddBlank = (secIdx: number, qIdx: number) => {
+    setSections((prev) =>
+      prev.map((sec, sIdx) => {
+        if (sIdx !== secIdx) return sec;
+        return {
+          ...sec,
+          questions: sec.questions.map((q: any, qi: number) => {
+            if (qi !== qIdx) return q;
+            const curBlanks = q.options || [];
+            const nextIdx = curBlanks.length + 1;
+            const newBlank = {
+              id: `blank-${Date.now()}-${nextIdx}`,
+              label: `Blank ${nextIdx}`,
+              acceptedAnswers: [""],
+            };
+            const updatedBlanks = [...curBlanks, newBlank];
+            return {
+              ...q,
+              options: updatedBlanks,
+              correctAnswers: updatedBlanks.map((b: any) => b.acceptedAnswers || [""]),
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const handleRemoveBlank = (secIdx: number, qIdx: number, blankIdx: number) => {
+    setSections((prev) =>
+      prev.map((sec, sIdx) => {
+        if (sIdx !== secIdx) return sec;
+        return {
+          ...sec,
+          questions: sec.questions.map((q: any, qi: number) => {
+            if (qi !== qIdx) return q;
+            const updatedBlanks = (q.options || []).filter((_: any, i: number) => i !== blankIdx);
+            return {
+              ...q,
+              options: updatedBlanks,
+              correctAnswers: updatedBlanks.map((b: any) => b.acceptedAnswers || [""]),
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const handleUpdateBlankLabel = (secIdx: number, qIdx: number, blankIdx: number, label: string) => {
+    setSections((prev) =>
+      prev.map((sec, sIdx) => {
+        if (sIdx !== secIdx) return sec;
+        return {
+          ...sec,
+          questions: sec.questions.map((q: any, qi: number) => {
+            if (qi !== qIdx) return q;
+            const updatedBlanks = (q.options || []).map((b: any, bi: number) =>
+              bi === blankIdx ? { ...b, label } : b
+            );
+            return {
+              ...q,
+              options: updatedBlanks,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const handleUpdateBlankAccepted = (secIdx: number, qIdx: number, blankIdx: number, acceptedStr: string) => {
+    // Support pipe `|` delimiter for code containing commas (e.g. `printf("%d", a); | printf("%d",a);`), fallback to comma `,`
+    const delimiter = acceptedStr.includes("|") ? "|" : ",";
+    const acceptedList = acceptedStr.split(delimiter).map((s) => s.trim()).filter(Boolean);
+    setSections((prev) =>
+      prev.map((sec, sIdx) => {
+        if (sIdx !== secIdx) return sec;
+        return {
+          ...sec,
+          questions: sec.questions.map((q: any, qi: number) => {
+            if (qi !== qIdx) return q;
+            const updatedBlanks = (q.options || []).map((b: any, bi: number) =>
+              bi === blankIdx ? { ...b, acceptedAnswers: acceptedList.length > 0 ? acceptedList : [acceptedStr] } : b
+            );
+            return {
+              ...q,
+              options: updatedBlanks,
+              correctAnswers: updatedBlanks.map((b: any) => b.acceptedAnswers || [""]),
+            };
+          }),
+        };
+      })
+    );
+    const fieldId = `fib-blank-ans-${secIdx}-${qIdx}-${blankIdx}`;
+    if (fieldErrors[fieldId]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[fieldId];
+        return copy;
+      });
+    }
+  };
+
   const handleAddTestCase = (secIdx: number, qIdx: number) => {
     setSections((prev) =>
       prev.map((sec, sIdx) => {
@@ -679,7 +878,17 @@ int main() {
               ...q,
               testCases: [
                 ...(q.testCases || []),
-                { input: "", expectedOutput: "", isPublic: true, weight: 1 },
+                q.type === "SQL"
+                  ? {
+                      id: `tc-${Date.now()}-${(q.testCases || []).length + 1}`,
+                      title: `Test Case ${(q.testCases || []).length + 1}`,
+                      seedData: "",
+                      input: "",
+                      expectedOutput: "",
+                      isPublic: true,
+                      weight: 1,
+                    }
+                  : { input: "", expectedOutput: "", isPublic: true, weight: 1 },
               ],
             };
           }),
@@ -786,6 +995,26 @@ int main() {
           if (!q.correctAnswers || q.correctAnswers.length === 0) {
             setFieldError(`mcq-correct-${sIdx}-${qIdx}`, `Please select at least one correct answer.`);
           }
+        } else if (q.type === "SQL") {
+          if (!q.schemaDdl || !q.schemaDdl.trim()) {
+            setFieldError(`sql-ddl-${sIdx}-${qIdx}`, `Schema DDL is required for SQL question ${qIdx + 1}.`);
+          }
+          if (!q.solutionSql || !q.solutionSql.trim()) {
+            setFieldError(`sql-solution-${sIdx}-${qIdx}`, `Reference Solution SQL is required for SQL question ${qIdx + 1}.`);
+          }
+        } else if (q.type === "FIB") {
+          const blanks = q.options || [];
+          if (blanks.length === 0) {
+            setFieldError(`fib-blanks-${sIdx}-${qIdx}`, `Fill in the Blanks question must contain at least 1 blank.`);
+          }
+          blanks.forEach((b: any, bIdx: number) => {
+            const hasAns = (Array.isArray(b.acceptedAnswers) && b.acceptedAnswers.some((a: string) => a && a.trim().length > 0)) ||
+              (typeof b.acceptedAnswers === "string" && b.acceptedAnswers.trim().length > 0) ||
+              (q.correctAnswers && q.correctAnswers[bIdx] && String(q.correctAnswers[bIdx]).trim().length > 0);
+            if (!hasAns) {
+              setFieldError(`fib-blank-ans-${sIdx}-${qIdx}-${bIdx}`, `Accepted answer for ${b.label || `Blank ${bIdx + 1}`} cannot be empty.`);
+            }
+          });
         }
       });
     });
@@ -856,8 +1085,16 @@ int main() {
     (acc, s) => acc + (s.questions?.filter((q: any) => q.type === "MCQ")?.length || 0),
     0
   );
+  const totalFib = sections.reduce(
+    (acc, s) => acc + (s.questions?.filter((q: any) => q.type === "FIB")?.length || 0),
+    0
+  );
   const totalCoding = sections.reduce(
     (acc, s) => acc + (s.questions?.filter((q: any) => q.type === "CODING")?.length || 0),
+    0
+  );
+  const totalSql = sections.reduce(
+    (acc, s) => acc + (s.questions?.filter((q: any) => q.type === "SQL")?.length || 0),
     0
   );
   const totalMarks = sections.reduce(
@@ -1108,7 +1345,7 @@ int main() {
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-base text-white flex items-center gap-2">
               <Layers className="w-5 h-5 text-emerald-400" />
-              <span>Assessment Sections ({sections.length})</span>
+              <span>Assessment Sections ({sections.length}) • {totalQuestions} Questions ({totalMcqs} MCQs, {totalFib} FIB, {totalCoding} Coding, {totalSql} SQL) • {totalMarks} Marks</span>
             </h2>
             <button
               type="button"
@@ -1164,11 +1401,29 @@ int main() {
 
                   <button
                     type="button"
+                    onClick={() => handleAddQuestion(secIdx, "FIB")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-violet-950/40 text-violet-300 border border-violet-800/40 hover:bg-violet-900/50 transition"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-violet-400" />
+                    <span>+ Fill in the Blanks</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleAddQuestion(secIdx, "CODING")}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/40 text-emerald-300 border border-emerald-800/40 hover:bg-emerald-900/50 transition"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>+ Coding Problem</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddQuestion(secIdx, "SQL")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-950/40 text-sky-300 border border-sky-800/40 hover:bg-sky-900/50 transition"
+                  >
+                    <Database className="w-3.5 h-3.5 text-sky-400" />
+                    <span>+ SQL Query</span>
                   </button>
 
                   <button
@@ -1237,10 +1492,14 @@ int main() {
                               ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1"
                               : q.type === "MCQ"
                                 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                : q.type === "FIB"
+                                  ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                                  : q.type === "SQL"
+                                    ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+                                    : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                           }`}>
                             {q.isRandom && <Sparkles className="w-2.5 h-2.5 text-purple-400" />}
-                            <span>{q.isRandom ? "RANDOM FROM FOLDER" : q.type}</span>
+                            <span>{q.isRandom ? "RANDOM FROM FOLDER" : q.type === "FIB" ? "FILL IN THE BLANKS" : q.type}</span>
                           </span>
                           <span className="font-bold text-xs text-white">Q{qIdx + 1}: {q.title}</span>
                         </div>
@@ -1256,7 +1515,7 @@ int main() {
                                 randomFolderId: nextIsRandom ? (q.randomFolderId || defaultFolder?.id || "") : q.randomFolderId,
                                 title: nextIsRandom
                                   ? (q.title && !q.title.startsWith("Question") && !q.title.startsWith("Problem") ? q.title : `Random Question (${defaultFolder?.name || "Folder"})`)
-                                  : (q.type === "MCQ" ? `MCQ Question` : `Coding Problem`),
+                                  : (q.type === "MCQ" ? `MCQ Question` : q.type === "SQL" ? `SQL Query Problem` : `Coding Problem`),
                                 description: nextIsRandom ? `A random question will be picked from the specified folder.` : q.description,
                               });
                             }}
@@ -1555,6 +1814,19 @@ int main() {
                               className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-rose-400 font-mono"
                             />
                           </div>
+                        ) : q.type === "SQL" ? (
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">Row Order Sensitivity</label>
+                            <label className="flex items-center gap-2 mt-1 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(q.orderSensitive)}
+                                onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { orderSensitive: e.target.checked })}
+                                className="w-4 h-4 text-sky-500 rounded bg-slate-950 border-slate-700 cursor-pointer"
+                              />
+                              <span className="text-xs text-slate-200 font-medium">Enforce ORDER BY (Exact Row Sequence)</span>
+                            </label>
+                          </div>
                         ) : (
                           <div>
                             <label className="block text-[11px] font-semibold text-slate-400 mb-1">Allowed Languages</label>
@@ -1700,6 +1972,115 @@ int main() {
                               value={q.explanation || ""}
                               onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { explanation: e.target.value })}
                               placeholder="Explanation for why the correct option is right..."
+                              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Fill in the Blanks Config */}
+                      {q.type === "FIB" && (
+                        <div id={`fib-blanks-${secIdx}-${qIdx}`} className="space-y-4 pt-2 border-t border-slate-800">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-[11px] font-bold uppercase text-violet-400 block">
+                                Blanks & Accepted Answers Configuration:
+                              </span>
+                              <p className="text-[10px] text-slate-400">
+                                Define the blanks and accepted correct answer(s) for each.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleAddBlank(secIdx, qIdx)}
+                              className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 font-semibold"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>+ Add Blank</span>
+                            </button>
+                          </div>
+
+                          {fieldErrors[`fib-blanks-${secIdx}-${qIdx}`] && (
+                            <p className="text-[11px] text-rose-400 flex items-center gap-1 font-medium bg-rose-950/40 p-2 rounded-lg border border-rose-800/50">
+                              <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                              <span>{fieldErrors[`fib-blanks-${secIdx}-${qIdx}`]}</span>
+                            </p>
+                          )}
+
+                          <div className="space-y-3">
+                            {(q.options || []).map((blank: any, bIdx: number) => {
+                              const acceptedRaw = Array.isArray(blank.acceptedAnswers)
+                                ? ((blank.acceptedAnswers as string[]).some((a: string) => a.includes(","))
+                                    ? blank.acceptedAnswers.join(" | ")
+                                    : blank.acceptedAnswers.join(", "))
+                                : (blank.acceptedAnswers || (q.correctAnswers ? q.correctAnswers[bIdx] : "") || "");
+                              const ansErrorKey = `fib-blank-ans-${secIdx}-${qIdx}-${bIdx}`;
+
+                              return (
+                                <div key={blank.id || bIdx} className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 flex-1">
+                                      <span className="w-6 h-6 rounded-lg bg-violet-950 border border-violet-800 text-violet-300 text-xs flex items-center justify-center font-mono shrink-0">
+                                        {bIdx + 1}
+                                      </span>
+                                      <input
+                                        type="text"
+                                        value={blank.label || `Blank ${bIdx + 1}`}
+                                        onChange={(e) => handleUpdateBlankLabel(secIdx, qIdx, bIdx, e.target.value)}
+                                        placeholder="Blank Label (e.g. Blank 1)"
+                                        className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs font-semibold text-white focus:border-violet-500 w-44"
+                                      />
+                                    </div>
+
+                                    {(q.options || []).length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveBlank(secIdx, qIdx, bIdx)}
+                                        className="p-1 text-slate-500 hover:text-rose-400 rounded transition"
+                                        title="Remove Blank"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] uppercase font-semibold text-slate-400 mb-1">
+                                      Accepted Answer(s) <span className="text-slate-500 font-normal lowercase">(separate alternatives with comma or pipe | if code contains commas, e.g. "printf('%d', a); | printf('%d',a);")</span>
+                                    </label>
+                                    <input
+                                      id={ansErrorKey}
+                                      type="text"
+                                      value={acceptedRaw}
+                                      onChange={(e) => handleUpdateBlankAccepted(secIdx, qIdx, bIdx, e.target.value)}
+                                      placeholder="e.g. 266, 0x010A"
+                                      className={`w-full px-3 py-1.5 bg-slate-950 border rounded-xl text-xs font-mono text-emerald-300 transition ${
+                                        fieldErrors[ansErrorKey]
+                                          ? "border-rose-500 ring-1 ring-rose-500/50 bg-rose-950/20"
+                                          : "border-slate-800 focus:border-violet-500"
+                                      }`}
+                                    />
+                                    {fieldErrors[ansErrorKey] && (
+                                      <p className="text-[10px] text-rose-400 mt-1 flex items-center gap-1">
+                                        <AlertCircle className="w-2.5 h-2.5" />
+                                        <span>{fieldErrors[ansErrorKey]}</span>
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                              Solution Explanation (Shown to students in review mode)
+                            </label>
+                            <input
+                              type="text"
+                              value={q.explanation || ""}
+                              onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { explanation: e.target.value })}
+                              placeholder="Explanation and derivation of the blank answers..."
                               className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300"
                             />
                           </div>
@@ -2083,6 +2464,238 @@ int main() {
                           </div>
                         </div>
                       )}
+
+                      {/* SQL Schema, Queries & Test Cases */}
+                      {q.type === "SQL" && (
+                        <div className="space-y-4 pt-3 border-t border-slate-800">
+                          {/* Schema DDL & Starter Code */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {/* Schema DDL */}
+                            <div className="space-y-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-sky-400 flex items-center gap-1.5">
+                                  <Database className="w-4 h-4 text-sky-400" />
+                                  <span>Database Schema DDL (CREATE TABLE)</span>
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-mono">SQLite Sandbox</span>
+                              </div>
+                              <p className="text-[11px] text-slate-400">
+                                Tables and relations created in the SQLite sandbox before each test case.
+                              </p>
+                              <textarea
+                                id={`sql-ddl-${secIdx}-${qIdx}`}
+                                rows={8}
+                                value={q.schemaDdl || ""}
+                                onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { schemaDdl: e.target.value })}
+                                placeholder="CREATE TABLE employees (&#10;  id INTEGER PRIMARY KEY,&#10;  name TEXT NOT NULL,&#10;  department TEXT NOT NULL,&#10;  salary INTEGER NOT NULL&#10;);"
+                                className={`w-full p-3 bg-slate-950 border ${
+                                  fieldErrors[`sql-ddl-${secIdx}-${qIdx}`] ? "border-rose-500 ring-1 ring-rose-500/50" : "border-slate-800"
+                                } rounded-xl font-mono text-xs text-sky-200 focus:outline-none focus:border-sky-500 resize-y min-h-[160px]`}
+                                spellCheck={false}
+                              />
+                              {fieldErrors[`sql-ddl-${secIdx}-${qIdx}`] && (
+                                <p className="text-[11px] text-rose-400 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  <span>{fieldErrors[`sql-ddl-${secIdx}-${qIdx}`]}</span>
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Starter Code */}
+                            <div className="space-y-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                  <Code2 className="w-4 h-4 text-slate-400" />
+                                  <span>Candidate Starter Code</span>
+                                </span>
+                                <span className="text-[10px] text-slate-500">Pre-filled query template</span>
+                              </div>
+                              <p className="text-[11px] text-slate-400">
+                                Pre-filled query text shown in candidate's Monaco editor.
+                              </p>
+                              <textarea
+                                rows={8}
+                                value={q.starterCode || ""}
+                                onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { starterCode: e.target.value })}
+                                placeholder="-- Write your SQL query here&#10;SELECT * FROM employees;&#10;"
+                                className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl font-mono text-xs text-slate-200 focus:outline-none focus:border-slate-600 resize-y min-h-[160px]"
+                                spellCheck={false}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Reference Solution SQL */}
+                          <div className="space-y-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-amber-400" />
+                                <span className="text-xs font-bold text-white uppercase tracking-wider">
+                                  Reference Solution Query (Canonical SQL)
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-amber-400 font-medium bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full">
+                                Golden Grader Query
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400">
+                              This query is automatically executed on test cases to compute the expected output tables.
+                            </p>
+                            <textarea
+                              id={`sql-solution-${secIdx}-${qIdx}`}
+                              rows={5}
+                              value={q.solutionSql || ""}
+                              onChange={(e) => handleUpdateQuestion(secIdx, qIdx, { solutionSql: e.target.value })}
+                              placeholder="SELECT department, AVG(salary) AS avg_salary FROM employees GROUP BY department ORDER BY department ASC;"
+                              className={`w-full p-3 bg-slate-950 border ${
+                                fieldErrors[`sql-solution-${secIdx}-${qIdx}`] ? "border-rose-500 ring-1 ring-rose-500/50" : "border-slate-800"
+                              } rounded-xl font-mono text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 resize-y min-h-[100px]`}
+                              spellCheck={false}
+                            />
+                            {fieldErrors[`sql-solution-${secIdx}-${qIdx}`] && (
+                              <p className="text-[11px] text-rose-400 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                <span>{fieldErrors[`sql-solution-${secIdx}-${qIdx}`]}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          {/* SQL Test Cases & Seed Data */}
+                          <div className="space-y-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                              <div>
+                                <span className="text-xs font-bold text-white uppercase tracking-wider">
+                                  SQL Test Cases & Seed Data
+                                </span>
+                                <p className="text-[11px] text-slate-400">
+                                  Provide INSERT statements to populate test data for each testcase.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleAddTestCase(secIdx, qIdx)}
+                                className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 px-3 py-1 rounded-lg bg-sky-950/60 border border-sky-800/50 hover:bg-sky-900/60 transition"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Add Test Case</span>
+                              </button>
+                            </div>
+
+                            <div className="space-y-3">
+                              {(q.testCases || []).map((tc: any, tcIdx: number) => {
+                                const testKey = `${secIdx}-${qIdx}-${tcIdx}`;
+                                const isTesting = testingSqlCase === testKey;
+                                const preview = sqlPreviewResult[testKey];
+
+                                return (
+                                  <div key={tcIdx} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-sky-400 font-mono">#{tcIdx + 1}</span>
+                                        <input
+                                          type="text"
+                                          value={tc.title || `Test Case ${tcIdx + 1}`}
+                                          onChange={(e) => handleUpdateTestCase(secIdx, qIdx, tcIdx, { title: e.target.value })}
+                                          placeholder="Test Case Title"
+                                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
+                                        />
+                                      </div>
+
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateTestCase(secIdx, qIdx, tcIdx, { isPublic: !tc.isPublic })}
+                                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${
+                                            tc.isPublic
+                                              ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/60"
+                                              : "bg-purple-950/60 text-purple-400 border-purple-800/60"
+                                          }`}
+                                        >
+                                          {tc.isPublic ? "Open (Public Sample)" : "Closed (Hidden Grader)"}
+                                        </button>
+
+                                        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                                          <span>Weight:</span>
+                                          <input
+                                            type="number"
+                                            step="0.5"
+                                            min="0.5"
+                                            value={tc.weight || 1}
+                                            onChange={(e) => handleUpdateTestCase(secIdx, qIdx, tcIdx, { weight: Number(e.target.value) })}
+                                            className="w-12 p-1 bg-slate-900 border border-slate-800 rounded font-mono text-xs text-center text-white"
+                                          />
+                                        </div>
+
+                                        <button
+                                          type="button"
+                                          disabled={isTesting || !q.schemaDdl || !q.solutionSql}
+                                          onClick={() => handleTestSql(secIdx, qIdx, tcIdx)}
+                                          className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-800/60 transition disabled:opacity-50"
+                                          title="Execute canonical query against this seed to preview expected output"
+                                        >
+                                          <Play className="w-3 h-3 text-sky-400" />
+                                          <span>{isTesting ? "Executing..." : "Test Solution"}</span>
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveTestCase(secIdx, qIdx, tcIdx)}
+                                          className="p-1 text-slate-500 hover:text-rose-400"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">
+                                        Seed Data (INSERT Statements)
+                                      </span>
+                                      <textarea
+                                        rows={3}
+                                        value={tc.seedData || ""}
+                                        onChange={(e) => handleUpdateTestCase(secIdx, qIdx, tcIdx, { seedData: e.target.value })}
+                                        placeholder="INSERT INTO employees VALUES (1, 'Alice', 'Engineering', 90000);&#10;INSERT INTO employees VALUES (2, 'Bob', 'Engineering', 80000);"
+                                        className="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg font-mono text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                        spellCheck={false}
+                                      />
+                                    </div>
+
+                                    {/* Test Execution Output Preview */}
+                                    {preview && (
+                                      <div className={`p-3 rounded-lg border text-xs font-mono ${
+                                        preview.success && !preview.actualResult?.error
+                                          ? "bg-slate-900 border-emerald-800/40 text-emerald-300"
+                                          : "bg-rose-950/40 border-rose-800/60 text-rose-300"
+                                      }`}>
+                                        {preview.success && !preview.actualResult?.error ? (
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-[11px] text-emerald-400 font-semibold">
+                                              <span>✓ Canonical Query Executed Successfully ({preview.actualResult.rows?.length || 0} rows, {preview.actualResult.executionTimeMs}ms)</span>
+                                            </div>
+                                            {preview.actualResult.columns && preview.actualResult.columns.length > 0 && (
+                                              <TableGrid
+                                                columns={preview.actualResult.columns}
+                                                rows={(preview.actualResult.rows || []).map((r: any) =>
+                                                  preview.actualResult.columns.map((c: string) => r[c] ?? null)
+                                                )}
+                                                maxRows={5}
+                                              />
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <div>
+                                            <span className="font-bold">Execution Error:</span> {preview.error || preview.actualResult?.error}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -2105,9 +2718,19 @@ int main() {
               <span className="font-bold text-amber-400 font-mono">{totalMcqs}</span>
               <span className="text-slate-500">MCQs</span>
             </div>
+            {totalFib > 0 && (
+              <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+                <span className="font-bold text-violet-400 font-mono">{totalFib}</span>
+                <span className="text-slate-500">FIB</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
               <span className="font-bold text-emerald-400 font-mono">{totalCoding}</span>
               <span className="text-slate-500">Coding</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+              <span className="font-bold text-sky-400 font-mono">{totalSql}</span>
+              <span className="text-slate-500">SQL</span>
             </div>
             <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
               <span className="font-bold text-blue-400 font-mono">{totalMarks}</span>

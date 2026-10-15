@@ -396,6 +396,25 @@ export const api = {
     return res.json();
   },
 
+  testSql: async (data: {
+    schemaDdl: string;
+    seedData?: string;
+    querySql?: string;
+    solutionSql?: string;
+    orderSensitive?: boolean;
+  }) => {
+    const res = await fetch(`${API_BASE}/execution/test-sql`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "SQL test failed" }));
+      throw new Error(err.error || "SQL test failed");
+    }
+    return res.json();
+  },
+
   // Results & Gradebook
   getResults: async (assessmentId: string) => {
     const res = await fetch(`${API_BASE}/results/${assessmentId}`, {

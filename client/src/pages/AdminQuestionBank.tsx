@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api";
-import { BankQuestion, QuestionFolder, TestCase } from "../types";
+import { BankQuestion, QuestionFolder, TestCase, FibBlank } from "../types";
 import {
   Folder,
   FolderOpen,
@@ -28,7 +28,11 @@ import {
   Loader2,
   MoreVertical,
   Lock,
+  Database,
+  Play,
+  Edit3,
 } from "lucide-react";
+import { TableGrid } from "../components/common/TableGrid";
 
 interface AdminQuestionBankProps {
   onBack: () => void;
@@ -44,7 +48,7 @@ export const AdminQuestionBank: React.FC<AdminQuestionBankProps> = ({ onBack }) 
 
   // Filters
   const [search, setSearch] = useState<string>("");
-  const [typeFilter, setTypeFilter] = useState<"ALL" | "MCQ" | "CODING">("ALL");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | "MCQ" | "FIB" | "CODING" | "SQL">("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<"ALL" | "EASY" | "MEDIUM" | "HARD">("ALL");
 
   // Selection for bulk actions
@@ -512,7 +516,7 @@ export const AdminQuestionBank: React.FC<AdminQuestionBankProps> = ({ onBack }) 
               <div className="flex items-center gap-2">
                 {/* Type Filter */}
                 <div className="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800 text-xs">
-                  {(["ALL", "MCQ", "CODING"] as const).map((t) => (
+                  {(["ALL", "MCQ", "FIB", "CODING", "SQL"] as const).map((t) => (
                     <button
                       key={t}
                       type="button"
@@ -620,6 +624,16 @@ export const AdminQuestionBank: React.FC<AdminQuestionBankProps> = ({ onBack }) 
                                 <HelpCircle className="w-3 h-3" />
                                 <span>MCQ</span>
                               </span>
+                            ) : q.type === "FIB" ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                <Edit3 className="w-3 h-3" />
+                                <span>FIB</span>
+                              </span>
+                            ) : q.type === "SQL" ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                <Database className="w-3 h-3 text-sky-400" />
+                                <span>SQL</span>
+                              </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                 <Code2 className="w-3 h-3" />
@@ -684,6 +698,17 @@ export const AdminQuestionBank: React.FC<AdminQuestionBankProps> = ({ onBack }) 
                         </div>
 
                         <div className="flex items-center gap-2">
+                          {q.type === "SQL" && (
+                            <span className="text-[10px] font-mono text-sky-300 bg-sky-950/60 px-2 py-0.5 rounded border border-sky-800/40 flex items-center gap-1">
+                              <Database className="w-2.5 h-2.5 text-sky-400" />
+                              <span>SQLite Sandbox</span>
+                            </span>
+                          )}
+                          {q.type === "SQL" && q.testCases && (
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              {q.testCases.length} seed cases
+                            </span>
+                          )}
                           {q.type === "CODING" && (
                             <span className="text-[10px] font-mono text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800/40 flex items-center gap-1">
                               <Lock className="w-2.5 h-2.5 text-purple-400" />
@@ -695,11 +720,15 @@ export const AdminQuestionBank: React.FC<AdminQuestionBankProps> = ({ onBack }) 
                               {q.testCases.length} test cases
                             </span>
                           )}
-                          {q.type === "MCQ" && (
+                          {q.type === "MCQ" ? (
                             <span className="text-[10px] text-slate-500 font-mono">
                               {q.mcqType || "SINGLE"} Choice
                             </span>
-                          )}
+                          ) : q.type === "FIB" ? (
+                            <span className="text-[10px] text-purple-400 font-mono">
+                              Fill in the Blanks
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -800,7 +829,7 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  const [type, setType] = useState<"MCQ" | "CODING">(initialQuestion?.type || "CODING");
+  const [type, setType] = useState<"MCQ" | "CODING" | "SQL" | "FIB">(initialQuestion?.type || "CODING");
   const [folderId, setFolderId] = useState<string>(initialQuestion?.folderId || defaultFolderId || "");
   const [difficulty, setDifficulty] = useState<"EASY" | "MEDIUM" | "HARD">(initialQuestion?.difficulty || "MEDIUM");
   const [title, setTitle] = useState<string>(initialQuestion?.title || "");
@@ -837,6 +866,43 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
   });
   const [explanation, setExplanation] = useState<string>(initialQuestion?.explanation || "");
 
+  // FIB State
+  const [fibBlanks, setFibBlanks] = useState<FibBlank[]>(() => {
+    if (initialQuestion?.type === "FIB" && initialQuestion.options) {
+      try {
+        const parsed = JSON.parse(initialQuestion.options);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return [
+      { id: "blank-1", label: "Blank 1", acceptedAnswers: [""] }
+    ];
+  });
+
+  const handleAddBlank = () => {
+    setFibBlanks((prev) => [
+      ...prev,
+      { id: `blank-${Date.now()}`, label: `Blank ${prev.length + 1}`, acceptedAnswers: [""] },
+    ]);
+  };
+
+  const handleRemoveBlank = (index: number) => {
+    if (fibBlanks.length <= 1) return;
+    setFibBlanks((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateBlankLabel = (index: number, label: string) => {
+    setFibBlanks((prev) => prev.map((b, i) => (i === index ? { ...b, label } : b)));
+  };
+
+  const handleUpdateBlankAccepted = (index: number, acceptedStr: string) => {
+    const delimiter = acceptedStr.includes("|") ? "|" : ",";
+    const parts = acceptedStr.split(delimiter).map((s) => s.trim()).filter(Boolean);
+    setFibBlanks((prev) =>
+      prev.map((b, i) => (i === index ? { ...b, acceptedAnswers: parts.length > 0 ? parts : [""] } : b))
+    );
+  };
+
   // Coding State
   const [allowedLanguages, setAllowedLanguages] = useState<string>(
     initialQuestion?.allowedLanguages || "JAVA"
@@ -863,11 +929,76 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
   const [activeCodeTab, setActiveCodeTab] = useState<string>("JAVA");
 
   const [testCases, setTestCases] = useState<TestCase[]>(() => {
-    if (initialQuestion?.testCases && initialQuestion.testCases.length > 0) {
+    if (initialQuestion?.testCases && initialQuestion.testCases.length > 0 && initialQuestion.type !== "SQL") {
       return initialQuestion.testCases;
     }
     return [{ input: "", expectedOutput: "", isPublic: true, weight: 1 }];
   });
+
+  // SQL State
+  const [schemaDdl, setSchemaDdl] = useState<string>(
+    initialQuestion?.schemaDdl ||
+      "CREATE TABLE employees (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  department TEXT NOT NULL,\n  salary REAL NOT NULL\n);"
+  );
+  const [solutionSql, setSolutionSql] = useState<string>(
+    initialQuestion?.solutionSql || "SELECT * FROM employees ORDER BY salary DESC;"
+  );
+  const [starterCode, setStarterCode] = useState<string>(
+    initialQuestion?.starterCode || "-- Write your SQL query here\nSELECT * FROM employees;\n"
+  );
+  const [orderSensitive, setOrderSensitive] = useState<boolean>(
+    initialQuestion?.orderSensitive ?? false
+  );
+  const [sqlTestCases, setSqlTestCases] = useState<
+    { title: string; seedData: string; isPublic: boolean; orderSensitive?: boolean; weight?: number }[]
+  >(() => {
+    if (initialQuestion?.testCases && initialQuestion.testCases.length > 0 && initialQuestion.type === "SQL") {
+      return initialQuestion.testCases.map((tc, idx) => ({
+        title: tc.title || `Test Case ${idx + 1}`,
+        seedData: tc.seedData || "",
+        isPublic: tc.isPublic,
+        orderSensitive: tc.orderSensitive ?? false,
+        weight: tc.weight || 1,
+      }));
+    }
+    return [
+      {
+        title: "Standard Test Case",
+        seedData:
+          "INSERT INTO employees VALUES (1, 'Alice', 'Engineering', 95000);\nINSERT INTO employees VALUES (2, 'Bob', 'Marketing', 62000);\nINSERT INTO employees VALUES (3, 'Charlie', 'Engineering', 105000);",
+        isPublic: true,
+        orderSensitive: false,
+        weight: 1,
+      },
+    ];
+  });
+  const [testingSqlCase, setTestingSqlCase] = useState<number | null>(null);
+  const [sqlPreviewResult, setSqlPreviewResult] = useState<Record<number, any>>({});
+
+  const handleTestSql = async (tcIdx: number) => {
+    const tc = sqlTestCases[tcIdx];
+    if (!schemaDdl.trim() || !solutionSql.trim()) {
+      setError("Please provide both Schema DDL and Reference Solution Query to run preview.");
+      return;
+    }
+    try {
+      setTestingSqlCase(tcIdx);
+      const res = await api.testSql({
+        schemaDdl,
+        seedData: tc.seedData || "",
+        solutionSql: solutionSql,
+        orderSensitive: tc.orderSensitive ?? orderSensitive,
+      });
+      setSqlPreviewResult((prev) => ({ ...prev, [tcIdx]: res }));
+    } catch (err: any) {
+      setSqlPreviewResult((prev) => ({
+        ...prev,
+        [tcIdx]: { success: false, error: err.message || "Failed to execute SQL test" },
+      }));
+    } finally {
+      setTestingSqlCase(null);
+    }
+  };
 
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -879,11 +1010,32 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
       return;
     }
 
+    if (type === "SQL") {
+      if (!schemaDdl.trim()) {
+        setError("Database Schema DDL is required for SQL questions.");
+        return;
+      }
+      if (!solutionSql.trim()) {
+        setError("Reference Solution Query is required for SQL questions.");
+        return;
+      }
+    }
+
+    if (type === "FIB") {
+      for (let i = 0; i < fibBlanks.length; i++) {
+        const validAnswers = (fibBlanks[i].acceptedAnswers || []).filter((a) => a && a.trim().length > 0);
+        if (validAnswers.length === 0) {
+          setError(`Please provide at least one accepted answer for Blank #${i + 1}`);
+          return;
+        }
+      }
+    }
+
     try {
       setSaving(true);
       setError("");
 
-      const payload = {
+      const payload: any = {
         folderId: folderId || null,
         type,
         difficulty,
@@ -892,20 +1044,38 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
         marks: Number(marks) || 0,
         negativeMarks: Number(negativeMarks) || 0,
         tags: tags.trim(),
-
-        // MCQ
-        mcqType,
-        options,
-        correctAnswers,
-        explanation,
-
-        // Coding
-        allowedLanguages,
-        starterCodes,
-        timeLimitSeconds: Number(timeLimitSeconds) || 3,
-        memoryLimitMb: Number(memoryLimitMb) || 256,
-        testCases,
       };
+
+      if (type === "MCQ") {
+        payload.mcqType = mcqType;
+        payload.options = options;
+        payload.correctAnswers = correctAnswers;
+        payload.explanation = explanation;
+      } else if (type === "FIB") {
+        payload.options = fibBlanks;
+        payload.correctAnswers = fibBlanks.map((b) => (b.acceptedAnswers || []).filter((a) => a && a.trim().length > 0));
+        payload.explanation = explanation;
+      } else if (type === "CODING") {
+        payload.allowedLanguages = allowedLanguages;
+        payload.starterCodes = starterCodes;
+        payload.timeLimitSeconds = Number(timeLimitSeconds) || 3;
+        payload.memoryLimitMb = Number(memoryLimitMb) || 256;
+        payload.testCases = testCases;
+      } else if (type === "SQL") {
+        payload.schemaDdl = schemaDdl;
+        payload.solutionSql = solutionSql;
+        payload.starterCode = starterCode;
+        payload.orderSensitive = orderSensitive;
+        payload.testCases = sqlTestCases.map((tc) => ({
+          title: tc.title || "Test Case",
+          seedData: tc.seedData || "",
+          input: "",
+          expectedOutput: "",
+          isPublic: tc.isPublic,
+          orderSensitive: tc.orderSensitive ?? orderSensitive,
+          weight: tc.weight || 1,
+        }));
+      }
 
       if (initialQuestion?.id) {
         await api.updateBankQuestion(initialQuestion.id, payload);
@@ -928,7 +1098,15 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
         <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              {type === "MCQ" ? <HelpCircle className="w-5 h-5" /> : <Code2 className="w-5 h-5" />}
+              {type === "MCQ" ? (
+                <HelpCircle className="w-5 h-5" />
+              ) : type === "SQL" ? (
+                <Database className="w-5 h-5 text-sky-400" />
+              ) : type === "FIB" ? (
+                <Edit3 className="w-5 h-5 text-violet-400" />
+              ) : (
+                <Code2 className="w-5 h-5" />
+              )}
             </div>
             <div>
               <h3 className="text-base font-bold text-white">
@@ -966,6 +1144,8 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
               >
                 <option value="CODING">Coding Problem</option>
                 <option value="MCQ">Multiple Choice (MCQ)</option>
+                <option value="FIB">Fill in the Blanks</option>
+                <option value="SQL">SQL Assessment</option>
               </select>
             </div>
 
@@ -1182,6 +1362,111 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
             </div>
           )}
 
+          {/* FIB SPECIFIC SECTION */}
+          {type === "FIB" && (
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                    Blanks Configuration & Accepted Answers
+                  </span>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Define blanks and acceptable answers (comma-separated for multiple variants).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddBlank}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-950/60 text-violet-400 border border-violet-800/50 hover:bg-violet-900/60 transition flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Blank</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {fibBlanks.map((blank, bIdx) => (
+                  <div key={blank.id || bIdx} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-violet-400 font-mono">
+                        Blank #{bIdx + 1}
+                      </span>
+                      {fibBlanks.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveBlank(bIdx)}
+                          className="text-slate-500 hover:text-rose-400 p-1 transition"
+                          title="Remove blank"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">
+                          Field Label / Placeholder
+                        </label>
+                        <input
+                          type="text"
+                          value={blank.label || ""}
+                          onChange={(e) => handleUpdateBlankLabel(bIdx, e.target.value)}
+                          placeholder={`e.g. Blank ${bIdx + 1}`}
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">
+                          Accepted Answers (comma or pipe | separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={
+                            (blank.acceptedAnswers || []).some((a: string) => a.includes(","))
+                              ? (blank.acceptedAnswers || []).join(" | ")
+                              : (blank.acceptedAnswers || []).join(", ")
+                          }
+                          onChange={(e) => handleUpdateBlankAccepted(bIdx, e.target.value)}
+                          placeholder='e.g. 511, 0x1ff or printf("%d", a); | printf("%d",a);'
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white font-mono focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Negative Marks & Explanation */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                    Negative Penalty
+                  </label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    value={negativeMarks}
+                    onChange={(e) => setNegativeMarks(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                    Solution Explanation (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={explanation}
+                    onChange={(e) => setExplanation(e.target.value)}
+                    placeholder="Explanation displayed in review mode"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* CODING SPECIFIC SECTION */}
           {type === "CODING" && (
             <div className="space-y-4 pt-4 border-t border-slate-800">
@@ -1321,6 +1606,259 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SQL SPECIFIC SECTION */}
+          {type === "SQL" && (
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                  SQL Schema, Canonical Solution & Test Cases
+                </span>
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={orderSensitive}
+                    onChange={(e) => setOrderSensitive(e.target.checked)}
+                    className="w-4 h-4 text-sky-600 rounded cursor-pointer"
+                  />
+                  <span>Enforce Result Row Order (ORDER BY check)</span>
+                </label>
+              </div>
+
+              {/* DDL & Starter Code */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Schema DDL */}
+                <div className="space-y-1.5 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-sky-400 flex items-center gap-1.5">
+                      <Database className="w-4 h-4 text-sky-400" />
+                      <span>Database Schema DDL (CREATE TABLE)</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">SQLite Sandbox</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Tables created in SQLite sandbox before candidate query execution.
+                  </p>
+                  <textarea
+                    rows={7}
+                    value={schemaDdl}
+                    onChange={(e) => setSchemaDdl(e.target.value)}
+                    placeholder="CREATE TABLE employees (&#10;  id INTEGER PRIMARY KEY,&#10;  name TEXT NOT NULL,&#10;  salary REAL NOT NULL&#10;);"
+                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-sky-200 focus:outline-none focus:border-sky-500 resize-y min-h-[140px]"
+                    spellCheck={false}
+                  />
+                </div>
+
+                {/* Candidate Starter Code */}
+                <div className="space-y-1.5 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Code2 className="w-4 h-4 text-slate-400" />
+                      <span>Candidate Starter Code</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500">Initial template</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Pre-filled query template shown in the candidate's editor.
+                  </p>
+                  <textarea
+                    rows={7}
+                    value={starterCode}
+                    onChange={(e) => setStarterCode(e.target.value)}
+                    placeholder="-- Write your SQL query here&#10;SELECT * FROM employees;&#10;"
+                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-slate-200 focus:outline-none focus:border-slate-600 resize-y min-h-[140px]"
+                    spellCheck={false}
+                  />
+                </div>
+              </div>
+
+              {/* Reference Solution SQL */}
+              <div className="space-y-1.5 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      Reference Solution Query (Canonical SQL)
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-amber-400 font-medium bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full">
+                    Golden Grader
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Executed against each testcase's seed data to automatically compute expected tabular output.
+                </p>
+                <textarea
+                  rows={4}
+                  value={solutionSql}
+                  onChange={(e) => setSolutionSql(e.target.value)}
+                  placeholder="SELECT name, salary FROM employees ORDER BY salary DESC;"
+                  className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 resize-y min-h-[90px]"
+                  spellCheck={false}
+                />
+              </div>
+
+              {/* SQL Test Cases & Seed Data */}
+              <div className="space-y-3 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div>
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      SQL Test Cases & Seed Data ({sqlTestCases.length})
+                    </span>
+                    <p className="text-[11px] text-slate-400">
+                      Provide INSERT statements for each test case dataset.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSqlTestCases((prev) => [
+                        ...prev,
+                        {
+                          title: `Test Case ${prev.length + 1}`,
+                          seedData: "",
+                          isPublic: false,
+                          orderSensitive: false,
+                          weight: 1,
+                        },
+                      ]);
+                    }}
+                    className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-950/60 border border-sky-800/50 hover:bg-sky-900/60 transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add SQL Test Case</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {sqlTestCases.map((tc, tcIdx) => {
+                    const isTesting = testingSqlCase === tcIdx;
+                    const preview = sqlPreviewResult[tcIdx];
+
+                    return (
+                      <div key={tcIdx} className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-sky-400 font-mono">#{tcIdx + 1}</span>
+                            <input
+                              type="text"
+                              value={tc.title}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setSqlTestCases((prev) =>
+                                  prev.map((c, i) => (i === tcIdx ? { ...c, title: val } : c))
+                                );
+                              }}
+                              placeholder="Test Case Title"
+                              className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSqlTestCases((prev) =>
+                                  prev.map((c, i) => (i === tcIdx ? { ...c, isPublic: !c.isPublic } : c))
+                                );
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${
+                                tc.isPublic
+                                  ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/60"
+                                  : "bg-purple-950/60 text-purple-400 border-purple-800/60"
+                              }`}
+                            >
+                              {tc.isPublic ? "Open (Public Sample)" : "Closed (Hidden Grader)"}
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={isTesting || !schemaDdl.trim() || !solutionSql.trim()}
+                              onClick={() => handleTestSql(tcIdx)}
+                              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-800/60 transition disabled:opacity-50"
+                              title="Execute canonical query against this seed to preview expected output"
+                            >
+                              <Play className="w-3 h-3 text-sky-400" />
+                              <span>{isTesting ? "Executing..." : "Test Solution"}</span>
+                            </button>
+
+                            {sqlTestCases.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSqlTestCases((prev) => prev.filter((_, i) => i !== tcIdx));
+                                }}
+                                className="p-1 text-slate-500 hover:text-rose-400"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">
+                            Seed Data (INSERT Statements)
+                          </span>
+                          <textarea
+                            rows={3}
+                            value={tc.seedData}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setSqlTestCases((prev) =>
+                                prev.map((c, i) => (i === tcIdx ? { ...c, seedData: val } : c))
+                              );
+                            }}
+                            placeholder="INSERT INTO employees VALUES (1, 'Alice', 90000);&#10;INSERT INTO employees VALUES (2, 'Bob', 80000);"
+                            className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                            spellCheck={false}
+                          />
+                        </div>
+
+                        {/* Test Execution Output Preview */}
+                        {preview && (
+                          <div
+                            className={`p-3 rounded-lg border text-xs font-mono ${
+                              preview.success && !preview.actualResult?.error
+                                ? "bg-slate-950 border-emerald-800/40 text-emerald-300"
+                                : "bg-rose-950/40 border-rose-800/60 text-rose-300"
+                            }`}
+                          >
+                            {preview.success && !preview.actualResult?.error ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-[11px] text-emerald-400 font-semibold">
+                                  <span>
+                                    ✓ Canonical Query Executed Successfully (
+                                    {preview.actualResult.rows?.length || 0} rows,{" "}
+                                    {preview.actualResult.executionTimeMs}ms)
+                                  </span>
+                                </div>
+                                {preview.actualResult.columns &&
+                                  preview.actualResult.columns.length > 0 && (
+                                    <TableGrid
+                                      columns={preview.actualResult.columns}
+                                      rows={(preview.actualResult.rows || []).map((r: any) =>
+                                        preview.actualResult.columns.map((c: string) => r[c] ?? null)
+                                      )}
+                                      maxRows={5}
+                                    />
+                                  )}
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="font-bold">Execution Error:</span>{" "}
+                                {preview.error || preview.actualResult?.error}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

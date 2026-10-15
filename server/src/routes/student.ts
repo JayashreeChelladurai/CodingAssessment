@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { isSebRequest, generateSebConfig, generateSebToken, resolveRequestHost } from "../services/sebService.js";
-import { gradeStudentCode, gradeMcqQuestion } from "../services/gradingService.js";
+import { gradeStudentCode, gradeMcqQuestion, gradeFibQuestion, gradeSqlQuestion } from "../services/gradingService.js";
+import { extractSchemaOverview } from "../services/sqlRunner.js";
 import {
   issueAttemptSessionToken,
   requireAttemptSession,
@@ -697,10 +698,16 @@ export async function allocateQuestionsForStudentAttempt(
           starterCode: chosenBq.starterCode,
           timeLimitSeconds: chosenBq.timeLimitSeconds,
           memoryLimitMb: chosenBq.memoryLimitMb,
+          schemaDdl: chosenBq.schemaDdl || "",
+          solutionSql: chosenBq.solutionSql || "",
+          orderSensitive: chosenBq.orderSensitive || false,
           testCases: {
             create: chosenBq.testCases.map((tc, tcIdx) => ({
-              input: tc.input,
-              expectedOutput: tc.expectedOutput,
+              title: tc.title || `Test Case ${tcIdx + 1}`,
+              input: tc.input || "",
+              expectedOutput: tc.expectedOutput || "",
+              seedData: tc.seedData || "",
+              orderSensitive: tc.orderSensitive !== undefined ? tc.orderSensitive : null,
               isPublic: tc.isPublic,
               weight: tc.weight,
               order: tcIdx,
@@ -1004,24 +1011,43 @@ studentRouter.post("/start", async (req, res) => {
       return idxA - idxB;
     });
 
-    // Sanitize questions: strip correctAnswers for exam mode!
-    const sanitizedQuestions = sortedQuestions.map((q) => ({
-      id: q.id,
-      sectionId: q.sectionId,
-      type: q.type,
-      title: q.title,
-      description: q.description,
-      marks: q.marks,
-      negativeMarks: q.negativeMarks,
-      mcqType: q.mcqType,
-      options: q.options, // Options list (without correct answer tag)
-      allowedLanguages: q.allowedLanguages,
-      starterCodes: q.starterCodes,
-      starterCode: q.starterCode,
-      timeLimitSeconds: q.timeLimitSeconds,
-      memoryLimitMb: q.memoryLimitMb,
-      testCases: q.testCases,
-    }));
+    // Sanitize questions: strip correctAnswers and canonical solutionSql for exam mode!
+    const sanitizedQuestions = sortedQuestions.map((q) => {
+      const isSql = q.type === "SQL";
+      let schemaOverview = null;
+      if (isSql) {
+        const sampleSeed = q.testCases.length > 0 ? q.testCases[0].seedData : "";
+        schemaOverview = extractSchemaOverview(q.schemaDdl || "", sampleSeed);
+      }
+      return {
+        id: q.id,
+        sectionId: q.sectionId,
+        type: q.type,
+        title: q.title,
+        description: q.description,
+        marks: q.marks,
+        negativeMarks: q.negativeMarks,
+        mcqType: q.mcqType,
+        options: q.options, // Options list (without correct answer tag)
+        allowedLanguages: q.allowedLanguages,
+        starterCodes: q.starterCodes,
+        starterCode: q.starterCode,
+        timeLimitSeconds: q.timeLimitSeconds,
+        memoryLimitMb: q.memoryLimitMb,
+        schemaDdl: isSql ? q.schemaDdl : undefined,
+        schemaOverview: isSql ? schemaOverview : undefined,
+        orderSensitive: isSql ? q.orderSensitive : undefined,
+        testCases: q.testCases.map((tc: any) => ({
+          id: tc.id,
+          title: tc.title || "Test Case",
+          input: tc.input || "",
+          seedData: tc.seedData || "",
+          expectedOutput: tc.expectedOutput ? (typeof tc.expectedOutput === "string" ? (() => { try { return JSON.parse(tc.expectedOutput); } catch { return tc.expectedOutput; } })() : tc.expectedOutput) : null,
+          isPublic: tc.isPublic,
+          weight: tc.weight,
+        })),
+      };
+    });
 
     const attemptToken = issueAttemptSessionToken(attempt.id, assessment.id, cleanRollNo);
     res.json({
@@ -1328,8 +1354,8 @@ studentRouter.post("/submit-mcq", requireAttemptSession, async (req: Authenticat
     }
 
     const question = await prisma.question.findUnique({ where: { id: questionId } });
-    if (!question || question.type !== "MCQ") {
-      return res.status(404).json({ error: "MCQ Question not found" });
+    if (!question || (question.type !== "MCQ" && question.type !== "FIB")) {
+      return res.status(404).json({ error: "MCQ / FIB Question not found" });
     }
 
     const attempt = await prisma.studentAttempt.findUnique({
@@ -1343,21 +1369,31 @@ studentRouter.post("/submit-mcq", requireAttemptSession, async (req: Authenticat
       return;
     }
 
-    let correctAnswers: string[] = [];
-    try {
-      correctAnswers = JSON.parse(question.correctAnswers || "[]");
-    } catch {
-      correctAnswers = [];
-    }
-
+    const isFib = question.type === "FIB";
     const selected = Array.isArray(selectedOptions) ? selectedOptions : [];
-    const isCorrect =
-      selected.length === correctAnswers.length &&
-      [...selected].sort().every((v, i) => v === [...correctAnswers].sort()[i]);
 
+    let isCorrect = false;
     let score = 0;
-    if (selected.length > 0) {
-      score = isCorrect ? question.marks : -Math.abs(question.negativeMarks || 0);
+
+    if (isFib) {
+      const fibGrading = gradeFibQuestion(selected, question.correctAnswers, question.marks, question.negativeMarks || 0);
+      isCorrect = fibGrading.isCorrect;
+      score = fibGrading.score;
+    } else {
+      let correctAnswers: string[] = [];
+      try {
+        correctAnswers = JSON.parse(question.correctAnswers || "[]");
+      } catch {
+        correctAnswers = [];
+      }
+
+      isCorrect =
+        selected.length === correctAnswers.length &&
+        [...selected].sort().every((v, i) => v === [...correctAnswers].sort()[i]);
+
+      if (selected.length > 0) {
+        score = isCorrect ? question.marks : -Math.abs(question.negativeMarks || 0);
+      }
     }
 
     const existing = await prisma.submission.findFirst({
@@ -1369,7 +1405,7 @@ studentRouter.post("/submit-mcq", requireAttemptSession, async (req: Authenticat
       submission = await prisma.submission.update({
         where: { id: existing.id },
         data: {
-          type: "MCQ",
+          type: isFib ? "FIB" : "MCQ",
           selectedOptions: JSON.stringify(selected),
           score,
           maxScore: question.marks,
@@ -1382,7 +1418,7 @@ studentRouter.post("/submit-mcq", requireAttemptSession, async (req: Authenticat
         data: {
           attemptId,
           questionId,
-          type: "MCQ",
+          type: isFib ? "FIB" : "MCQ",
           selectedOptions: JSON.stringify(selected),
           score,
           maxScore: question.marks,
@@ -1578,6 +1614,79 @@ export async function autoGradeAndFinalizeAttempt(
           });
         }
       }
+    } else if (q.type === "SQL") {
+      let draftCode = "";
+      if (typeof drafts[q.id] === "string") {
+        draftCode = drafts[q.id].trim();
+      } else if (typeof drafts[q.id] === "object" && drafts[q.id] !== null) {
+        draftCode = (drafts[q.id].code || "").trim();
+      }
+
+      if (draftCode.length > 0) {
+        if (existingSub && existingSub.code === draftCode) {
+          totalScore += existingSub.score;
+          continue;
+        }
+
+        const grading = await gradeSqlQuestion(q, draftCode, false);
+        totalScore += grading.totalScore;
+
+        if (existingSub) {
+          await prisma.submission.update({
+            where: { id: existingSub.id },
+            data: {
+              type: "SQL",
+              language: "SQL",
+              code: draftCode,
+              score: grading.totalScore,
+              maxScore: grading.maxScore,
+              passedTestCases: grading.passedTestCases,
+              totalTestCases: grading.totalTestCases,
+              status: grading.status,
+              testCaseResults: JSON.stringify(grading.testCaseResults),
+              submittedAt: new Date(),
+            },
+          });
+        } else {
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "SQL",
+              language: "SQL",
+              code: draftCode,
+              score: grading.totalScore,
+              maxScore: grading.maxScore,
+              passedTestCases: grading.passedTestCases,
+              totalTestCases: grading.totalTestCases,
+              status: grading.status,
+              testCaseResults: JSON.stringify(grading.testCaseResults),
+              submittedAt: new Date(),
+            },
+          });
+        }
+      } else {
+        if (existingSub) {
+          totalScore += existingSub.score;
+        } else {
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "SQL",
+              language: "SQL",
+              code: q.starterCode || "",
+              score: 0,
+              maxScore: q.marks,
+              passedTestCases: 0,
+              totalTestCases: q.testCases.length,
+              status: "NOT_SUBMITTED",
+              testCaseResults: "[]",
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
     } else if (q.type === "MCQ") {
       const selected = mcqResponses[q.id];
       if (selected && selected.length > 0) {
@@ -1626,6 +1735,56 @@ export async function autoGradeAndFinalizeAttempt(
               attemptId: attempt.id,
               questionId: q.id,
               type: "MCQ",
+              selectedOptions: "[]",
+              score: 0,
+              maxScore: q.marks,
+              status: "NOT_SUBMITTED",
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
+    } else if (q.type === "FIB") {
+      const selected = mcqResponses[q.id];
+      if (selected && Array.isArray(selected) && selected.some((s) => typeof s === "string" && s.trim().length > 0)) {
+        const grading = gradeFibQuestion(selected, q.correctAnswers, q.marks, q.negativeMarks || 0);
+        totalScore += grading.score;
+
+        if (existingSub) {
+          await prisma.submission.update({
+            where: { id: existingSub.id },
+            data: {
+              type: "FIB",
+              selectedOptions: JSON.stringify(selected),
+              score: grading.score,
+              maxScore: q.marks,
+              status: grading.isCorrect ? "ACCEPTED" : "WRONG_ANSWER",
+              submittedAt: new Date(),
+            },
+          });
+        } else {
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "FIB",
+              selectedOptions: JSON.stringify(selected),
+              score: grading.score,
+              maxScore: q.marks,
+              status: grading.isCorrect ? "ACCEPTED" : "WRONG_ANSWER",
+              submittedAt: new Date(),
+            },
+          });
+        }
+      } else {
+        if (existingSub) {
+          totalScore += existingSub.score;
+        } else {
+          await prisma.submission.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: q.id,
+              type: "FIB",
               selectedOptions: "[]",
               score: 0,
               maxScore: q.marks,
@@ -1748,9 +1907,20 @@ studentRouter.get("/review/:code/:rollNo", async (req, res) => {
       assignedQIds = [];
     }
 
-    const reviewQuestions = assignedQIds.length > 0
+    const rawReviewQuestions = assignedQIds.length > 0
       ? assessment.questions.filter((q) => assignedQIds.includes(q.id))
       : assessment.questions;
+
+    const reviewQuestions = rawReviewQuestions.map((q) => {
+      if (q.type === "SQL") {
+        const sampleSeed = q.testCases.length > 0 ? q.testCases[0].seedData : "";
+        return {
+          ...q,
+          schemaOverview: extractSchemaOverview(q.schemaDdl || "", sampleSeed),
+        };
+      }
+      return q;
+    });
 
     res.json({
       isUnlocked: true,

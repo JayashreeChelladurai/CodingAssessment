@@ -1,6 +1,9 @@
 import { StarterDefinition } from "./linkedListStarters";
 
 const TREE_BUILDER_AND_PRINTER = `
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
     public static TreeNode buildTree(String[] tokens) {
         if (tokens == null || tokens.length == 0 || tokens[0].equals("null") || tokens[0].equals("")) return null;
         TreeNode root = new TreeNode(Integer.parseInt(tokens[0]));
@@ -76,10 +79,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public int maxDepth(TreeNode root) {
+    public static int maxDepth(TreeNode root) {
         // Write your logic here
         return 0;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -119,10 +124,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public boolean isSameTree(TreeNode p, TreeNode q) {
+    public static boolean isSameTree(TreeNode p, TreeNode q) {
         // Write your logic here
         return false;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -164,10 +171,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public TreeNode invertTree(TreeNode root) {
+    public static TreeNode invertTree(TreeNode root) {
         // Write your logic here
         return null;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -211,12 +220,14 @@ class TreeNode {
 }
 
 public class Solution {
-    private int maxSum = Integer.MIN_VALUE;
+    private static int maxSum = Integer.MIN_VALUE;
 
-    public int maxPathSum(TreeNode root) {
+    public static int maxPathSum(TreeNode root) {
         // Write your logic here
         return 0;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -235,7 +246,7 @@ ${TREE_BUILDER_AND_PRINTER}
         return maxSum;
     }
 
-    private int maxGain(TreeNode node) {
+    private static int maxGain(TreeNode node) {
         if (node == null) return 0;
         int leftGain = Math.max(maxGain(node.left), 0);
         int rightGain = Math.max(maxGain(node.right), 0);
@@ -262,10 +273,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public List<List<Integer>> levelOrder(TreeNode root) {
+    public static List<List<Integer>> levelOrder(TreeNode root) {
         // Write your logic here
         return new ArrayList<>();
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -330,11 +343,44 @@ class TreeNode {
 }
 
 public class Solution {
-    public TreeNode buildTree(int[] preorder, int[] inorder) {
+    public static TreeNode buildTree(int[] preorder, int[] inorder) {
         // Write your logic here
         return null;
     }
-${TREE_BUILDER_AND_PRINTER}
+
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+    public static void printTree(TreeNode root) {
+        if (root == null) {
+            System.out.println("null");
+            return;
+        }
+        List<String> list = new ArrayList<>();
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            TreeNode curr = queue.poll();
+            if (curr != null) {
+                list.add(String.valueOf(curr.val));
+                queue.add(curr.left);
+                queue.add(curr.right);
+            } else {
+                list.add("null");
+            }
+        }
+        int last = list.size() - 1;
+        while (last >= 0 && list.get(last).equals("null")) last--;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i <= last; i++) {
+            if (i > 0) sb.append(" ");
+            sb.append(list.get(i));
+        }
+        System.out.println(sb.toString());
+    }
+
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         if (!sc.hasNextInt()) return;
@@ -353,7 +399,7 @@ ${TREE_BUILDER_AND_PRINTER}
         return helper(preorder, 0, preorder.length - 1, 0, inorder.length - 1, inMap);
     }
 
-    private TreeNode helper(int[] preorder, int preStart, int preEnd, int inStart, int inEnd, Map<Integer, Integer> inMap) {
+    private static TreeNode helper(int[] preorder, int preStart, int preEnd, int inStart, int inEnd, Map<Integer, Integer> inMap) {
         if (preStart > preEnd || inStart > inEnd) return null;
         TreeNode root = new TreeNode(preorder[preStart]);
         int inRoot = inMap.get(root.val);
@@ -381,10 +427,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public boolean isValidBST(TreeNode root) {
+    public static boolean isValidBST(TreeNode root) {
         // Write your logic here
         return false;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -401,7 +449,7 @@ ${TREE_BUILDER_AND_PRINTER}
     testSolution: `        return validate(root, null, null);
     }
 
-    private boolean validate(TreeNode node, Integer low, Integer high) {
+    private static boolean validate(TreeNode node, Integer low, Integer high) {
         if (node == null) return true;
         if ((low != null && node.val <= low) || (high != null && node.val >= high)) return false;
         return validate(node.left, low, node.val) && validate(node.right, node.val, high);`,
@@ -425,10 +473,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public int kthSmallest(TreeNode root, int k) {
+    public static int kthSmallest(TreeNode root, int k) {
         // Write your logic here
         return 0;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -475,10 +525,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+    public static TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
         // Write your logic here
         return null;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static TreeNode findNode(TreeNode root, int val) {
         if (root == null) return null;
@@ -532,10 +584,12 @@ class TreeNode {
 }
 
 public class Solution {
-    public boolean isSubtree(TreeNode root, TreeNode subRoot) {
+    public static boolean isSubtree(TreeNode root, TreeNode subRoot) {
         // Write your logic here
         return false;
     }
+
+    // You can write additional helper functions here if needed
 ${TREE_BUILDER_AND_PRINTER}
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -559,7 +613,7 @@ ${TREE_BUILDER_AND_PRINTER}
         return isSubtree(root.left, subRoot) || isSubtree(root.right, subRoot);
     }
 
-    private boolean isSame(TreeNode s, TreeNode t) {
+    private static boolean isSame(TreeNode s, TreeNode t) {
         if (s == null && t == null) return true;
         if (s == null || t == null || s.val != t.val) return false;
         return isSame(s.left, t.left) && isSame(s.right, t.right);`,
@@ -584,17 +638,22 @@ class TreeNode {
 
 public class Solution {
     // Encodes a tree to a single string.
-    public String serialize(TreeNode root) {
+    public static String serialize(TreeNode root) {
         // Write your logic here
         return "";
     }
 
     // Decodes your encoded data to tree.
-    public TreeNode deserialize(String data) {
+    public static TreeNode deserialize(String data) {
         // Write your deserialize logic here
         return null;
     }
 
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         if (!sc.hasNextLine()) return;

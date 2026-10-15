@@ -1,7 +1,10 @@
 export interface TestCase {
   id?: string;
-  input: string;
-  expectedOutput: string;
+  title?: string;
+  input?: string;
+  expectedOutput?: string;
+  seedData?: string;
+  orderSensitive?: boolean | null;
   isPublic: boolean;
   weight?: number;
   order?: number;
@@ -12,20 +15,40 @@ export interface McqOption {
   text: string;
 }
 
+export interface ColumnInfo {
+  name: string;
+  type: string;
+  isPk?: boolean;
+  nullable?: boolean;
+}
+
+export interface TableSchemaInfo {
+  tableName: string;
+  columns: ColumnInfo[];
+  sampleRows: Record<string, any>[];
+}
+
+export interface FibBlank {
+  id: string;
+  label?: string;
+  acceptedAnswers: string[];
+}
+
 export interface Question {
   id: string;
   sectionId?: string | null;
-  type: "CODING" | "MCQ";
+  type: "CODING" | "MCQ" | "SQL" | "FIB";
   title: string;
   description: string;
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
   marks: number;
   negativeMarks?: number;
   order: number;
   
-  // MCQ fields
+  // MCQ & FIB fields
   mcqType?: "SINGLE" | "MULTIPLE";
-  options?: string; // JSON: McqOption[]
-  correctAnswers?: string; // JSON: string[] (only in review mode)
+  options?: string; // JSON: McqOption[] or FibBlank[]
+  correctAnswers?: string; // JSON: string[] or string[][] (accepted answers)
   explanation?: string; // (only in review mode)
 
   // Coding fields
@@ -34,13 +57,20 @@ export interface Question {
   starterCode?: string;
   timeLimitSeconds?: number;
   memoryLimitMb?: number;
+
+  // SQL fields
+  schemaDdl?: string;
+  solutionSql?: string;
+  orderSensitive?: boolean;
+  schemaOverview?: TableSchemaInfo[];
+
   testCases?: TestCase[];
 
   // Random question generation from Question Bank folder
   isRandom?: boolean;
   randomFolderId?: string | null;
   randomDifficulty?: "ANY" | "EASY" | "MEDIUM" | "HARD";
-  randomType?: "ANY" | "CODING" | "MCQ";
+  randomType?: "ANY" | "CODING" | "MCQ" | "SQL" | "FIB";
   templateQuestionId?: string | null;
   bankQuestionId?: string | null;
   randomFolder?: {
@@ -96,10 +126,10 @@ export interface Submission {
   id: string;
   attemptId: string;
   questionId: string;
-  type: "CODING" | "MCQ";
+  type: "CODING" | "MCQ" | "SQL" | "FIB";
   language?: string;
   code?: string;
-  selectedOptions?: string; // JSON: string[]
+  selectedOptions?: string; // JSON: string[] (MCQ option IDs, or FIB student answers per blank)
   score: number;
   maxScore: number;
   passedTestCases?: number;
@@ -177,7 +207,7 @@ export interface BankQuestion {
     name: string;
     parentId?: string | null;
   };
-  type: "CODING" | "MCQ";
+  type: "CODING" | "MCQ" | "SQL" | "FIB";
   title: string;
   description: string;
   difficulty: "EASY" | "MEDIUM" | "HARD";
@@ -198,8 +228,60 @@ export interface BankQuestion {
   starterCode?: string;
   timeLimitSeconds?: number;
   memoryLimitMb?: number;
+
+  // SQL fields
+  schemaDdl?: string;
+  solutionSql?: string;
+  orderSensitive?: boolean;
+
   testCases?: TestCase[];
 
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ComparisonDiff {
+  status: "PASSED" | "FAILED";
+  reason?: string;
+  columnMismatch?: { expected: string[]; actual: string[] };
+  rowCountMismatch?: { expected: number; actual: number };
+  cellMismatches?: {
+    rowIdx: number;
+    colIdx: number;
+    columnName: string;
+    expected: any;
+    actual: any;
+  }[];
+}
+
+export interface TestCaseEvaluation {
+  testCaseId: string;
+  title: string;
+  isPublic: boolean;
+  order: number;
+  status: "PASSED" | "FAILED" | "ERROR";
+  errorMessage: string | null;
+  executionTimeMs: number;
+  actualColumns: string[];
+  expectedColumns: string[];
+  actualRows: any[][];
+  expectedRows: any[][];
+  actualRowCount: number;
+  expectedRowCount: number;
+  diff: ComparisonDiff;
+}
+
+export interface QuestionGradingResult {
+  questionId: string;
+  status: "ACCEPTED" | "WRONG_ANSWER" | "SQL_SYNTAX_ERROR";
+  score: number;
+  totalScore?: number;
+  maxScore: number;
+  passedTestCases: number;
+  totalTestCases: number;
+  executionTimeMs: number;
+  testCaseResults: TestCaseEvaluation[];
+  results?: TestCaseEvaluation[];
+  submissionId?: string;
+  submittedAt?: string;
 }

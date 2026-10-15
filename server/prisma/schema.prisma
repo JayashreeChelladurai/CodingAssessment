@@ -72,6 +72,12 @@ model Question {
   starterCode      String       @default("import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        \n    }\n}\n")
   timeLimitSeconds Int          @default(3)
   memoryLimitMb    Int          @default(256)
+  
+  // SQL Specific Fields
+  schemaDdl        String       @default("") // CREATE TABLE statements
+  solutionSql      String       @default("") // Reference canonical SQL solution query
+  orderSensitive   Boolean      @default(false)
+  
   createdAt        DateTime     @default(now())
 
   // Random Question Configuration
@@ -79,7 +85,7 @@ model Question {
   randomFolderId     String?
   randomFolder       QuestionFolder? @relation(fields: [randomFolderId], references: [id], onDelete: SetNull)
   randomDifficulty   String?         // "ANY" | "EASY" | "MEDIUM" | "HARD"
-  randomType         String?         // "ANY" | "CODING" | "MCQ"
+  randomType         String?         // "ANY" | "CODING" | "MCQ" | "SQL"
   templateQuestionId String?         // Template Question ID if dynamically instantiated for a student
   bankQuestionId     String?         // Source BankQuestion ID if dynamically instantiated
   
@@ -91,8 +97,11 @@ model TestCase {
   id             String   @id @default(uuid())
   questionId     String
   question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  title          String   @default("Test Case")
   input          String   @default("")
-  expectedOutput String
+  expectedOutput String   @default("")
+  seedData       String   @default("") // INSERT statements for SQL test cases
+  orderSensitive Boolean? // If null, inherits question.orderSensitive
   isPublic       Boolean  @default(true) // true = Open/Sample, false = Closed/Hidden
   weight         Float    @default(1.0)
   order          Int      @default(0)
@@ -210,6 +219,12 @@ model BankQuestion {
   starterCode      String          @default("")
   timeLimitSeconds Int             @default(3)
   memoryLimitMb    Int             @default(256)
+  
+  // SQL Specific Fields
+  schemaDdl        String          @default("")
+  solutionSql      String          @default("")
+  orderSensitive   Boolean         @default(false)
+  
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -220,8 +235,11 @@ model BankTestCase {
   id             String       @id @default(uuid())
   bankQuestionId String
   bankQuestion   BankQuestion @relation(fields: [bankQuestionId], references: [id], onDelete: Cascade)
+  title          String       @default("Test Case")
   input          String       @default("")
-  expectedOutput String
+  expectedOutput String       @default("")
+  seedData       String       @default("")
+  orderSensitive Boolean?
   isPublic       Boolean      @default(true)
   weight         Float        @default(1.0)
   order          Int          @default(0)

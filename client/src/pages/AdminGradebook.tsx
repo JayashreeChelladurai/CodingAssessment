@@ -21,8 +21,11 @@ import {
   FileCode,
   Layers,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Database,
+  Edit3,
 } from "lucide-react";
+import { SqlResultViewer } from "../components/editor/SqlResultViewer";
 
 interface AdminGradebookProps {
   assessment: Assessment;
@@ -278,6 +281,7 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                     <th className="p-3">Status</th>
                     <th className="p-3 text-center">MCQ Score</th>
                     <th className="p-3 text-center">Coding Score</th>
+                    <th className="p-3 text-center">SQL Score</th>
                     {data.assessment.isRandomized ? (
                       <th className="p-3 text-center">Assigned Problems & Submissions</th>
                     ) : (
@@ -325,6 +329,9 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                       </td>
                       <td className="p-3 text-center font-mono font-bold text-emerald-400">
                         {st.codingScore}
+                      </td>
+                      <td className="p-3 text-center font-mono font-bold text-sky-400">
+                        {st.sqlScore ?? 0}
                       </td>
 
                       {data.assessment.isRandomized ? (
@@ -705,6 +712,253 @@ export const AdminGradebook: React.FC<AdminGradebookProps> = ({
                           })()}
                         </div>
                       )}
+                    </div>
+                  ) : activeQuestion.type === "SQL" ? (
+                    /* SQL QUESTION CONTENT */
+                    <div className="space-y-4">
+                      {/* Submitted Query Card */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-inner">
+                        <div className="px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2 text-sky-400 font-semibold font-mono">
+                            <Database className="w-3.5 h-3.5" />
+                            <span>Submitted SQL Query</span>
+                          </div>
+
+                          {activeSubmission?.code && (
+                            <button
+                              onClick={() => handleCopyCode(activeSubmission.code)}
+                              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-medium text-[11px]"
+                            >
+                              {copiedCode ? (
+                                <>
+                                  <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span className="text-emerald-400">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Copy Query</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        {activeSubmission?.code ? (
+                          <pre className="p-4 text-xs font-mono leading-relaxed text-sky-300 overflow-x-auto max-h-96 select-text whitespace-pre">
+                            {activeSubmission.code}
+                          </pre>
+                        ) : (
+                          <div className="p-8 text-center text-slate-500 text-xs">
+                            No SQL query submitted for this question.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Problem Description & Reference Solution Query */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                            Problem Description
+                          </span>
+                          <div className="text-xs text-slate-300 leading-relaxed max-h-48 overflow-y-auto">
+                            <MarkdownView content={activeQuestion.description} />
+                          </div>
+                        </div>
+
+                        {activeQuestion.solutionSql && (
+                          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
+                              Canonical Reference Query
+                            </span>
+                            <pre className="p-3 bg-slate-900 border border-slate-800/80 rounded-lg text-xs font-mono text-emerald-300 overflow-x-auto max-h-48 whitespace-pre">
+                              {activeQuestion.solutionSql}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SQL Test Results & Diff Viewer */}
+                      {(() => {
+                        let parsedEvals: any[] = [];
+                        try {
+                          parsedEvals = JSON.parse(activeSubmission?.testCaseResults || "[]");
+                        } catch {
+                          parsedEvals = [];
+                        }
+
+                        if (!activeSubmission && parsedEvals.length === 0) {
+                          return (
+                            <div className="p-6 text-center text-slate-500 text-xs bg-slate-950 rounded-xl border border-slate-800">
+                              No evaluation results available for this question.
+                            </div>
+                          );
+                        }
+
+                        const sqlGradingResult = {
+                          questionId: activeQuestion.id,
+                          status: activeSubmission?.status === "ACCEPTED" ? "PASSED" : activeSubmission?.status === "COMPILE_ERROR" ? "ERROR" : "FAILED",
+                          passedTestCases: activeSubmission?.passedTestCases || 0,
+                          totalTestCases: activeSubmission?.totalTestCases || 0,
+                          score: activeSubmission?.score || 0,
+                          maxScore: activeQuestion.marks,
+                          evaluations: parsedEvals,
+                        };
+
+                        return (
+                          <div className="space-y-2">
+                            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                              <Award className="w-3.5 h-3.5 text-sky-400" />
+                              <span>
+                                Test Cases Evaluation & Table Differences ({sqlGradingResult.passedTestCases} / {sqlGradingResult.totalTestCases} Passed)
+                              </span>
+                            </h4>
+                            <SqlResultViewer result={sqlGradingResult} />
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : activeQuestion.type === "FIB" ? (
+                    /* FIB QUESTION CONTENT */
+                    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <h4 className="font-bold text-white flex items-center gap-2">
+                          <Edit3 className="w-4 h-4 text-violet-400" />
+                          <span>Student Blanks & Answer Key</span>
+                        </h4>
+                        <span className="text-[11px] font-mono text-slate-400">
+                          {activeSubmission ? (
+                            activeSubmission.score > 0 ? (
+                              <span className="text-emerald-400 font-bold">✓ Score: +{activeSubmission.score}m</span>
+                            ) : activeSubmission.status === "NOT_SUBMITTED" ? (
+                              <span className="text-slate-500">Unanswered</span>
+                            ) : (
+                              <span className="text-rose-400 font-bold">Score: {activeSubmission.score}m</span>
+                            )
+                          ) : (
+                            <span className="text-slate-500">Not Attempted</span>
+                          )}
+                        </span>
+                      </div>
+
+                      {/* Question Description */}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 text-slate-200 text-xs leading-relaxed font-sans">
+                        <MarkdownView content={activeQuestion.description} />
+                      </div>
+
+                      {(() => {
+                        let studentAnswers: string[] = [];
+                        if (activeSubmission?.selectedOptions) {
+                          try {
+                            studentAnswers = JSON.parse(activeSubmission.selectedOptions || "[]");
+                          } catch {
+                            studentAnswers = [];
+                          }
+                        } else if (inspectStudent?.mcqResponses) {
+                          try {
+                            const map = JSON.parse(inspectStudent.mcqResponses || "{}");
+                            studentAnswers = map[activeQuestion.id] || [];
+                          } catch {
+                            studentAnswers = [];
+                          }
+                        }
+
+                        let blanks: any[] = [];
+                        try {
+                          blanks = JSON.parse(activeQuestion.options || "[]");
+                        } catch {
+                          blanks = [];
+                        }
+
+                        let correctAnswers: any[] = [];
+                        try {
+                          correctAnswers = JSON.parse(activeQuestion.correctAnswers || "[]");
+                        } catch {
+                          correctAnswers = [];
+                        }
+
+                        return (
+                          <div className="space-y-3">
+                            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                              Blanks Breakdown
+                            </span>
+
+                            {blanks.map((b: any, bIdx: number) => {
+                              const ans = (studentAnswers[bIdx] || "").trim();
+                              let accepted: string[] = [];
+                              if (Array.isArray(b.acceptedAnswers) && b.acceptedAnswers.length > 0) {
+                                accepted = b.acceptedAnswers;
+                              } else if (Array.isArray(correctAnswers[bIdx])) {
+                                accepted = correctAnswers[bIdx];
+                              } else if (typeof correctAnswers[bIdx] === "string") {
+                                accepted = correctAnswers[bIdx].split(/[,|]/).map((s: string) => s.trim());
+                              }
+
+                              const normAns = ans.toLowerCase().replace(/\s+/g, " ");
+                              const isCorrect = accepted.some((acc: string) => {
+                                const normAcc = (acc || "").trim().toLowerCase().replace(/\s+/g, " ");
+                                return normAcc.length > 0 && normAcc === normAns;
+                              });
+
+                              return (
+                                <div
+                                  key={b.id || bIdx}
+                                  className={`p-3.5 rounded-xl border space-y-2 transition ${
+                                    ans.length === 0
+                                      ? "bg-slate-900/60 border-slate-800"
+                                      : isCorrect
+                                      ? "bg-emerald-950/30 border-emerald-500/40"
+                                      : "bg-rose-950/30 border-rose-500/40"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-violet-300 font-mono">
+                                      Blank #{bIdx + 1} ({b.label || `Blank ${bIdx + 1}`})
+                                    </span>
+                                    <span
+                                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                        ans.length === 0
+                                          ? "bg-slate-800 text-slate-400"
+                                          : isCorrect
+                                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                          : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                      }`}
+                                    >
+                                      {ans.length === 0 ? "Empty / Skipped" : isCorrect ? "Correct ✓" : "Incorrect ✗"}
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                    <div className="p-2 rounded bg-slate-950/80 border border-slate-800/80">
+                                      <span className="text-[10px] text-slate-500 uppercase block mb-0.5">
+                                        Student's Response:
+                                      </span>
+                                      <span className={`font-mono ${ans ? "text-white" : "text-slate-500 italic"}`}>
+                                        {ans || "<No response entered>"}
+                                      </span>
+                                    </div>
+                                    <div className="p-2 rounded bg-slate-950/80 border border-slate-800/80">
+                                      <span className="text-[10px] text-emerald-400 uppercase block mb-0.5">
+                                        Accepted Answers:
+                                      </span>
+                                      <span className="font-mono text-emerald-300 font-semibold">
+                                        {accepted.join(", ") || "—"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {activeQuestion.explanation && (
+                              <div className="mt-4 p-4 rounded-xl bg-indigo-950/30 border border-indigo-900/40 text-indigo-200 text-xs leading-relaxed space-y-1">
+                                <strong className="text-indigo-400 block font-semibold">Solution Explanation:</strong>
+                                <p>{activeQuestion.explanation}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     /* MCQ QUESTION CONTENT */

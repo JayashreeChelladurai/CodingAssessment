@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
-import { gradeStudentCode } from "../services/gradingService.js";
+import { gradeStudentCode, gradeSqlQuestion } from "../services/gradingService.js";
 import { executeCode } from "../services/codeRunner.js";
+import { executeSqlSandbox, generateExpectedOutput, compareSqlResults } from "../services/sqlRunner.js";
 import { AuthenticatedRequest, requireAttemptSession } from "../services/auth.js";
 import { enforceAttemptNotExpired } from "./student.js";
 
@@ -59,6 +60,16 @@ executionRouter.post("/run", requireAttemptSession, async (req: AuthenticatedReq
       return res.status(404).json({ error: "Question not found" });
     }
 
+    // SQL Question Execution
+    if (question.type === "SQL") {
+      const grading = await gradeSqlQuestion(question, code, true);
+      return res.json({
+        type: "sample_testcases",
+        grading,
+      });
+    }
+
+    // Coding Question Execution
     const grading = await gradeStudentCode(language, code, question, true);
     res.json({
       type: "sample_testcases",
@@ -104,6 +115,69 @@ executionRouter.post("/submit", requireAttemptSession, async (req: Authenticated
       return res.status(404).json({ error: "Question not found" });
     }
 
+    // SQL Question Submission
+    if (question.type === "SQL") {
+      const grading = await gradeSqlQuestion(question, code, false);
+
+      const existing = await prisma.submission.findFirst({
+        where: { attemptId, questionId },
+      });
+
+      let submission;
+      if (existing) {
+        submission = await prisma.submission.update({
+          where: { id: existing.id },
+          data: {
+            type: "SQL",
+            language: "SQL",
+            code,
+            score: grading.totalScore,
+            maxScore: grading.maxScore,
+            passedTestCases: grading.passedTestCases,
+            totalTestCases: grading.totalTestCases,
+            status: grading.status,
+            testCaseResults: JSON.stringify(grading.testCaseResults),
+            submittedAt: new Date(),
+          },
+        });
+      } else {
+        submission = await prisma.submission.create({
+          data: {
+            attemptId,
+            questionId,
+            type: "SQL",
+            language: "SQL",
+            code,
+            score: grading.totalScore,
+            maxScore: grading.maxScore,
+            passedTestCases: grading.passedTestCases,
+            totalTestCases: grading.totalTestCases,
+            status: grading.status,
+            testCaseResults: JSON.stringify(grading.testCaseResults),
+          },
+        });
+      }
+
+      let drafts: Record<string, string> = {};
+      try {
+        drafts = JSON.parse(attempt.drafts || "{}");
+      } catch {
+        drafts = {};
+      }
+      drafts[questionId] = code;
+
+      await prisma.studentAttempt.update({
+        where: { id: attemptId },
+        data: { drafts: JSON.stringify(drafts) },
+      });
+
+      return res.json({
+        submission,
+        grading,
+      });
+    }
+
+    // Coding Question Submission
     const grading = await gradeStudentCode(language, code, question, false);
 
     const existing = await prisma.submission.findFirst({
@@ -161,6 +235,35 @@ executionRouter.post("/submit", requireAttemptSession, async (req: Authenticated
     res.json({
       submission,
       grading,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin / Editor SQL sandbox preview endpoint
+executionRouter.post("/test-sql", async (req, res) => {
+  try {
+    const { schemaDdl, seedData, querySql, solutionSql, orderSensitive } = req.body;
+    if (!querySql && !solutionSql) {
+      return res.status(400).json({ error: "Query SQL or Solution SQL is required" });
+    }
+
+    const queryToRun = querySql || solutionSql;
+    const actual = executeSqlSandbox(schemaDdl || "", seedData || "", queryToRun);
+
+    let expected = null;
+    let diff = null;
+
+    if (solutionSql && querySql) {
+      expected = generateExpectedOutput(schemaDdl || "", seedData || "", solutionSql);
+      diff = compareSqlResults(actual, expected, Boolean(orderSensitive));
+    }
+
+    res.json({
+      actual,
+      expected,
+      diff,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

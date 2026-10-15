@@ -37,8 +37,8 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
     const isFl = flaggedQuestions.includes(q.id);
     let isAnswered = false;
 
-    if (q.type === "MCQ") {
-      isAnswered = (mcqResponses[q.id]?.length || 0) > 0;
+    if (q.type === "MCQ" || q.type === "FIB") {
+      isAnswered = (mcqResponses[q.id]?.filter((ans) => typeof ans === "string" && ans.trim().length > 0).length || 0) > 0;
     } else {
       const d = drafts ? drafts[q.id] : undefined;
       if (typeof d === "string") {
@@ -131,11 +131,15 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
                       }`}
                     >
                       <span>Q{globalIdx + 1}</span>
-                      {q.type === "MCQ" && (
+                      {q.type === "MCQ" ? (
                         <span className="absolute -top-1 -right-1 text-[8px] bg-slate-950 px-1 rounded text-amber-400 font-sans border border-slate-800">
                           M
                         </span>
-                      )}
+                      ) : q.type === "FIB" ? (
+                        <span className="absolute -top-1 -right-1 text-[8px] bg-slate-950 px-1 rounded text-violet-400 font-sans border border-slate-800">
+                          F
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
@@ -162,11 +166,11 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
             </button>
           )}
 
-          {currentQuestion?.type === "MCQ" && (
+          {(currentQuestion?.type === "MCQ" || currentQuestion?.type === "FIB") && (
             <button
               onClick={() => onClearResponse(currentQuestion.id)}
               className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-300 rounded-xl transition border border-slate-700"
-              title="Clear MCQ Choice"
+              title={currentQuestion?.type === "FIB" ? "Clear My Answers" : "Clear MCQ Choice"}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>

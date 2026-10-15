@@ -42,7 +42,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   const showLockedNotice = (msg?: string) => {
     if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
     setLockedNotice(
-      msg || "🔒 Starter code is non-editable. Please write your solution inside the active method."
+      msg || "🔒 Starter scaffolding & automated test driver are non-editable. Write your solution and helper functions in the active area."
     );
     noticeTimerRef.current = setTimeout(() => {
       setLockedNotice(null);
@@ -79,29 +79,39 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
 
     setHasLockedStarter(true);
 
-    // Determine where the student's solution method begins
-    let methodStartIdx = solClassIdx;
-    if (!lines[solClassIdx].includes("MedianFinder")) {
-      const nextMethod = lines.findIndex(
-        (l, idx) => idx > solClassIdx && /^\s*public\s+(?!static\b)/.test(l)
-      );
-      if (nextMethod !== -1) {
-        methodStartIdx = nextMethod;
-      }
-    }
+    // Top scaffolding ends at "public class Solution {" (or MedianFinder)
+    // Everything inside the class before the automated test driver is fully editable by the student,
+    // allowing them to write helper functions (static or non-static) and modify function signatures.
+    const topEndLine = solClassIdx + 1;
 
-    // Determine where the driver/static helper methods begin
-    const firstStaticIdx = lines.findIndex(
-      (l, idx) => idx > solClassIdx && /^\s*public\s+static\s+/.test(l)
+    // Find where the automated test driver begins:
+    // 1. Look for explicit automated test runner / driver comment markers
+    let driverStartIdx = lines.findIndex(
+      (l, idx) =>
+        idx > solClassIdx &&
+        (/^\s*\/\/\s*={3,}.*(?:DO NOT MODIFY|TEST RUNNER|DRIVER)/i.test(l) ||
+         /^\s*\/\/\s*(?:DO NOT MODIFY|TEST RUNNER|DRIVER CODE|AUTOMATED TEST RUNNER)/i.test(l))
     );
 
-    // Top scaffolding: 1-indexed lines 1 to methodStartIdx + 1 (the method signature line itself is locked)
-    const topEndLine = methodStartIdx + 1;
-    // Active editable solution code: methodStartIdx + 2 to firstStaticIdx
-    const activeStartLine = methodStartIdx + 2;
-    const activeEndLine = firstStaticIdx !== -1 ? firstStaticIdx : lines.length;
-    // Bottom driver: firstStaticIdx + 1 to lines.length
-    const bottomStartLine = firstStaticIdx !== -1 ? firstStaticIdx + 1 : lines.length + 1;
+    // 2. Automated test runner methods (never student helper functions)
+    if (driverStartIdx === -1) {
+      driverStartIdx = lines.findIndex(
+        (l, idx) =>
+          idx > solClassIdx &&
+          (/^\s*public\s+static\s+void\s+main\s*\(/i.test(l) ||
+           /^\s*public\s+static\s+TreeNode\s+buildTree\s*\(\s*String\s*\[\s*\]/i.test(l) ||
+           /^\s*public\s+static\s+void\s+printTree\s*\(/i.test(l) ||
+           /^\s*public\s+static\s+TreeNode\s+findNode\s*\(/i.test(l) ||
+           /^\s*public\s+static\s+void\s+printList\s*\(/i.test(l) ||
+           /^\s*(?:int|void)\s+main\s*\(/i.test(l))
+      );
+    }
+
+    // Active editable solution code: from line topEndLine + 1 (inside Solution class) to driverStartIdx
+    const activeStartLine = topEndLine + 1;
+    const activeEndLine = driverStartIdx !== -1 ? driverStartIdx : lines.length;
+    // Bottom driver: from driverStartIdx + 1 to lines.length
+    const bottomStartLine = driverStartIdx !== -1 ? driverStartIdx + 1 : lines.length + 1;
 
     lockedRangesRef.current = {
       topLockedEndLine: topEndLine,
@@ -120,7 +130,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
           linesDecorationsClassName: "monaco-locked-gutter-marker",
           hoverMessage: {
             value:
-              "🔒 **Starter Code (Non-editable)**  \nPre-configured imports, data structures, and class definitions. Write your solution in the active method below.",
+              "🔒 **Starter Scaffolding (Non-editable)**  \nPre-configured imports, data structures, and class definitions. Write your solution and helper functions in the active area below.",
           },
         },
       });

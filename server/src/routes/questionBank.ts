@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { requireAdminSession } from "../services/auth.js";
+import { generateExpectedOutput } from "../services/sqlRunner.js";
 
 export const questionBankRouter = Router();
 
@@ -43,6 +44,23 @@ async function seedDefaultFoldersIfEmpty() {
       { name: "Easy", parentId: codingRoot.id, description: "Warm-up & fundamentals", order: 0 },
       { name: "Medium", parentId: codingRoot.id, description: "Data structures & classic algorithms", order: 1 },
       { name: "Hard", parentId: codingRoot.id, description: "Complex optimizations & dynamic programming", order: 2 },
+    ],
+  });
+
+  // Root folder: SQL
+  const sqlRoot = await prisma.questionFolder.create({
+    data: {
+      name: "SQL",
+      description: "Database queries, joins, aggregations & analytics",
+      order: 2,
+    },
+  });
+
+  await prisma.questionFolder.createMany({
+    data: [
+      { name: "Easy", parentId: sqlRoot.id, description: "Basic SELECT, WHERE, ORDER BY, GROUP BY", order: 0 },
+      { name: "Medium", parentId: sqlRoot.id, description: "Joins, aggregations, subqueries, CASE", order: 1 },
+      { name: "Hard", parentId: sqlRoot.id, description: "Window functions, CTEs, complex reporting", order: 2 },
     ],
   });
 }
@@ -309,20 +327,40 @@ questionBankRouter.post("/questions", async (req, res) => {
         // Coding
         allowedLanguages: qData.allowedLanguages || "JAVA,C,CPP",
         starterCodes: typeof qData.starterCodes === "string" ? qData.starterCodes : JSON.stringify(qData.starterCodes || {}),
-        starterCode: qData.starterCode || "",
+        starterCode: qData.starterCode || (type === "SQL" ? "-- Write your SQL query below\nSELECT \nFROM \n" : ""),
         timeLimitSeconds: typeof qData.timeLimitSeconds === "number" ? qData.timeLimitSeconds : 3,
         memoryLimitMb: typeof qData.memoryLimitMb === "number" ? qData.memoryLimitMb : 256,
+
+        // SQL
+        schemaDdl: qData.schemaDdl || "",
+        solutionSql: qData.solutionSql || "",
+        orderSensitive: Boolean(qData.orderSensitive),
 
         // Test Cases
         testCases: {
           create: Array.isArray(qData.testCases)
-            ? qData.testCases.map((tc: any, idx: number) => ({
-                input: tc.input || "",
-                expectedOutput: tc.expectedOutput || "",
-                isPublic: tc.isPublic !== false,
-                weight: typeof tc.weight === "number" ? tc.weight : 1.0,
-                order: typeof tc.order === "number" ? tc.order : idx,
-              }))
+            ? qData.testCases.map((tc: any, idx: number) => {
+                let expectedOutputStr = tc.expectedOutput || "";
+                if (typeof expectedOutputStr === "object") {
+                  expectedOutputStr = JSON.stringify(expectedOutputStr);
+                }
+                if (type === "SQL" && (!expectedOutputStr || expectedOutputStr === "{}") && qData.solutionSql && tc.seedData) {
+                  try {
+                    const exp = generateExpectedOutput(qData.schemaDdl || "", tc.seedData, qData.solutionSql);
+                    expectedOutputStr = JSON.stringify(exp);
+                  } catch {}
+                }
+                return {
+                  title: tc.title || `Test Case ${idx + 1}`,
+                  input: tc.input || "",
+                  expectedOutput: expectedOutputStr,
+                  seedData: tc.seedData || "",
+                  orderSensitive: tc.orderSensitive !== undefined ? tc.orderSensitive : null,
+                  isPublic: tc.isPublic !== false,
+                  weight: typeof tc.weight === "number" ? tc.weight : 1.0,
+                  order: typeof tc.order === "number" ? tc.order : idx,
+                };
+              })
             : [],
         },
       },
@@ -358,14 +396,31 @@ questionBankRouter.put("/questions/:id", async (req, res) => {
         await tx.bankTestCase.deleteMany({ where: { bankQuestionId: id } });
         if (qData.testCases.length > 0) {
           await tx.bankTestCase.createMany({
-            data: qData.testCases.map((tc: any, idx: number) => ({
-              bankQuestionId: id,
-              input: tc.input || "",
-              expectedOutput: tc.expectedOutput || "",
-              isPublic: tc.isPublic !== false,
-              weight: typeof tc.weight === "number" ? tc.weight : 1.0,
-              order: typeof tc.order === "number" ? tc.order : idx,
-            })),
+            data: qData.testCases.map((tc: any, idx: number) => {
+              let expectedOutputStr = tc.expectedOutput || "";
+              if (typeof expectedOutputStr === "object") {
+                expectedOutputStr = JSON.stringify(expectedOutputStr);
+              }
+              if (type === "SQL" && (!expectedOutputStr || expectedOutputStr === "{}") && (qData.solutionSql || existing.solutionSql) && tc.seedData) {
+                try {
+                  const ddl = qData.schemaDdl || existing.schemaDdl || "";
+                  const sol = qData.solutionSql || existing.solutionSql || "";
+                  const exp = generateExpectedOutput(ddl, tc.seedData, sol);
+                  expectedOutputStr = JSON.stringify(exp);
+                } catch {}
+              }
+              return {
+                bankQuestionId: id,
+                title: tc.title || `Test Case ${idx + 1}`,
+                input: tc.input || "",
+                expectedOutput: expectedOutputStr,
+                seedData: tc.seedData || "",
+                orderSensitive: tc.orderSensitive !== undefined ? tc.orderSensitive : null,
+                isPublic: tc.isPublic !== false,
+                weight: typeof tc.weight === "number" ? tc.weight : 1.0,
+                order: typeof tc.order === "number" ? tc.order : idx,
+              };
+            }),
           });
         }
       }
@@ -395,6 +450,11 @@ questionBankRouter.put("/questions/:id", async (req, res) => {
           ...(qData.starterCode !== undefined ? { starterCode: qData.starterCode } : {}),
           ...(typeof qData.timeLimitSeconds === "number" ? { timeLimitSeconds: qData.timeLimitSeconds } : {}),
           ...(typeof qData.memoryLimitMb === "number" ? { memoryLimitMb: qData.memoryLimitMb } : {}),
+
+          // SQL
+          ...(qData.schemaDdl !== undefined ? { schemaDdl: qData.schemaDdl } : {}),
+          ...(qData.solutionSql !== undefined ? { solutionSql: qData.solutionSql } : {}),
+          ...(qData.orderSensitive !== undefined ? { orderSensitive: Boolean(qData.orderSensitive) } : {}),
         },
         include: {
           folder: true,

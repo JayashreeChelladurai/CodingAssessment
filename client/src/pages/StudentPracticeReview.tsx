@@ -3,6 +3,9 @@ import { api } from "../services/api";
 import { Question, TestCaseEvaluationResult } from "../types";
 import { MarkdownView } from "../components/common/MarkdownView";
 import { MonacoCodeEditor } from "../components/editor/MonacoCodeEditor";
+import { SchemaViewer } from "../components/common/SchemaViewer";
+import { SqlMonacoEditor } from "../components/editor/SqlMonacoEditor";
+import { SqlResultViewer } from "../components/editor/SqlResultViewer";
 import {
   BookOpen,
   ArrowLeft,
@@ -15,7 +18,9 @@ import {
   Clock,
   Terminal,
   FileCode,
-  HelpCircle
+  HelpCircle,
+  Database,
+  Edit3
 } from "lucide-react";
 
 interface StudentPracticeReviewProps {
@@ -53,7 +58,7 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
         const firstQ = data.assessment.questions[0];
         const sub = (data.attempt?.submissions || []).find((s: any) => s.questionId === firstQ.id);
         setPracticeCode(sub?.code || firstQ.starterCode || "");
-        setPracticeLanguage(sub?.language || "JAVA");
+        setPracticeLanguage(sub?.language || (firstQ.type === "SQL" ? "SQL" : "JAVA"));
       }
     } catch (err: any) {
       setError(err.message || "Could not retrieve review data.");
@@ -69,7 +74,7 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
     const q = reviewData.assessment.questions[idx];
     const sub = (reviewData.attempt?.submissions || []).find((s: any) => s.questionId === q.id);
     setPracticeCode(sub?.code || q.starterCode || "");
-    setPracticeLanguage(sub?.language || "JAVA");
+    setPracticeLanguage(sub?.language || (q.type === "SQL" ? "SQL" : "JAVA"));
   };
 
   const handleRunPractice = async () => {
@@ -114,6 +119,9 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
   let mcqOptions: any[] = [];
   let correctAnswers: string[] = [];
   let studentSelectedOptions: string[] = [];
+  let fibBlanks: any[] = [];
+  let fibAnswers: string[] = [];
+  let fibAccepted: string[][] = [];
 
   if (activeQuestion?.type === "MCQ") {
     try {
@@ -124,6 +132,27 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
       } else if (reviewData?.attempt?.mcqResponses) {
         const mcqMap = JSON.parse(reviewData.attempt.mcqResponses);
         studentSelectedOptions = mcqMap[activeQuestion.id] || [];
+      }
+    } catch {
+      // ignore
+    }
+  } else if (activeQuestion?.type === "FIB") {
+    try {
+      fibBlanks = typeof activeQuestion.options === "string" ? JSON.parse(activeQuestion.options || "[]") : (activeQuestion.options || []);
+      const rawCorrect = typeof activeQuestion.correctAnswers === "string" ? JSON.parse(activeQuestion.correctAnswers || "[]") : (activeQuestion.correctAnswers || []);
+      if (Array.isArray(rawCorrect)) {
+        fibAccepted = rawCorrect.map((entry) => {
+          if (Array.isArray(entry)) return entry.map((s) => String(s).trim());
+          if (typeof entry === "string" && entry.includes("|")) return entry.split("|").map((s) => s.trim()).filter(Boolean);
+          return [String(entry).trim()];
+        });
+      }
+
+      if (activeSubmission?.selectedOptions) {
+        fibAnswers = JSON.parse(activeSubmission.selectedOptions);
+      } else if (reviewData?.attempt?.mcqResponses) {
+        const mcqMap = JSON.parse(reviewData.attempt.mcqResponses);
+        fibAnswers = mcqMap[activeQuestion.id] || [];
       }
     } catch {
       // ignore
@@ -334,6 +363,194 @@ export const StudentPracticeReview: React.FC<StudentPracticeReviewProps> = ({ on
                       <p className="leading-relaxed">{activeQuestion.explanation}</p>
                     </div>
                   )}
+                </div>
+              ) : activeQuestion.type === "FIB" ? (
+                /* FIB Review View */
+                <div className="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                  <div className="flex justify-between items-center pb-4 border-b border-slate-800">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-violet-400 block mb-1 flex items-center gap-1.5">
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Fill in the Blanks Review</span>
+                      </span>
+                      <h3 className="font-bold text-base text-white">{activeQuestion.title}</h3>
+                    </div>
+                    <span className="font-mono text-sm font-bold text-emerald-400">
+                      Score: {activeSubmission ? activeSubmission.score : 0} / {activeQuestion.marks}m
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-800 text-xs text-slate-200">
+                    <MarkdownView content={activeQuestion.description} />
+                  </div>
+
+                  <div className="space-y-3">
+                    <span className="text-xs font-bold uppercase text-slate-400 block">Blanks Evaluation:</span>
+                    {(fibAccepted.length > 0 ? fibAccepted : [["(No expected answer)"]]).map((acceptedList, idx) => {
+                      const label = fibBlanks[idx]?.label || fibBlanks[idx]?.text || `Blank ${idx + 1}`;
+                      const studentAns = (fibAnswers[idx] || "").trim();
+                      const normStudent = studentAns.toLowerCase().replace(/\s+/g, " ");
+                      const isCorrect = acceptedList.some((acc: string) => acc.trim().toLowerCase().replace(/\s+/g, " ") === normStudent);
+
+                      let cardStyle = isCorrect
+                        ? "bg-emerald-950/30 border-emerald-500/80 text-emerald-300"
+                        : studentAns
+                        ? "bg-rose-950/30 border-rose-500/80 text-rose-300"
+                        : "bg-slate-950 border-slate-800 text-slate-400";
+
+                      return (
+                        <div key={idx} className={`p-4 rounded-xl border space-y-2 text-xs ${cardStyle}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-200 flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-mono">
+                                {idx + 1}
+                              </span>
+                              <span>{label}</span>
+                            </span>
+
+                            {isCorrect ? (
+                              <span className="px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300 font-semibold flex items-center gap-1 text-[11px]">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Correct</span>
+                              </span>
+                            ) : studentAns ? (
+                              <span className="px-2 py-0.5 rounded bg-rose-900/60 text-rose-300 font-semibold flex items-center gap-1 text-[11px]">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>Incorrect</span>
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-semibold text-[11px]">
+                                Unattempted
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
+                            <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                              <span className="text-slate-400 block text-[10px] font-sans">Your Answer:</span>
+                              <span className={studentAns ? (isCorrect ? "text-emerald-300 font-bold" : "text-rose-300 font-bold") : "text-slate-500 italic font-sans"}>
+                                {studentAns || "<Empty>"}
+                              </span>
+                            </div>
+                            <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                              <span className="text-slate-400 block text-[10px] font-sans">Accepted Answer(s):</span>
+                              <span className="text-emerald-400 font-bold">
+                                {acceptedList.join("  OR  ")}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {activeQuestion.explanation && (
+                    <div className="bg-amber-950/20 border border-amber-900/40 rounded-xl p-4 text-xs space-y-1 text-amber-300">
+                      <strong className="block font-bold text-amber-200">Explanation & Walkthrough:</strong>
+                      <p className="leading-relaxed">{activeQuestion.explanation}</p>
+                    </div>
+                  )}
+                </div>
+              ) : activeQuestion.type === "SQL" ? (
+                /* SQL Review & Interactive Query Runner */
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Column: Problem, Schema & Canonical Solution */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                          <Database className="w-4 h-4 text-sky-400" />
+                          <span>SQL Problem</span>
+                        </span>
+                        <span className="font-mono text-xs font-bold text-emerald-400">
+                          Score: {activeSubmission ? activeSubmission.score : 0} / {activeQuestion.marks}m
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-base text-white">{activeQuestion.title}</h3>
+                      <div className="text-xs text-slate-300 leading-relaxed">
+                        <MarkdownView content={activeQuestion.description} />
+                      </div>
+                    </div>
+
+                    {/* Database Schema */}
+                    {activeQuestion.schemaOverview && activeQuestion.schemaOverview.length > 0 && (
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                          Database Schema & Tables
+                        </span>
+                        <SchemaViewer tables={activeQuestion.schemaOverview} />
+                      </div>
+                    )}
+
+                    {/* Reference Canonical SQL */}
+                    {activeQuestion.solutionSql && (
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
+                          Canonical Reference Query
+                        </span>
+                        <pre className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto whitespace-pre">
+                          {activeQuestion.solutionSql}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: SQL Editor & Test Case Evaluation */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Database className="w-3.5 h-3.5 text-sky-400" />
+                          <span className="font-bold text-white">Interactive SQL Practice Editor</span>
+                        </div>
+
+                        <button
+                          onClick={handleRunPractice}
+                          disabled={isPracticing}
+                          className="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold py-1.5 px-4 rounded-xl transition text-xs shadow-md"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          <span>{isPracticing ? "Executing..." : "Run Query"}</span>
+                        </button>
+                      </div>
+
+                      <div className="p-2 bg-slate-950">
+                        <SqlMonacoEditor
+                          value={practiceCode}
+                          onChange={setPracticeCode}
+                          schemaTables={activeQuestion.schemaOverview || []}
+                          height="280px"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Query Evaluation Results */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Practice Evaluation & Test Case Output
+                      </h4>
+                      <SqlResultViewer
+                        result={practiceResults || (() => {
+                          try {
+                            const parsed = JSON.parse(activeSubmission?.testCaseResults || "[]");
+                            if (parsed.length > 0) {
+                              return {
+                                questionId: activeQuestion.id,
+                                status: activeSubmission?.status === "ACCEPTED" ? "PASSED" : "FAILED",
+                                passedTestCases: activeSubmission?.passedTestCases || 0,
+                                totalTestCases: activeSubmission?.totalTestCases || 0,
+                                score: activeSubmission?.score || 0,
+                                maxScore: activeQuestion.marks,
+                                evaluations: parsed,
+                              };
+                            }
+                          } catch {}
+                          return null;
+                        })()}
+                        isRunning={isPracticing}
+                      />
+                    </div>
+                  </div>
                 </div>
               ) : (
                 /* Coding Review & Interactive Sandbox View */

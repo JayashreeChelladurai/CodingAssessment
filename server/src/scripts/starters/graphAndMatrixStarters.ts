@@ -10,6 +10,12 @@ public class Solution {
         // Write your logic here
         return 0;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -75,6 +81,12 @@ public class Solution {
         // Write your logic here
         return null;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -165,6 +177,12 @@ public class Solution {
         // Write your logic here
         return false;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -212,6 +230,12 @@ public class Solution {
         // Write your logic here
         return new ArrayList<>();
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -272,6 +296,12 @@ public class Solution {
         // Write your logic here
         return 0;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -309,6 +339,12 @@ public class Solution {
         // Write your logic here
         return "";
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -369,6 +405,12 @@ public class Solution {
         // Write your logic here
         return false;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -410,6 +452,12 @@ public class Solution {
         // Write your logic here
         return 0;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -456,6 +504,12 @@ public class Solution {
         // Write your logic here
         
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -514,6 +568,12 @@ public class Solution {
         // Write your logic here
         return new ArrayList<>();
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -565,6 +625,12 @@ public class Solution {
         // Write your logic here
         
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -613,6 +679,12 @@ public class Solution {
         // Write your logic here
         return false;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -660,6 +732,12 @@ public class Solution {
         // Write your logic here
         return false;
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -700,6 +778,12 @@ public class Solution {
         // Write your logic here
         
     }
+    // You can write additional helper functions here if needed
+
+    // ========================================================
+    // DO NOT MODIFY BELOW THIS LINE - AUTOMATED TEST RUNNER
+    // ========================================================
+
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);

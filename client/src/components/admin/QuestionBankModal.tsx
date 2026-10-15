@@ -22,6 +22,8 @@ import {
   Tag,
   Loader2,
   Lock,
+  Database,
+  Edit3,
 } from "lucide-react";
 
 interface QuestionBankModalProps {
@@ -46,7 +48,7 @@ export const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
   const [previewQuestion, setPreviewQuestion] = useState<BankQuestion | null>(null);
 
   const [search, setSearch] = useState<string>("");
-  const [typeFilter, setTypeFilter] = useState<"ALL" | "MCQ" | "CODING">("ALL");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | "MCQ" | "FIB" | "CODING" | "SQL">("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<"ALL" | "EASY" | "MEDIUM" | "HARD">("ALL");
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -312,7 +314,7 @@ export const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
               <div className="flex items-center justify-between gap-2">
                 {/* Type Filter */}
                 <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800 text-[11px]">
-                  {(["ALL", "MCQ", "CODING"] as const).map((t) => (
+                  {(["ALL", "MCQ", "FIB", "CODING", "SQL"] as const).map((t) => (
                     <button
                       key={t}
                       type="button"
@@ -418,6 +420,16 @@ export const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20">
                                 <HelpCircle className="w-2.5 h-2.5" />
                                 <span>MCQ</span>
+                              </span>
+                            ) : q.type === "FIB" ? (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                                <Edit3 className="w-2.5 h-2.5 text-violet-400" />
+                                <span>FIB</span>
+                              </span>
+                            ) : q.type === "SQL" ? (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                <Database className="w-2.5 h-2.5 text-sky-400" />
+                                <span>SQL</span>
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -595,6 +607,59 @@ export const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
                     </div>
                   )}
 
+                  {/* FIB Details */}
+                  {previewQuestion.type === "FIB" && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-semibold uppercase text-violet-400 block">
+                        Blanks & Accepted Answers
+                      </span>
+                      {(() => {
+                        try {
+                          const blanks = JSON.parse(previewQuestion.options || "[]");
+                          const correctAnswers = JSON.parse(previewQuestion.correctAnswers || "[]");
+                          return (
+                            <div className="space-y-2">
+                              {blanks.map((blank: any, idx: number) => {
+                                const accepted =
+                                  blank.acceptedAnswers ||
+                                  (Array.isArray(correctAnswers[idx])
+                                    ? correctAnswers[idx]
+                                    : [correctAnswers[idx]]) ||
+                                  [];
+                                return (
+                                  <div
+                                    key={blank.id || idx}
+                                    className="p-2.5 rounded-lg text-xs bg-slate-900/60 border border-slate-800 space-y-1"
+                                  >
+                                    <div className="flex items-center justify-between text-violet-300 font-semibold">
+                                      <span>{blank.label || `Blank #${idx + 1}`}</span>
+                                    </div>
+                                    <div className="text-[11px] text-slate-400">
+                                      Accepted:{" "}
+                                      <span className="font-mono text-emerald-400">
+                                        {accepted.join(", ")}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        } catch {
+                          return <div className="text-xs text-slate-500">Invalid FIB data</div>;
+                        }
+                      })()}
+                      {previewQuestion.explanation && (
+                        <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-xs">
+                          <span className="text-[10px] uppercase text-slate-500 block mb-0.5">
+                            Explanation
+                          </span>
+                          <p className="text-slate-300">{previewQuestion.explanation}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Coding Details & Testcases */}
                   {previewQuestion.type === "CODING" && (
                     <div className="space-y-3">
@@ -655,6 +720,79 @@ export const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
                                     {tc.expectedOutput}
                                   </pre>
                                 </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SQL Details & Schema Preview */}
+                  {previewQuestion.type === "SQL" && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <span>Engine: <strong className="text-white">SQLite In-Memory</strong></span>
+                        <span>Evaluation: <strong className="text-white">{previewQuestion.orderSensitive ? "Order-Sensitive" : "Order-Agnostic"}</strong></span>
+                      </div>
+
+                      {/* Schema DDL */}
+                      {previewQuestion.schemaDdl && (
+                        <div>
+                          <span className="text-[10px] font-semibold uppercase text-sky-400 flex items-center gap-1 mb-1.5">
+                            <Database className="w-3 h-3 text-sky-400" />
+                            <span>Database Schema DDL</span>
+                          </span>
+                          <pre className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[11px] font-mono text-sky-200/90 max-h-40 overflow-y-auto whitespace-pre">
+                            {previewQuestion.schemaDdl}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Solution SQL */}
+                      {previewQuestion.solutionSql && (
+                        <div>
+                          <span className="text-[10px] font-semibold uppercase text-amber-400 block mb-1.5">
+                            Canonical Reference Query
+                          </span>
+                          <pre className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[11px] font-mono text-emerald-300 max-h-32 overflow-y-auto whitespace-pre">
+                            {previewQuestion.solutionSql}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Test Cases */}
+                      {previewQuestion.testCases && previewQuestion.testCases.length > 0 && (
+                        <div>
+                          <span className="text-[10px] font-semibold uppercase text-slate-400 block mb-1.5">
+                            Test Cases ({previewQuestion.testCases.length})
+                          </span>
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {previewQuestion.testCases.map((tc, tcIdx) => (
+                              <div
+                                key={tcIdx}
+                                className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono space-y-1"
+                              >
+                                <div className="flex items-center justify-between text-[10px]">
+                                  <span className="text-slate-400 font-semibold">{tc.title || `Case #${tcIdx + 1}`}</span>
+                                  <span
+                                    className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                                      tc.isPublic
+                                        ? "bg-sky-950 text-sky-400 border border-sky-800/40"
+                                        : "bg-slate-800 text-slate-400"
+                                    }`}
+                                  >
+                                    {tc.isPublic ? "Public / Sample" : "Hidden"}
+                                  </span>
+                                </div>
+                                {tc.seedData && (
+                                  <div>
+                                    <span className="text-slate-500 text-[10px]">Seed Data:</span>
+                                    <pre className="text-slate-300 bg-slate-950 p-1 rounded mt-0.5 whitespace-pre-wrap text-[11px]">
+                                      {tc.seedData}
+                                    </pre>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>

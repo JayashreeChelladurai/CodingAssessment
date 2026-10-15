@@ -7,6 +7,7 @@ import {
   broadcastStudentUpdated,
   broadcastStudentsList,
 } from "../services/socketService.js";
+import { generateExpectedOutput } from "../services/sqlRunner.js";
 
 export const assessmentRouter = Router();
 
@@ -775,24 +776,30 @@ async function createQuestionRecord(
   tx: { question: typeof prisma.question } = prisma
 ) {
   const isMcq = q.type === "MCQ";
+  const isFib = q.type === "FIB" || q.type === "FILL_IN_BLANKS";
+  const isSql = q.type === "SQL";
   const isRandom = Boolean(q.isRandom);
   const optionsStr = typeof q.options === "string" ? q.options : JSON.stringify(q.options || []);
   const correctAnswersStr = typeof q.correctAnswers === "string" ? q.correctAnswers : JSON.stringify(q.correctAnswers || []);
   const starterCodesStr = typeof q.starterCodes === "string" ? q.starterCodes : JSON.stringify(q.starterCodes || {});
 
+  const defaultStarterCode = isSql
+    ? "-- Write your SQL query below\nSELECT \nFROM \n"
+    : "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        \n    }\n}\n";
+
   const created = await tx.question.create({
     data: {
       assessmentId,
       sectionId,
-      type: isMcq ? "MCQ" : "CODING",
+      type: isFib ? "FIB" : isMcq ? "MCQ" : isSql ? "SQL" : "CODING",
       isRandom,
       randomFolderId: isRandom ? (q.randomFolderId || null) : null,
       randomDifficulty: isRandom ? (q.randomDifficulty || null) : null,
       randomType: isRandom ? (q.randomType || null) : null,
       templateQuestionId: null,
       title: sanitizeQuestionContent(q.title || (isRandom ? `Random Question ${qIdx + 1}` : `Question ${qIdx + 1}`)),
-      description: sanitizeQuestionContent(q.description || (isRandom ? "Randomly assigned from Question Bank folder" : "")),
-      marks: Number(q.marks) || (isMcq ? 2 : 50),
+      description: q.description || (isRandom ? "Randomly assigned from Question Bank folder" : ""),
+      marks: Number(q.marks) || (isMcq || isFib ? 2 : 10),
       negativeMarks: Number(q.negativeMarks) || 0,
       order: qIdx,
       mcqType: q.mcqType || "SINGLE",
@@ -801,17 +808,35 @@ async function createQuestionRecord(
       explanation: sanitizeQuestionContent(q.explanation || ""),
       allowedLanguages: q.allowedLanguages || "JAVA,C,CPP",
       starterCodes: starterCodesStr,
-      starterCode: q.starterCode || "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        \n    }\n}\n",
+      starterCode: q.starterCode || defaultStarterCode,
       timeLimitSeconds: Number(q.timeLimitSeconds) || 3,
       memoryLimitMb: Number(q.memoryLimitMb) || 256,
+      schemaDdl: q.schemaDdl || "",
+      solutionSql: q.solutionSql || "",
+      orderSensitive: Boolean(q.orderSensitive),
       testCases: {
-        create: !isRandom && !isMcq && q.testCases ? q.testCases.map((tc: any, tcIdx: number) => ({
-          input: tc.input || "",
-          expectedOutput: tc.expectedOutput || "",
-          isPublic: tc.isPublic ?? true,
-          weight: Number(tc.weight) || 1.0,
-          order: tcIdx,
-        })) : [],
+        create: !isRandom && !isMcq && !isFib && q.testCases ? q.testCases.map((tc: any, tcIdx: number) => {
+          let expectedOutputStr = tc.expectedOutput || "";
+          if (typeof expectedOutputStr === "object") {
+            expectedOutputStr = JSON.stringify(expectedOutputStr);
+          }
+          if (isSql && (!expectedOutputStr || expectedOutputStr === "{}") && q.solutionSql && tc.seedData) {
+            try {
+              const exp = generateExpectedOutput(q.schemaDdl || "", tc.seedData || "", q.solutionSql);
+              expectedOutputStr = JSON.stringify(exp);
+            } catch {}
+          }
+          return {
+            title: tc.title || `Test Case ${tcIdx + 1}`,
+            input: tc.input || "",
+            expectedOutput: expectedOutputStr,
+            seedData: tc.seedData || "",
+            orderSensitive: tc.orderSensitive !== undefined ? tc.orderSensitive : null,
+            isPublic: tc.isPublic ?? true,
+            weight: Number(tc.weight) || 1.0,
+            order: tcIdx,
+          };
+        }) : [],
       },
     },
   });
@@ -826,23 +851,29 @@ async function upsertQuestionRecord(
   tx: any
 ): Promise<string> {
   const isMcq = q.type === "MCQ";
+  const isFib = q.type === "FIB" || q.type === "FILL_IN_BLANKS";
+  const isSql = q.type === "SQL";
   const isRandom = Boolean(q.isRandom);
   const optionsStr = typeof q.options === "string" ? q.options : JSON.stringify(q.options || []);
   const correctAnswersStr = typeof q.correctAnswers === "string" ? q.correctAnswers : JSON.stringify(q.correctAnswers || []);
   const starterCodesStr = typeof q.starterCodes === "string" ? q.starterCodes : JSON.stringify(q.starterCodes || {});
 
+  const defaultStarterCode = isSql
+    ? "-- Write your SQL query below\nSELECT \nFROM \n"
+    : "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        \n    }\n}\n";
+
   const qData: any = {
     assessmentId,
     sectionId,
-    type: isMcq ? "MCQ" : "CODING",
+    type: isFib ? "FIB" : isMcq ? "MCQ" : isSql ? "SQL" : "CODING",
     isRandom,
     randomFolderId: isRandom ? (q.randomFolderId || null) : null,
     randomDifficulty: isRandom ? (q.randomDifficulty || null) : null,
     randomType: isRandom ? (q.randomType || null) : null,
     templateQuestionId: null,
     title: sanitizeQuestionContent(q.title || (isRandom ? `Random Question ${qIdx + 1}` : `Question ${qIdx + 1}`)),
-    description: sanitizeQuestionContent(q.description || (isRandom ? "Randomly assigned from Question Bank folder" : "")),
-    marks: Number(q.marks) || (isMcq ? 2 : 50),
+    description: q.description || (isRandom ? "Randomly assigned from Question Bank folder" : ""),
+    marks: Number(q.marks) || (isMcq || isFib ? 2 : 10),
     negativeMarks: Number(q.negativeMarks) || 0,
     order: qIdx,
     mcqType: q.mcqType || "SINGLE",
@@ -851,19 +882,37 @@ async function upsertQuestionRecord(
     explanation: sanitizeQuestionContent(q.explanation || ""),
     allowedLanguages: q.allowedLanguages || "JAVA,C,CPP",
     starterCodes: starterCodesStr,
-    starterCode: q.starterCode || "import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        \n    }\n}\n",
+    starterCode: q.starterCode || defaultStarterCode,
     timeLimitSeconds: Number(q.timeLimitSeconds) || 3,
     memoryLimitMb: Number(q.memoryLimitMb) || 256,
+    schemaDdl: q.schemaDdl || "",
+    solutionSql: q.solutionSql || "",
+    orderSensitive: Boolean(q.orderSensitive),
   };
 
-  const testCasesData = (!isRandom && !isMcq && q.testCases && Array.isArray(q.testCases))
-    ? q.testCases.map((tc: any, tcIdx: number) => ({
-        input: tc.input || "",
-        expectedOutput: tc.expectedOutput || "",
-        isPublic: tc.isPublic ?? true,
-        weight: Number(tc.weight) || 1.0,
-        order: tcIdx,
-      }))
+  const testCasesData = (!isRandom && !isMcq && !isFib && q.testCases && Array.isArray(q.testCases))
+    ? q.testCases.map((tc: any, tcIdx: number) => {
+        let expectedOutputStr = tc.expectedOutput || "";
+        if (typeof expectedOutputStr === "object") {
+          expectedOutputStr = JSON.stringify(expectedOutputStr);
+        }
+        if (isSql && (!expectedOutputStr || expectedOutputStr === "{}") && q.solutionSql && tc.seedData) {
+          try {
+            const exp = generateExpectedOutput(q.schemaDdl || "", tc.seedData || "", q.solutionSql);
+            expectedOutputStr = JSON.stringify(exp);
+          } catch {}
+        }
+        return {
+          title: tc.title || `Test Case ${tcIdx + 1}`,
+          input: tc.input || "",
+          expectedOutput: expectedOutputStr,
+          seedData: tc.seedData || "",
+          orderSensitive: tc.orderSensitive !== undefined ? tc.orderSensitive : null,
+          isPublic: tc.isPublic ?? true,
+          weight: Number(tc.weight) || 1.0,
+          order: tcIdx,
+        };
+      })
     : [];
 
   // If question already exists in this assessment, UPDATE it to preserve Question ID and Submissions

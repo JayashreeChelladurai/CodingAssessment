@@ -87,6 +87,7 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
       let totalEarnedScore = 0;
       let mcqScore = 0;
       let codingScore = 0;
+      let sqlScore = 0;
 
       let assignedQIds: string[] = [];
       try {
@@ -106,6 +107,8 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
 
         if (q.type === "MCQ") {
           mcqScore += score;
+        } else if (q.type === "SQL") {
+          sqlScore += score;
         } else {
           codingScore += score;
         }
@@ -157,6 +160,7 @@ resultsRouter.get("/:assessmentId", async (req, res) => {
         mcqResponses: att.mcqResponses,
         mcqScore: Number(mcqScore.toFixed(2)),
         codingScore: Number(codingScore.toFixed(2)),
+        sqlScore: Number(sqlScore.toFixed(2)),
         totalScore: Number(totalEarnedScore.toFixed(2)),
         maxScore: assessment.isRandomized ? studentMaxPossibleMarks : totalPossibleMarks,
         percentage: (assessment.isRandomized ? studentMaxPossibleMarks : totalPossibleMarks) > 0
@@ -241,6 +245,7 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
       "Device/System Info",
       "MCQ Marks",
       "Coding Marks",
+      "SQL Marks",
       "Total Score",
       "Max Score",
       "Percentage (%)",
@@ -258,6 +263,9 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
           headers.push(`Q${idx + 1} Selected Choice`);
           headers.push(`Q${idx + 1} Correct Answer`);
           headers.push(`Q${idx + 1} Score (${q.marks}m)`);
+        } else if (q.type === "SQL") {
+          headers.push(`Q${idx + 1} SQL Submission`);
+          headers.push(`Q${idx + 1} Score (${q.marks}m)`);
         } else {
           headers.push(`Q${idx + 1} Coding Submission`);
           headers.push(`Q${idx + 1} Score (${q.marks}m)`);
@@ -273,6 +281,7 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
       let totalEarnedScore = 0;
       let mcqScore = 0;
       let codingScore = 0;
+      let sqlScore = 0;
 
       let mcqResponsesMap: Record<string, string[]> = {};
       try {
@@ -288,6 +297,7 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
         const score = sub ? sub.score : 0;
         totalEarnedScore += score;
         if (q.type === "MCQ") mcqScore += score;
+        else if (q.type === "SQL") sqlScore += score;
         else codingScore += score;
 
         if (mode === "summary") {
@@ -351,6 +361,13 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
             questionColumns.push(sanitizeCsvCell(selectedText));
             questionColumns.push(sanitizeCsvCell(correctText));
             questionColumns.push(sanitizeCsvCell(score.toFixed(1)));
+          } else if (q.type === "SQL") {
+            // SQL question
+            const statusText = sub
+              ? `${sub.status} (${sub.passedTestCases || 0}/${sub.totalTestCases || 0} passed)`
+              : "[Not Submitted]";
+            questionColumns.push(sanitizeCsvCell(statusText));
+            questionColumns.push(sanitizeCsvCell(score.toFixed(1)));
           } else {
             // Coding question
             const statusText = sub
@@ -382,6 +399,7 @@ resultsRouter.get("/:assessmentId/export", async (req, res) => {
         sanitizeCsvCell(att.deviceInfo || "N/A"),
         sanitizeCsvCell(mcqScore.toFixed(2)),
         sanitizeCsvCell(codingScore.toFixed(2)),
+        sanitizeCsvCell(sqlScore.toFixed(2)),
         sanitizeCsvCell(totalEarnedScore.toFixed(2)),
         sanitizeCsvCell(studentMax.toString()),
         sanitizeCsvCell(`${percentage}%`),
